@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Подрядчики | CRM{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h2 mb-1">Подрядчики</h1>
+        <p class="text-secondary mb-0">Пул исполнителей с ролями, стоимостью, рейтингом и чёрным списком.</p>
+    </div>
+    <a href="{% url 'core:vendor_create' %}" class="btn btn-primary">Добавить подрядчика</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Подрядчик</th>
+                    <th>Роли</th>
+                    <th>Стоимость</th>
+                    <th>Рейтинг</th>
+                    <th>Надёжность</th>
+                    <th>Статус</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vendor in vendors %}
+                    <tr>
+                        <td class="fw-semibold">{{ vendor.name }}</td>
+                        <td>{{ vendor.roles }}</td>
+                        <td>{{ vendor.min_cost }} / {{ vendor.avg_cost }} ₽</td>
+                        <td>{{ vendor.rating }}</td>
+                        <td>{{ vendor.reliability }}%</td>
+                        <td>{% if vendor.blacklisted %}<span class="text-danger">Чёрный список</span>{% else %}Активен{% endif %}</td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{% url 'core:vendor_update' vendor.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
+                                <a href="{% url 'core:vendor_delete' vendor.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7" class="text-center text-secondary py-4">Подрядчики пока не добавлены.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

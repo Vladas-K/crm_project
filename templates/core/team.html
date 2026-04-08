@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Пользователи и роли | CRM{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h2 mb-1">Пользователи и роли</h1>
+        <p class="text-secondary mb-0">Sales Manager, Project Manager, Admin, Finance и ограничения по доступу.</p>
+    </div>
+    <a href="/admin/core/teammemberprofile/add/" class="btn btn-primary">Добавить профиль</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Пользователь</th>
+                    <th>Роль</th>
+                    <th>Финансы</th>
+                    <th>Клиенты</th>
+                    <th>Аналитика</th>
+                    <th>Система</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for profile in profiles %}
+                    <tr>
+                        <td class="fw-semibold">{{ profile.user.get_username }}</td>
+                        <td>{{ profile.get_role_display }}</td>
+                        <td>{{ profile.can_view_finance|yesno:"Да,Нет" }}</td>
+                        <td>{{ profile.can_view_clients|yesno:"Да,Нет" }}</td>
+                        <td>{{ profile.can_view_analytics|yesno:"Да,Нет" }}</td>
+                        <td>{{ profile.can_manage_system|yesno:"Да,Нет" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="text-center text-secondary py-4">Профили сотрудников пока не созданы.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

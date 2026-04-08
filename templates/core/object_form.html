@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | CRM{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h2 mb-1">{{ page_title }}</h1>
+        <p class="text-secondary mb-0">Редактирование данных без перехода в Django admin.</p>
+    </div>
+    <a href="{{ cancel_url }}" class="btn btn-outline-secondary">Назад</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        <form method="post" enctype="multipart/form-data" class="row g-3">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="{% if field.field.widget.input_type == 'checkbox' %}col-12{% else %}col-md-6{% endif %}">
+                    <label class="form-label{% if field.field.widget.input_type == 'checkbox' %} d-block{% endif %}" for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                    </label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <div class="form-text">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <div class="col-12"><div class="alert alert-danger mb-0">{{ error }}</div></div>
+            {% endfor %}
+            <div class="col-12 d-flex gap-2 pt-2">
+                <button type="submit" class="btn btn-primary">{{ submit_label }}</button>
+                <a href="{{ cancel_url }}" class="btn btn-outline-secondary">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

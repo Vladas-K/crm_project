@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Форматы | CRM{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h2 mb-1">Форматы мероприятий</h1>
+        <p class="text-secondary mb-0">Динамические модули, которые создают задачи, тайминг, бюджет и подрядчиков.</p>
+    </div>
+    <a href="{% url 'core:format_create' %}" class="btn btn-primary">Добавить формат</a>
+</div>
+
+<div class="row g-4">
+    {% for format in formats %}
+        <div class="col-md-6 col-xl-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h5">{{ format.name }}</h2>
+                    <p class="text-secondary">{{ format.description|default:"Описание пока не заполнено." }}</p>
+                    <div class="small text-secondary">
+                        Шаблоны: {{ format.task_templates.count }} задач, {{ format.timeline_templates.count }} блоков тайминга,
+                        {{ format.budget_templates.count }} статей бюджета, {{ format.vendor_templates.count }} подрядчиков
+                    </div>
+                    <div class="d-flex gap-2 mt-3">
+                        <a href="{% url 'core:format_update' format.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
+                        <a href="{% url 'core:format_delete' format.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12"><div class="card border-0 shadow-sm"><div class="card-body py-5 text-center text-secondary">Форматы пока не добавлены.</div></div></div>
+    {% endfor %}
+</div>
+{% endblock %}

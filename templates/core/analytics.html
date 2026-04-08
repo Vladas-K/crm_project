@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Аналитика | CRM{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h2 mb-1">Аналитика</h1>
+        <p class="text-secondary mb-0">Конверсия, средний чек, прибыль, источники и загрузка команды.</p>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4"><div class="metric-card metric-card--large"><span>Конверсия</span><strong>{{ metrics.conversion }}%</strong></div></div>
+    <div class="col-md-4"><div class="metric-card metric-card--large"><span>Средний чек</span><strong>{{ metrics.average_check }} ₽</strong></div></div>
+    <div class="col-md-4"><div class="metric-card metric-card--large"><span>Прибыль</span><strong>{{ metrics.profit|floatformat:2 }} ₽</strong></div></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4"><h2 class="h5 mb-0">Источник → деньги</h2></div>
+            <div class="card-body">
+                {% for item in metrics.sources %}
+                    <div class="list-row">
+                        <div class="fw-semibold">{{ item.source|default:"Не указан" }}</div>
+                        <div>{{ item.total }}</div>
+                    </div>
+                {% empty %}
+                    <p class="text-secondary mb-0">Данных пока нет.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4"><h2 class="h5 mb-0">Загрузка команды</h2></div>
+            <div class="card-body">
+                {% for user in metrics.team_load %}
+                    <div class="list-row">
+                        <div class="fw-semibold">{{ user.get_username }}</div>
+                        <div>{{ user.total_events }} мероприятий</div>
+                    </div>
+                {% empty %}
+                    <p class="text-secondary mb-0">Пользователей пока нет.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

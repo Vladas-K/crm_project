@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Воронка | CRM{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h2 mb-1">Воронка продаж</h1>
+        <p class="text-secondary mb-0">Отдельная сущность с вероятностью сделки и контролем потерь.</p>
+    </div>
+    <a href="{% url 'core:pipeline_create' %}" class="btn btn-primary">Добавить этап</a>
+</div>
+
+<div class="row g-4">
+    {% for stage in stages %}
+        <div class="col-md-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h2 class="h5 mb-0">{{ stage.name }}</h2>
+                        <span class="badge text-bg-primary-subtle">{{ stage.probability }}%</span>
+                    </div>
+                    <div class="small text-secondary mb-3">Лидов: {{ stage.leads.count }}</div>
+                    <div class="d-flex gap-2 mb-3">
+                        <a href="{% url 'core:pipeline_update' stage.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
+                        <a href="{% url 'core:pipeline_delete' stage.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>
+                    </div>
+                    {% for lead in stage.leads.all|slice:":4" %}
+                        <div class="list-row">
+                            <div>
+                                <div class="fw-semibold">{{ lead.name }}</div>
+                                <div class="small text-secondary">{{ lead.manager|default:"Без менеджера" }}</div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-secondary mb-0">На этапе пока нет лидов.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12"><div class="card border-0 shadow-sm"><div class="card-body py-5 text-center text-secondary">Этапы воронки пока не добавлены.</div></div></div>
+    {% endfor %}
+</div>
+{% endblock %}

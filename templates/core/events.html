@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Мероприятия | CRM{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h2 mb-1">Мероприятия</h1>
+        <p class="text-secondary mb-0">Ядро системы: бюджет, подрядчики, задачи, коммуникации, документы и итоги.</p>
+    </div>
+    <a href="{% url 'core:event_create' %}" class="btn btn-primary">Добавить мероприятие</a>
+</div>
+
+<div class="row g-4">
+    {% for event in events %}
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between gap-3 mb-3">
+                        <div>
+                            <h2 class="h4 mb-1">{{ event.title|default:event.client }}</h2>
+                            <div class="text-secondary">{{ event.date }} • {{ event.city }}</div>
+                        </div>
+                        <span class="badge text-bg-success-subtle">{{ event.get_status_display }}</span>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-sm-6"><div class="metric-card"><span>Клиент</span><strong>{{ event.client }}</strong></div></div>
+                        <div class="col-sm-6"><div class="metric-card"><span>Формат</span><strong>{{ event.event_format|default:"Не выбран" }}</strong></div></div>
+                        <div class="col-sm-6"><div class="metric-card"><span>Бюджет</span><strong>{{ event.planned_budget }} ₽</strong></div></div>
+                        <div class="col-sm-6"><div class="metric-card"><span>Маржинальность</span><strong>{{ event.margin|floatformat:1 }}%</strong></div></div>
+                    </div>
+                    <div class="small text-secondary mt-3">
+                        Задач: {{ event.tasks.count }} • Подрядчиков: {{ event.event_vendors.count }} • Документов: {{ event.documents.count }}
+                    </div>
+                    <div class="d-flex gap-2 mt-3">
+                        <a href="{% url 'core:event_update' event.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
+                        <a href="{% url 'core:event_delete' event.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12"><div class="card border-0 shadow-sm"><div class="card-body py-5 text-center text-secondary">Мероприятия пока не добавлены.</div></div></div>
+    {% endfor %}
+</div>
+{% endblock %}

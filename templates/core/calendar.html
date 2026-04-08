@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Календарь | CRM{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h2 mb-1">Календарь</h1>
+        <p class="text-secondary mb-0">Все мероприятия, загрузка команды и планирование ресурсов без пересечений.</p>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Дата</th>
+                    <th>Мероприятие</th>
+                    <th>Клиент</th>
+                    <th>Менеджер</th>
+                    <th>Город</th>
+                    <th>Гостей</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                    <tr>
+                        <td>{{ event.date }}</td>
+                        <td class="fw-semibold">{{ event.title|default:event.event_format }}</td>
+                        <td>{{ event.client }}</td>
+                        <td>{{ event.manager|default:"-" }}</td>
+                        <td>{{ event.city }}</td>
+                        <td>{{ event.guests_count }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="text-center text-secondary py-4">Календарь пока пуст.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

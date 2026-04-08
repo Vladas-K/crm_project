@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Дашборд | CRM{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-12">
+        <div class="hero-card p-4 p-lg-5">
+            <span class="badge text-bg-light mb-3">Финальная структура CRM</span>
+            <h1 class="display-6 fw-semibold mb-3">CRM для event-агентства с лидами, воронкой, мероприятиями и подрядчиками</h1>
+            <p class="lead text-secondary mb-0">
+                Архитектура теперь отражает ваш процесс: от входящего лида и квалификации до реализации мероприятия,
+                пост-аналитики, финансов и управления командой.
+            </p>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="text-secondary mb-2">Лиды</p><h2 class="display-6 mb-0">{{ stats.leads_count }}</h2></div></div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="text-secondary mb-2">Клиенты</p><h2 class="display-6 mb-0">{{ stats.clients_count }}</h2></div></div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="text-secondary mb-2">Мероприятия</p><h2 class="display-6 mb-0">{{ stats.events_count }}</h2></div></div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="text-secondary mb-2">Подрядчики</p><h2 class="display-6 mb-0">{{ stats.vendors_count }}</h2></div></div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4"><h3 class="h5 mb-0">Последние лиды</h3></div>
+            <div class="card-body">
+                {% for lead in latest_leads %}
+                    <div class="list-row">
+                        <div>
+                            <div class="fw-semibold">{{ lead.name }}</div>
+                            <div class="text-secondary small">{{ lead.source|default:"Источник не указан" }}</div>
+                        </div>
+                        <span class="badge text-bg-primary-subtle">{{ lead.stage|default:"Без этапа" }}</span>
+                    </div>
+                {% empty %}
+                    <p class="text-secondary mb-0">Лидов пока нет.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4"><h3 class="h5 mb-0">Ближайшие мероприятия</h3></div>
+            <div class="card-body">
+                {% for event in upcoming_events %}
+                    <div class="list-row">
+                        <div>
+                            <div class="fw-semibold">{{ event.title|default:event.client }}</div>
+                            <div class="text-secondary small">{{ event.city }} • {{ event.date }}</div>
+                        </div>
+                        <span class="badge text-bg-success-subtle">{{ event.event_format|default:"Формат не выбран" }}</span>
+                    </div>
+                {% empty %}
+                    <p class="text-secondary mb-0">Мероприятий пока нет.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4"><h3 class="h5 mb-0">Открытые задачи</h3></div>
+            <div class="card-body">
+                {% for task in open_tasks %}
+                    <div class="list-row">
+                        <div>
+                            <div class="fw-semibold">{{ task.title }}</div>
+                            <div class="text-secondary small">{{ task.event }}</div>
+                        </div>
+                        <span class="badge text-bg-warning">{{ task.get_status_display }}</span>
+                    </div>
+                {% empty %}
+                    <p class="text-secondary mb-0">Нет открытых задач.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 pt-4"><h3 class="h5 mb-0">Сводка по воронке</h3></div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {% for stage in pipeline_summary %}
+                        <div class="col-md-6 col-xl-3">
+                            <div class="pipeline-tile">
+                                <div class="small text-secondary mb-2">{{ stage.name }}</div>
+                                <div class="h3 mb-1">{{ stage.total }}</div>
+                                <div class="small text-secondary">Вероятность: {{ stage.probability }}%</div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-secondary mb-0">Этапы воронки ещё не добавлены.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Пакеты | CRM{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h2 mb-1">Услуги и пакеты</h1>
+        <p class="text-secondary mb-0">Готовые пакеты для быстрого формирования коммерческого предложения.</p>
+    </div>
+    <a href="{% url 'core:package_create' %}" class="btn btn-primary">Добавить пакет</a>
+</div>
+
+<div class="row g-4">
+    {% for package in packages %}
+        <div class="col-md-6 col-xl-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="small text-secondary mb-2">{{ package.event_format }}</div>
+                    <h2 class="h5">{{ package.name }}</h2>
+                    <p class="text-secondary">{{ package.services }}</p>
+                    <div class="fs-5 fw-semibold">{{ package.price }} ₽</div>
+                    <div class="d-flex gap-2 mt-3">
+                        <a href="{% url 'core:package_update' package.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
+                        <a href="{% url 'core:package_delete' package.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12"><div class="card border-0 shadow-sm"><div class="card-body py-5 text-center text-secondary">Пакеты пока не добавлены.</div></div></div>
+    {% endfor %}
+</div>
+{% endblock %}
