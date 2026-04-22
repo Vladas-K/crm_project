@@ -16,16 +16,36 @@
     </div>
 
     <div class="col-md-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="text-secondary mb-2">Лиды</p><h2 class="display-6 mb-0">{{ stats.leads_count }}</h2></div></div>
+        <a href="{% url 'core:leads' %}" class="card border-0 shadow-sm h-100 dashboard-stat">
+            <div class="card-body">
+                <p class="text-secondary mb-2">Лиды</p>
+                <h2 class="display-6 mb-0">{{ stats.leads_count }}</h2>
+            </div>
+        </a>
     </div>
     <div class="col-md-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="text-secondary mb-2">Клиенты</p><h2 class="display-6 mb-0">{{ stats.clients_count }}</h2></div></div>
+        <a href="{% url 'core:clients' %}" class="card border-0 shadow-sm h-100 dashboard-stat">
+            <div class="card-body">
+                <p class="text-secondary mb-2">Клиенты</p>
+                <h2 class="display-6 mb-0">{{ stats.clients_count }}</h2>
+            </div>
+        </a>
     </div>
     <div class="col-md-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="text-secondary mb-2">Мероприятия</p><h2 class="display-6 mb-0">{{ stats.events_count }}</h2></div></div>
+        <a href="{% url 'core:events' %}" class="card border-0 shadow-sm h-100 dashboard-stat">
+            <div class="card-body">
+                <p class="text-secondary mb-2">Мероприятия</p>
+                <h2 class="display-6 mb-0">{{ stats.events_count }}</h2>
+            </div>
+        </a>
     </div>
     <div class="col-md-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100"><div class="card-body"><p class="text-secondary mb-2">Подрядчики</p><h2 class="display-6 mb-0">{{ stats.vendors_count }}</h2></div></div>
+        <a href="{% url 'core:vendors' %}" class="card border-0 shadow-sm h-100 dashboard-stat">
+            <div class="card-body">
+                <p class="text-secondary mb-2">Подрядчики</p>
+                <h2 class="display-6 mb-0">{{ stats.vendors_count }}</h2>
+            </div>
+        </a>
     </div>
 
     <div class="col-xl-4">
