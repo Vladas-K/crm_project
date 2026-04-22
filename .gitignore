@@ -160,8 +160,6 @@ cython_debug/
 #.idea/
 .vscode/
 
-static/
-
 media/
 
 .DS_Store
