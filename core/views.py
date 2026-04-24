@@ -84,12 +84,27 @@ class TaskListView(ListView):
     model = EventTask
     template_name = "core/tasks.html"
     context_object_name = "tasks"
-    queryset = EventTask.objects.select_related("event", "responsible").order_by("deadline", "id")
+
+    def get_queryset(self):
+        today = timezone.localdate()
+        queryset = EventTask.objects.select_related("event", "responsible").order_by("deadline", "id")
+        task_filter = self.request.GET.get("filter", "all")
+
+        if task_filter == "open":
+            queryset = queryset.exclude(status=EventTask.Status.DONE)
+        elif task_filter == "overdue":
+            queryset = queryset.exclude(status=EventTask.Status.DONE).filter(deadline__lt=today)
+        elif task_filter == "done":
+            queryset = queryset.filter(status=EventTask.Status.DONE)
+
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         today = timezone.localdate()
+        active_filter = self.request.GET.get("filter", "all")
         context["today"] = today
+        context["active_filter"] = active_filter
         context["task_stats"] = {
             "total": EventTask.objects.count(),
             "open": EventTask.objects.exclude(status=EventTask.Status.DONE).count(),

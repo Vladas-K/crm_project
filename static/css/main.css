@@ -116,6 +116,23 @@ body {
     box-shadow: 0 22px 40px rgba(15, 23, 42, 0.12) !important;
 }
 
+.dashboard-stat--active {
+    border-color: rgba(21, 128, 61, 0.28) !important;
+    box-shadow: 0 20px 36px rgba(21, 128, 61, 0.12) !important;
+}
+
+.dashboard-stat--active::before {
+    opacity: 1;
+}
+
+.dashboard-stat--active p {
+    color: #15803d !important;
+}
+
+.dashboard-stat--active h2 {
+    color: #166534 !important;
+}
+
 .dashboard-stat *,
 .dashboard-stat:hover *,
 .dashboard-stat:focus * {

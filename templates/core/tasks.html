@@ -13,38 +13,46 @@
 
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100 dashboard-stat">
+        <a href="{% url 'core:tasks' %}" class="card border-0 shadow-sm h-100 dashboard-stat{% if active_filter == 'all' %} dashboard-stat--active{% endif %}">
             <div class="card-body">
                 <p class="text-secondary mb-2">Всего задач</p>
                 <h2 class="display-6 mb-0">{{ task_stats.total }}</h2>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100 dashboard-stat">
+        <a href="{% url 'core:tasks' %}?filter=open" class="card border-0 shadow-sm h-100 dashboard-stat{% if active_filter == 'open' %} dashboard-stat--active{% endif %}">
             <div class="card-body">
                 <p class="text-secondary mb-2">Открытые</p>
                 <h2 class="display-6 mb-0">{{ task_stats.open }}</h2>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100 dashboard-stat">
+        <a href="{% url 'core:tasks' %}?filter=overdue" class="card border-0 shadow-sm h-100 dashboard-stat{% if active_filter == 'overdue' %} dashboard-stat--active{% endif %}">
             <div class="card-body">
                 <p class="text-secondary mb-2">Просроченные</p>
                 <h2 class="display-6 mb-0">{{ task_stats.overdue }}</h2>
             </div>
-        </div>
+        </a>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100 dashboard-stat">
+        <a href="{% url 'core:tasks' %}?filter=done" class="card border-0 shadow-sm h-100 dashboard-stat{% if active_filter == 'done' %} dashboard-stat--active{% endif %}">
             <div class="card-body">
                 <p class="text-secondary mb-2">Завершённые</p>
                 <h2 class="display-6 mb-0">{{ task_stats.done }}</h2>
             </div>
-        </div>
+        </a>
     </div>
 </div>
+
+{% if active_filter == "open" %}
+    <div class="alert alert-light border shadow-sm mb-4">Показаны только открытые задачи.</div>
+{% elif active_filter == "overdue" %}
+    <div class="alert alert-light border shadow-sm mb-4">Показаны только просроченные задачи.</div>
+{% elif active_filter == "done" %}
+    <div class="alert alert-light border shadow-sm mb-4">Показаны только завершённые задачи.</div>
+{% endif %}
 
 <div class="row g-4">
     {% for task in tasks %}
