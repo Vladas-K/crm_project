@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}{{ task.title }} | CRM{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="h2 mb-1">{{ task.title }}</h1>
+        <p class="text-secondary mb-0">Детальная карточка задачи по мероприятию.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'core:task_update' task.pk %}" class="btn btn-outline-primary">Изменить</a>
+        <a href="{% url 'core:task_delete' task.pk %}" class="btn btn-outline-danger">Удалить</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+                    <div>
+                        <div class="text-secondary small mb-1">Мероприятие</div>
+                        <h2 class="h4 mb-0">{{ task.event.title|default:task.event.client }}</h2>
+                    </div>
+                    {% if task.status == "done" %}
+                        <span class="badge text-bg-success">Готово</span>
+                    {% elif task.status == "in_progress" %}
+                        <span class="badge text-bg-primary">В работе</span>
+                    {% else %}
+                        <span class="badge text-bg-warning">К выполнению</span>
+                    {% endif %}
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="metric-card">
+                            <span>Дедлайн</span>
+                            <strong>{{ task.deadline|date:"d.m.Y"|default:"Не задан" }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="metric-card">
+                            <span>Ответственный</span>
+                            <strong>{{ task.responsible|default:"Не назначен" }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="metric-card">
+                            <span>Смещение дедлайна</span>
+                            <strong>{{ task.deadline_offset_days }} дн.</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="metric-card">
+                            <span>Дата мероприятия</span>
+                            <strong>{{ task.event.date|date:"d.m.Y" }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h3 class="h5 mb-3">Описание</h3>
+                    {% if task.description %}
+                        <p class="mb-0">{{ task.description|linebreaksbr }}</p>
+                    {% else %}
+                        <p class="text-secondary mb-0">Описание пока не заполнено.</p>
+                    {% endif %}
+                </div>
+
+                <div class="d-flex gap-2">
+                    <a href="{% url 'core:tasks' %}" class="btn btn-outline-secondary">К списку задач</a>
+                    <a href="{% url 'core:event_update' task.event.pk %}" class="btn btn-outline-primary">Открыть мероприятие</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <h3 class="h5 mb-3">Контекст</h3>
+                <div class="small text-secondary mb-2">Город</div>
+                <div class="fw-semibold mb-3">{{ task.event.city }}</div>
+
+                <div class="small text-secondary mb-2">Клиент</div>
+                <div class="fw-semibold mb-3">{{ task.event.client }}</div>
+
+                <div class="small text-secondary mb-2">Формат</div>
+                <div class="fw-semibold mb-3">{{ task.event.event_format|default:"Не выбран" }}</div>
+
+                <div class="small text-secondary mb-2">Состояние задачи</div>
+                <div class="fw-semibold">
+                    {% if is_overdue %}
+                        <span class="text-danger">Просрочено</span>
+                    {% elif is_due_today %}
+                        <span class="text-warning">Срок сегодня</span>
+                    {% elif task.status == "done" %}
+                        <span class="text-success">Завершена</span>
+                    {% else %}
+                        <span class="text-secondary">В срок</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

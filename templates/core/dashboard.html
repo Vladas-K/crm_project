@@ -93,7 +93,11 @@
                 {% for task in open_tasks %}
                     <div class="list-row">
                         <div>
-                            <div class="fw-semibold">{{ task.title }}</div>
+                            <div class="fw-semibold">
+                                <a href="{% url 'core:task_detail' task.pk %}" class="text-decoration-none text-reset">
+                                    {{ task.title }}
+                                </a>
+                            </div>
                             <div class="text-secondary small">{{ task.event }}</div>
                         </div>
                         <span class="badge text-bg-warning">{{ task.get_status_display }}</span>

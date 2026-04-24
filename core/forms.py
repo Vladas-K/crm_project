@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 
-from .models import Client, Event, EventFormat, Lead, PipelineStage, ServicePackage, Vendor
+from .models import Client, Event, EventFormat, EventTask, Lead, PipelineStage, ServicePackage, Vendor
 
 User = get_user_model()
 
@@ -144,3 +144,26 @@ class EventForm(BootstrapModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["manager"].queryset = User.objects.order_by("username")
+
+
+class EventTaskForm(BootstrapModelForm):
+    class Meta:
+        model = EventTask
+        fields = [
+            "event",
+            "title",
+            "description",
+            "deadline",
+            "deadline_offset_days",
+            "responsible",
+            "status",
+        ]
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 4}),
+            "deadline": forms.DateInput(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["responsible"].queryset = User.objects.order_by("username")
+        self.fields["event"].queryset = Event.objects.select_related("client").order_by("date", "title", "id")

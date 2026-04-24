@@ -3,9 +3,18 @@ from django.contrib.auth import get_user_model
 from django.db.models import Count, Sum
 from django.urls import reverse_lazy
 from django.utils import timezone
-from django.views.generic import CreateView, DeleteView, ListView, TemplateView, UpdateView
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
 
-from .forms import ClientForm, EventForm, EventFormatForm, LeadForm, PipelineStageForm, ServicePackageForm, VendorForm
+from .forms import (
+    ClientForm,
+    EventForm,
+    EventFormatForm,
+    EventTaskForm,
+    LeadForm,
+    PipelineStageForm,
+    ServicePackageForm,
+    VendorForm,
+)
 
 from .models import (
     Client,
@@ -87,6 +96,24 @@ class TaskListView(ListView):
             "overdue": EventTask.objects.exclude(status=EventTask.Status.DONE).filter(deadline__lt=today).count(),
             "done": EventTask.objects.filter(status=EventTask.Status.DONE).count(),
         }
+        return context
+
+
+class TaskDetailView(DetailView):
+    model = EventTask
+    template_name = "core/task_detail.html"
+    context_object_name = "task"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        today = timezone.localdate()
+        context["today"] = today
+        context["is_overdue"] = bool(
+            self.object.deadline and self.object.deadline < today and self.object.status != EventTask.Status.DONE
+        )
+        context["is_due_today"] = bool(
+            self.object.deadline and self.object.deadline == today and self.object.status != EventTask.Status.DONE
+        )
         return context
 
 
@@ -269,6 +296,32 @@ class EventDeleteView(DeleteView):
     model = Event
     template_name = "core/object_confirm_delete.html"
     success_url = reverse_lazy("core:events")
+
+
+class TaskCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
+    model = EventTask
+    form_class = EventTaskForm
+    template_name = "core/object_form.html"
+    page_title = "Новая задача"
+    success_message = "Задача создана."
+    success_url = reverse_lazy("core:tasks")
+    cancel_url = reverse_lazy("core:tasks")
+
+
+class TaskUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
+    model = EventTask
+    form_class = EventTaskForm
+    template_name = "core/object_form.html"
+    page_title = "Редактирование задачи"
+    success_message = "Задача обновлена."
+    success_url = reverse_lazy("core:tasks")
+    cancel_url = reverse_lazy("core:tasks")
+
+
+class TaskDeleteView(DeleteView):
+    model = EventTask
+    template_name = "core/object_confirm_delete.html"
+    success_url = reverse_lazy("core:tasks")
 
 
 class EventFormatCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
