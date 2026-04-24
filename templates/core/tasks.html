@@ -13,27 +13,35 @@
 
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3">
-        <div class="metric-card metric-card--large">
-            <span>Всего задач</span>
-            <strong>{{ task_stats.total }}</strong>
+        <div class="card border-0 shadow-sm h-100 dashboard-stat">
+            <div class="card-body">
+                <p class="text-secondary mb-2">Всего задач</p>
+                <h2 class="display-6 mb-0">{{ task_stats.total }}</h2>
+            </div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="metric-card metric-card--large">
-            <span>Открытые</span>
-            <strong>{{ task_stats.open }}</strong>
+        <div class="card border-0 shadow-sm h-100 dashboard-stat">
+            <div class="card-body">
+                <p class="text-secondary mb-2">Открытые</p>
+                <h2 class="display-6 mb-0">{{ task_stats.open }}</h2>
+            </div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="metric-card metric-card--large">
-            <span>Просроченные</span>
-            <strong>{{ task_stats.overdue }}</strong>
+        <div class="card border-0 shadow-sm h-100 dashboard-stat">
+            <div class="card-body">
+                <p class="text-secondary mb-2">Просроченные</p>
+                <h2 class="display-6 mb-0">{{ task_stats.overdue }}</h2>
+            </div>
         </div>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <div class="metric-card metric-card--large">
-            <span>Завершённые</span>
-            <strong>{{ task_stats.done }}</strong>
+        <div class="card border-0 shadow-sm h-100 dashboard-stat">
+            <div class="card-body">
+                <p class="text-secondary mb-2">Завершённые</p>
+                <h2 class="display-6 mb-0">{{ task_stats.done }}</h2>
+            </div>
         </div>
     </div>
 </div>
