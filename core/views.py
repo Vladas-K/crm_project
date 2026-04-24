@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Sum
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, ListView, TemplateView, UpdateView
 
 from .forms import ClientForm, EventForm, EventFormatForm, LeadForm, PipelineStageForm, ServicePackageForm, VendorForm
@@ -68,6 +69,25 @@ class EventListView(ListView):
     template_name = "core/events.html"
     context_object_name = "events"
     queryset = Event.objects.select_related("client", "lead", "event_format", "manager")
+
+
+class TaskListView(ListView):
+    model = EventTask
+    template_name = "core/tasks.html"
+    context_object_name = "tasks"
+    queryset = EventTask.objects.select_related("event", "responsible").order_by("deadline", "id")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        today = timezone.localdate()
+        context["today"] = today
+        context["task_stats"] = {
+            "total": EventTask.objects.count(),
+            "open": EventTask.objects.exclude(status=EventTask.Status.DONE).count(),
+            "overdue": EventTask.objects.exclude(status=EventTask.Status.DONE).filter(deadline__lt=today).count(),
+            "done": EventTask.objects.filter(status=EventTask.Status.DONE).count(),
+        }
+        return context
 
 
 class EventFormatListView(ListView):
