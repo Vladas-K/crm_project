@@ -98,6 +98,8 @@ body {
         box-shadow 0.22s ease,
         border-color 0.22s ease,
         background 0.22s ease;
+    transform: scale(1);
+    will-change: transform;
 }
 
 .dashboard-stat,
