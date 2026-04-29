@@ -111,7 +111,7 @@ body {
 .dashboard-stat:focus {
     color: inherit;
     text-decoration: none;
-    transform: scale(1.03) translateZ(0);
+    transform: scale(1.04) rotateX(3deg) rotateY(-3deg);
     border-color: rgba(31, 111, 235, 0.22) !important;
     box-shadow: 0 25px 50px rgba(15, 23, 42, 0.15) !important;
 }
