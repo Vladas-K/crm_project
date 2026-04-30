@@ -154,11 +154,6 @@ body {
     display: none;
 }
 
-.dashboard-stat:hover p,
-.dashboard-stat:hover h2 {
-    color: inherit;
-}
-
 .dashboard-stat h2 {
     letter-spacing: -0.03em;
 }
