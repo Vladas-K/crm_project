@@ -100,6 +100,7 @@ body {
         background 0.3s ease;
     transform: scale(1);
     will-change: transform;
+    cursor: pointer;
 }
 
 .dashboard-stat,
@@ -112,7 +113,7 @@ body {
 .dashboard-stat:hover,
 .dashboard-stat:focus {
     transform: scale(1.025);
-    box-shadow: 0 30px 70px rgba(15, 23, 42, 0.18);
+    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.16);
     border-color: rgba(31, 111, 235, 0.18) !important;
 }
 
