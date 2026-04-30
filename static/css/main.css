@@ -118,8 +118,8 @@ body {
 }
 
 .dashboard-stat--active {
-    border-color: rgba(21, 128, 61, 0.28) !important;
-    box-shadow: 0 20px 36px rgba(21, 128, 61, 0.12) !important;
+    border-color: rgba(31, 111, 235, 0.3) !important;
+    box-shadow: 0 20px 36px rgba(31, 111, 235, 0.12) !important;
 }
 
 .dashboard-stat--active p {
