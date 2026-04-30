@@ -89,7 +89,7 @@ body {
     position: relative;
     overflow: hidden;
     color: inherit;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 251, 255, 0.98) 100%);
+    background: #ffffff;
     border: 1px solid rgba(31, 111, 235, 0.08) !important;
     border-radius: 1.15rem;
     text-decoration: none;
