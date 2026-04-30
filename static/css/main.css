@@ -151,19 +151,7 @@ body {
 }
 
 .dashboard-stat::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background:
-        radial-gradient(circle at top right, rgba(31, 111, 235, 0.10), transparent 40%),
-        radial-gradient(circle at bottom left, rgba(0, 0, 0, 0.03), transparent 50%);
-    opacity: 0;
-    transition: opacity 0.25s ease;
-}
-
-.dashboard-stat:hover::before,
-.dashboard-stat:focus::before {
-    opacity: 1;
+    display: none;
 }
 
 .dashboard-stat:hover p,
