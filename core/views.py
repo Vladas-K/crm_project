@@ -478,7 +478,9 @@ class TaskDeleteView(DeleteView):
     template_name = "core/object_confirm_delete.html"
 
     def get_success_url(self):
-        return reverse("core:event_detail", kwargs={"pk": self.object.event.pk})
+        if self.request.GET.get("return_tab") == "tasks" or self.request.POST.get("return_tab") == "tasks":
+            return f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=tasks"
+        return reverse("core:tasks")
 
 
 class TaskStatusUpdateView(View):
