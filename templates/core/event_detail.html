@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.title|default:event.client }} | CRM{% endblock %}
+
+{% block content %}
+<div class="event-hero mb-4">
+    <div class="event-hero__content">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <span class="event-chip">{{ event.get_status_display }}</span>
+            {% if event.event_format %}
+                <span class="event-chip event-chip--soft">{{ event.event_format }}</span>
+            {% endif %}
+            <span class="event-chip event-chip--soft">{{ event.date|date:"d.m.Y" }} • {{ event.city }}</span>
+        </div>
+
+        <div class="d-flex flex-column flex-xl-row justify-content-between gap-4">
+            <div>
+                <h1 class="event-hero__title mb-2">{{ event.title|default:event.client }}</h1>
+                <p class="event-hero__subtitle mb-0">
+                    Клиент: {{ event.client }}{% if event.manager %} • Project Manager: {{ event.manager }}{% endif %}
+                </p>
+            </div>
+            <div class="d-flex gap-2 align-self-start">
+                <a href="{% url 'core:events' %}" class="btn btn-outline-secondary">К списку</a>
+                <a href="{% url 'core:event_update' event.pk %}" class="btn btn-primary">Редактировать</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100 dashboard-stat">
+            <div class="card-body">
+                <p class="text-secondary mb-2">Плановый бюджет</p>
+                <h2 class="display-6 mb-0">{{ event.planned_budget }} ₽</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100 dashboard-stat">
+            <div class="card-body">
+                <p class="text-secondary mb-2">Расходы</p>
+                <h2 class="display-6 mb-0">{{ event.total_expenses }} ₽</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100 dashboard-stat">
+            <div class="card-body">
+                <p class="text-secondary mb-2">Прибыль</p>
+                <h2 class="display-6 mb-0">{{ event.profit }} ₽</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100 dashboard-stat">
+            <div class="card-body">
+                <p class="text-secondary mb-2">Маржа</p>
+                <h2 class="display-6 mb-0">{{ event.margin|floatformat:1 }}%</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-xl-8">
+        <div class="apple-panel h-100">
+            <div class="apple-panel__header">
+                <div>
+                    <h2 class="apple-panel__title">Основное</h2>
+                    <p class="apple-panel__subtitle">Краткая сводка по мероприятию и рабочему контексту.</p>
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="metric-card">
+                        <span>Клиент</span>
+                        <strong>{{ event.client }}</strong>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="metric-card">
+                        <span>Лид</span>
+                        <strong>{{ event.lead|default:"Не привязан" }}</strong>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="metric-card">
+                        <span>Гостей</span>
+                        <strong>{{ event.guests_count }}</strong>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="metric-card">
+                        <span>Предоплата</span>
+                        <strong>{{ event.prepayment_total }} ₽</strong>
+                    </div>
+                </div>
+            </div>
+
+            {% if event.goal or event.preferences or event.stop_factors %}
+                <div class="event-notes-grid mt-4">
+                    <div class="apple-note">
+                        <span>Цель</span>
+                        <p>{{ event.goal|default:"Не указана" }}</p>
+                    </div>
+                    <div class="apple-note">
+                        <span>Предпочтения</span>
+                        <p>{{ event.preferences|default:"Не указаны" }}</p>
+                    </div>
+                    <div class="apple-note">
+                        <span>Стоп-факторы</span>
+                        <p>{{ event.stop_factors|default:"Не указаны" }}</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="apple-panel h-100">
+            <div class="apple-panel__header">
+                <div>
+                    <h2 class="apple-panel__title">Операционный статус</h2>
+                    <p class="apple-panel__subtitle">Быстрый взгляд на исполнение.</p>
+                </div>
+            </div>
+            <div class="event-side-list">
+                <div class="event-side-list__item">
+                    <span>Задачи</span>
+                    <strong>{{ event.tasks.count }}</strong>
+                </div>
+                <div class="event-side-list__item">
+                    <span>Просрочено задач</span>
+                    <strong>{{ overdue_tasks_count }}</strong>
+                </div>
+                <div class="event-side-list__item">
+                    <span>Подрядчики</span>
+                    <strong>{{ event.event_vendors.count }}</strong>
+                </div>
+                <div class="event-side-list__item">
+                    <span>Документы</span>
+                    <strong>{{ event.documents.count }}</strong>
+                </div>
+                <div class="event-side-list__item">
+                    <span>Коммуникации</span>
+                    <strong>{{ event.communications.count }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-12">
+        <div class="apple-panel">
+            <div class="apple-panel__header">
+                <div>
+                    <h2 class="apple-panel__title">Задачи</h2>
+                    <p class="apple-panel__subtitle">Текущая работа по подготовке и проведению мероприятия.</p>
+                </div>
+            </div>
+            <div class="apple-list">
+                {% for task in event.tasks.all %}
+                    <div class="apple-list__row">
+                        <div>
+                            <div class="fw-semibold">{{ task.title }}</div>
+                            <div class="text-secondary small">
+                                {% if task.responsible %}{{ task.responsible }}{% else %}Без ответственного{% endif %}
+                                {% if task.deadline %} • {{ task.deadline|date:"d.m.Y" }}{% endif %}
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            {% if task.deadline and task.deadline < today and task.status != "done" %}
+                                <span class="badge text-bg-danger">Просрочено</span>
+                            {% endif %}
+                            <span class="badge text-bg-light">{{ task.get_status_display }}</span>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-secondary mb-0">Задач пока нет.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6">
+        <div class="apple-panel h-100">
+            <div class="apple-panel__header">
+                <div>
+                    <h2 class="apple-panel__title">Расходы</h2>
+                    <p class="apple-panel__subtitle">Бюджетные строки и статусы оплат.</p>
+                </div>
+            </div>
+            <div class="apple-list">
+                {% for expense in event.expenses.all %}
+                    <div class="apple-list__row">
+                        <div>
+                            <div class="fw-semibold">{{ expense.category }}</div>
+                            <div class="text-secondary small">{{ expense.vendor_name|default:"Подрядчик не указан" }}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-semibold">{{ expense.amount }} ₽</div>
+                            <div class="text-secondary small">{{ expense.get_payment_status_display }}</div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-secondary mb-0">Расходов пока нет.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6">
+        <div class="apple-panel h-100">
+            <div class="apple-panel__header">
+                <div>
+                    <h2 class="apple-panel__title">Подрядчики</h2>
+                    <p class="apple-panel__subtitle">Текущий состав команды подрядчиков по мероприятию.</p>
+                </div>
+            </div>
+            <div class="apple-list">
+                {% for assignment in event.event_vendors.all %}
+                    <div class="apple-list__row">
+                        <div>
+                            <div class="fw-semibold">{{ assignment.vendor }}</div>
+                            <div class="text-secondary small">{{ assignment.role }}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-semibold">{{ assignment.cost }} ₽</div>
+                            <div class="text-secondary small">{{ assignment.get_status_display }}</div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-secondary mb-0">Подрядчики пока не назначены.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6">
+        <div class="apple-panel h-100">
+            <div class="apple-panel__header">
+                <div>
+                    <h2 class="apple-panel__title">Коммуникации</h2>
+                    <p class="apple-panel__subtitle">История касаний и обсуждений по проекту.</p>
+                </div>
+            </div>
+            <div class="apple-list">
+                {% for communication in event.communications.all %}
+                    <div class="apple-list__row">
+                        <div>
+                            <div class="fw-semibold">{{ communication.get_communication_type_display }}</div>
+                            <div class="text-secondary small">
+                                {{ communication.date|date:"d.m.Y H:i" }}
+                                {% if communication.manager %} • {{ communication.manager }}{% endif %}
+                            </div>
+                        </div>
+                        <div class="apple-list__meta">{{ communication.comment|default:"Без комментария" }}</div>
+                    </div>
+                {% empty %}
+                    <p class="text-secondary mb-0">Коммуникаций пока нет.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-6">
+        <div class="apple-panel h-100">
+            <div class="apple-panel__header">
+                <div>
+                    <h2 class="apple-panel__title">Документы</h2>
+                    <p class="apple-panel__subtitle">Договоры, счета, КП и акты по мероприятию.</p>
+                </div>
+            </div>
+            <div class="apple-list">
+                {% for document in event.documents.all %}
+                    <div class="apple-list__row">
+                        <div>
+                            <div class="fw-semibold">{{ document.get_document_type_display }}</div>
+                            <div class="text-secondary small">{{ document.get_status_display }}</div>
+                        </div>
+                        <div class="apple-list__meta">
+                            {% if document.file %}
+                                <a href="{{ document.file.url }}" class="text-decoration-none">Файл</a>
+                            {% else %}
+                                Файл не загружен
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-secondary mb-0">Документов пока нет.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

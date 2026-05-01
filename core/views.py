@@ -80,6 +80,33 @@ class EventListView(ListView):
     queryset = Event.objects.select_related("client", "lead", "event_format", "manager")
 
 
+class EventDetailView(DetailView):
+    model = Event
+    template_name = "core/event_detail.html"
+    context_object_name = "event"
+
+    def get_queryset(self):
+        return (
+            Event.objects.select_related("client", "lead", "event_format", "manager")
+            .prefetch_related(
+                "tasks__responsible",
+                "expenses",
+                "event_vendors__vendor",
+                "communications__manager",
+                "documents",
+            )
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        today = timezone.localdate()
+        context["today"] = today
+        context["overdue_tasks_count"] = self.object.tasks.exclude(status=EventTask.Status.DONE).filter(
+            deadline__lt=today
+        ).count()
+        return context
+
+
 class TaskListView(ListView):
     model = EventTask
     template_name = "core/tasks.html"

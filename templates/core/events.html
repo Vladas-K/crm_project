@@ -18,7 +18,11 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between gap-3 mb-3">
                         <div>
-                            <h2 class="h4 mb-1">{{ event.title|default:event.client }}</h2>
+                            <h2 class="h4 mb-1">
+                                <a href="{% url 'core:event_detail' event.pk %}" class="text-decoration-none text-reset">
+                                    {{ event.title|default:event.client }}
+                                </a>
+                            </h2>
                             <div class="text-secondary">{{ event.date }} • {{ event.city }}</div>
                         </div>
                         <span class="badge text-bg-success-subtle">{{ event.get_status_display }}</span>
@@ -33,6 +37,7 @@
                         Задач: {{ event.tasks.count }} • Подрядчиков: {{ event.event_vendors.count }} • Документов: {{ event.documents.count }}
                     </div>
                     <div class="d-flex gap-2 mt-3">
+                        <a href="{% url 'core:event_detail' event.pk %}" class="btn btn-sm btn-outline-secondary">Открыть</a>
                         <a href="{% url 'core:event_update' event.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
                         <a href="{% url 'core:event_delete' event.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>
                     </div>
