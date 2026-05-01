@@ -265,6 +265,22 @@ body {
     font-size: 1rem;
 }
 
+.event-actions,
+.event-row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.event-row-actions {
+    justify-content: flex-end;
+}
+
+.event-row-actions form {
+    margin: 0;
+}
+
 .event-chip {
     display: inline-flex;
     align-items: center;
@@ -412,6 +428,10 @@ body {
 
     .apple-list__row {
         flex-direction: column;
+    }
+
+    .event-row-actions {
+        justify-content: flex-start;
     }
 
     .apple-list__meta {

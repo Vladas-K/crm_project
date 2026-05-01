@@ -1,7 +1,20 @@
 from django import forms
 from django.contrib.auth import get_user_model
 
-from .models import Client, Event, EventFormat, EventTask, Lead, PipelineStage, ServicePackage, Vendor
+from .models import (
+    Client,
+    Event,
+    EventCommunication,
+    EventDocument,
+    EventExpense,
+    EventFormat,
+    EventTask,
+    EventVendor,
+    Lead,
+    PipelineStage,
+    ServicePackage,
+    Vendor,
+)
 
 User = get_user_model()
 
@@ -167,3 +180,39 @@ class EventTaskForm(BootstrapModelForm):
         super().__init__(*args, **kwargs)
         self.fields["responsible"].queryset = User.objects.order_by("username")
         self.fields["event"].queryset = Event.objects.select_related("client").order_by("date", "title", "id")
+
+
+class EventExpenseForm(BootstrapModelForm):
+    class Meta:
+        model = EventExpense
+        fields = ["event", "category", "vendor_name", "amount", "prepayment", "payment_status"]
+
+
+class EventVendorForm(BootstrapModelForm):
+    class Meta:
+        model = EventVendor
+        fields = ["event", "vendor", "role", "cost", "status"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["vendor"].queryset = Vendor.objects.order_by("name")
+
+
+class EventCommunicationForm(BootstrapModelForm):
+    class Meta:
+        model = EventCommunication
+        fields = ["event", "communication_type", "date", "comment", "manager"]
+        widgets = {
+            "date": forms.DateTimeInput(),
+            "comment": forms.Textarea(attrs={"rows": 4}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["manager"].queryset = User.objects.order_by("username")
+
+
+class EventDocumentForm(BootstrapModelForm):
+    class Meta:
+        model = EventDocument
+        fields = ["event", "document_type", "file", "status"]

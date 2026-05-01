@@ -20,7 +20,7 @@
                     Клиент: {{ event.client }}{% if event.manager %} • Project Manager: {{ event.manager }}{% endif %}
                 </p>
             </div>
-            <div class="d-flex gap-2 align-self-start">
+            <div class="event-actions align-self-start">
                 <a href="{% url 'core:events' %}" class="btn btn-outline-secondary">К списку</a>
                 <a href="{% url 'core:event_update' event.pk %}" class="btn btn-primary">Редактировать</a>
             </div>
@@ -160,22 +160,42 @@
                     <h2 class="apple-panel__title">Задачи</h2>
                     <p class="apple-panel__subtitle">Текущая работа по подготовке и проведению мероприятия.</p>
                 </div>
+                <a href="{% url 'core:event_task_create' event.pk %}" class="btn btn-sm btn-primary">Добавить</a>
             </div>
             <div class="apple-list">
                 {% for task in event.tasks.all %}
                     <div class="apple-list__row">
                         <div>
-                            <div class="fw-semibold">{{ task.title }}</div>
+                            <div class="fw-semibold">
+                                <a href="{% url 'core:task_detail' task.pk %}" class="text-decoration-none text-reset">
+                                    {{ task.title }}
+                                </a>
+                            </div>
                             <div class="text-secondary small">
                                 {% if task.responsible %}{{ task.responsible }}{% else %}Без ответственного{% endif %}
                                 {% if task.deadline %} • {{ task.deadline|date:"d.m.Y" }}{% endif %}
                             </div>
                         </div>
-                        <div class="d-flex align-items-center gap-2">
+                        <div class="event-row-actions">
                             {% if task.deadline and task.deadline < today and task.status != "done" %}
                                 <span class="badge text-bg-danger">Просрочено</span>
                             {% endif %}
                             <span class="badge text-bg-light">{{ task.get_status_display }}</span>
+                            {% if task.status != "in_progress" %}
+                                <form method="post" action="{% url 'core:task_status_update' task.pk %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="status" value="in_progress">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">В работу</button>
+                                </form>
+                            {% endif %}
+                            {% if task.status != "done" %}
+                                <form method="post" action="{% url 'core:task_status_update' task.pk %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="status" value="done">
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Готово</button>
+                                </form>
+                            {% endif %}
+                            <a href="{% url 'core:task_update' task.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
                         </div>
                     </div>
                 {% empty %}
@@ -192,6 +212,7 @@
                     <h2 class="apple-panel__title">Расходы</h2>
                     <p class="apple-panel__subtitle">Бюджетные строки и статусы оплат.</p>
                 </div>
+                <a href="{% url 'core:event_expense_create' event.pk %}" class="btn btn-sm btn-primary">Добавить</a>
             </div>
             <div class="apple-list">
                 {% for expense in event.expenses.all %}
@@ -203,6 +224,7 @@
                         <div class="text-end">
                             <div class="fw-semibold">{{ expense.amount }} ₽</div>
                             <div class="text-secondary small">{{ expense.get_payment_status_display }}</div>
+                            <a href="{% url 'core:event_expense_update' expense.pk %}" class="btn btn-sm btn-outline-primary mt-2">Изменить</a>
                         </div>
                     </div>
                 {% empty %}
@@ -219,6 +241,7 @@
                     <h2 class="apple-panel__title">Подрядчики</h2>
                     <p class="apple-panel__subtitle">Текущий состав команды подрядчиков по мероприятию.</p>
                 </div>
+                <a href="{% url 'core:event_vendor_create' event.pk %}" class="btn btn-sm btn-primary">Добавить</a>
             </div>
             <div class="apple-list">
                 {% for assignment in event.event_vendors.all %}
@@ -230,6 +253,23 @@
                         <div class="text-end">
                             <div class="fw-semibold">{{ assignment.cost }} ₽</div>
                             <div class="text-secondary small">{{ assignment.get_status_display }}</div>
+                            <div class="event-row-actions justify-content-end mt-2">
+                                {% if assignment.status != "approved" %}
+                                    <form method="post" action="{% url 'core:event_vendor_status_update' assignment.pk %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="approved">
+                                        <button type="submit" class="btn btn-sm btn-outline-success">Утвердить</button>
+                                    </form>
+                                {% endif %}
+                                {% if assignment.status != "replaced" %}
+                                    <form method="post" action="{% url 'core:event_vendor_status_update' assignment.pk %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="replaced">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">Заменён</button>
+                                    </form>
+                                {% endif %}
+                                <a href="{% url 'core:event_vendor_update' assignment.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
+                            </div>
                         </div>
                     </div>
                 {% empty %}
@@ -246,6 +286,7 @@
                     <h2 class="apple-panel__title">Коммуникации</h2>
                     <p class="apple-panel__subtitle">История касаний и обсуждений по проекту.</p>
                 </div>
+                <a href="{% url 'core:event_communication_create' event.pk %}" class="btn btn-sm btn-primary">Добавить</a>
             </div>
             <div class="apple-list">
                 {% for communication in event.communications.all %}
@@ -257,7 +298,12 @@
                                 {% if communication.manager %} • {{ communication.manager }}{% endif %}
                             </div>
                         </div>
-                        <div class="apple-list__meta">{{ communication.comment|default:"Без комментария" }}</div>
+                        <div class="apple-list__meta">
+                            {{ communication.comment|default:"Без комментария" }}
+                            <div class="mt-2">
+                                <a href="{% url 'core:event_communication_update' communication.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
+                            </div>
+                        </div>
                     </div>
                 {% empty %}
                     <p class="text-secondary mb-0">Коммуникаций пока нет.</p>
@@ -273,6 +319,7 @@
                     <h2 class="apple-panel__title">Документы</h2>
                     <p class="apple-panel__subtitle">Договоры, счета, КП и акты по мероприятию.</p>
                 </div>
+                <a href="{% url 'core:event_document_create' event.pk %}" class="btn btn-sm btn-primary">Добавить</a>
             </div>
             <div class="apple-list">
                 {% for document in event.documents.all %}
@@ -287,6 +334,9 @@
                             {% else %}
                                 Файл не загружен
                             {% endif %}
+                            <div class="mt-2">
+                                <a href="{% url 'core:event_document_update' document.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
+                            </div>
                         </div>
                     </div>
                 {% empty %}

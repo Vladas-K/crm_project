@@ -1,15 +1,21 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Count, Sum
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
 
 from .forms import (
     ClientForm,
+    EventCommunicationForm,
+    EventDocumentForm,
+    EventExpenseForm,
     EventForm,
     EventFormatForm,
     EventTaskForm,
+    EventVendorForm,
     LeadForm,
     PipelineStageForm,
     ServicePackageForm,
@@ -19,8 +25,12 @@ from .forms import (
 from .models import (
     Client,
     Event,
+    EventCommunication,
+    EventDocument,
+    EventExpense,
     EventFormat,
     EventTask,
+    EventVendor,
     Lead,
     PipelineStage,
     ServicePackage,
@@ -236,6 +246,50 @@ class SuccessMessageMixin:
         return response
 
 
+class EventScopedFormMixin:
+    event_kwarg = "event_pk"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.parent_event = None
+        event_pk = kwargs.get(self.event_kwarg)
+        if event_pk:
+            self.parent_event = get_object_or_404(Event, pk=event_pk)
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_initial(self):
+        initial = super().get_initial()
+        if self.parent_event:
+            initial["event"] = self.parent_event
+        return initial
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        if self.parent_event and "event" in form.fields:
+            form.fields["event"].initial = self.parent_event
+            form.fields["event"].queryset = Event.objects.filter(pk=self.parent_event.pk)
+            form.fields["event"].disabled = True
+        return form
+
+    def form_valid(self, form):
+        if self.parent_event and "event" in form.fields:
+            form.instance.event = self.parent_event
+        return super().form_valid(form)
+
+    def get_cancel_url(self):
+        if self.parent_event:
+            return reverse("core:event_detail", kwargs={"pk": self.parent_event.pk})
+        event = getattr(getattr(self, "object", None), "event", None)
+        if event:
+            return reverse("core:event_detail", kwargs={"pk": event.pk})
+        return super().get_cancel_url()
+
+    def get_success_url(self):
+        event = self.parent_event or getattr(getattr(self, "object", None), "event", None)
+        if event:
+            return reverse("core:event_detail", kwargs={"pk": event.pk})
+        return super().get_success_url()
+
+
 class LeadCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
     model = Lead
     form_class = LeadForm
@@ -340,7 +394,7 @@ class EventDeleteView(DeleteView):
     success_url = reverse_lazy("core:events")
 
 
-class TaskCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
+class TaskCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     model = EventTask
     form_class = EventTaskForm
     template_name = "core/object_form.html"
@@ -350,7 +404,7 @@ class TaskCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
     cancel_url = reverse_lazy("core:tasks")
 
 
-class TaskUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class TaskUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     model = EventTask
     form_class = EventTaskForm
     template_name = "core/object_form.html"
@@ -363,7 +417,115 @@ class TaskUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
 class TaskDeleteView(DeleteView):
     model = EventTask
     template_name = "core/object_confirm_delete.html"
-    success_url = reverse_lazy("core:tasks")
+
+    def get_success_url(self):
+        return reverse("core:event_detail", kwargs={"pk": self.object.event.pk})
+
+
+class TaskStatusUpdateView(View):
+    allowed_statuses = {choice[0] for choice in EventTask.Status.choices}
+
+    def post(self, request, pk):
+        task = get_object_or_404(EventTask, pk=pk)
+        status = request.POST.get("status")
+        if status in self.allowed_statuses:
+            task.status = status
+            task.save(update_fields=["status"])
+            messages.success(request, "Статус задачи обновлён.")
+        return redirect("core:event_detail", pk=task.event.pk)
+
+
+class EventExpenseCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+    model = EventExpense
+    form_class = EventExpenseForm
+    template_name = "core/object_form.html"
+    page_title = "Новый расход"
+    success_message = "Расход добавлен."
+    success_url = reverse_lazy("core:events")
+    cancel_url = reverse_lazy("core:events")
+
+
+class EventExpenseUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+    model = EventExpense
+    form_class = EventExpenseForm
+    template_name = "core/object_form.html"
+    page_title = "Редактирование расхода"
+    success_message = "Расход обновлён."
+    success_url = reverse_lazy("core:events")
+    cancel_url = reverse_lazy("core:events")
+
+
+class EventVendorCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+    model = EventVendor
+    form_class = EventVendorForm
+    template_name = "core/object_form.html"
+    page_title = "Новый подрядчик мероприятия"
+    success_message = "Подрядчик добавлен в мероприятие."
+    success_url = reverse_lazy("core:events")
+    cancel_url = reverse_lazy("core:events")
+
+
+class EventVendorUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+    model = EventVendor
+    form_class = EventVendorForm
+    template_name = "core/object_form.html"
+    page_title = "Редактирование подрядчика мероприятия"
+    success_message = "Подрядчик мероприятия обновлён."
+    success_url = reverse_lazy("core:events")
+    cancel_url = reverse_lazy("core:events")
+
+
+class EventVendorStatusUpdateView(View):
+    allowed_statuses = {choice[0] for choice in EventVendor.Status.choices}
+
+    def post(self, request, pk):
+        assignment = get_object_or_404(EventVendor, pk=pk)
+        status = request.POST.get("status")
+        if status in self.allowed_statuses:
+            assignment.status = status
+            assignment.save(update_fields=["status"])
+            messages.success(request, "Статус подрядчика обновлён.")
+        return redirect("core:event_detail", pk=assignment.event.pk)
+
+
+class EventCommunicationCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+    model = EventCommunication
+    form_class = EventCommunicationForm
+    template_name = "core/object_form.html"
+    page_title = "Новая коммуникация"
+    success_message = "Коммуникация добавлена."
+    success_url = reverse_lazy("core:events")
+    cancel_url = reverse_lazy("core:events")
+
+
+class EventCommunicationUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+    model = EventCommunication
+    form_class = EventCommunicationForm
+    template_name = "core/object_form.html"
+    page_title = "Редактирование коммуникации"
+    success_message = "Коммуникация обновлена."
+    success_url = reverse_lazy("core:events")
+    cancel_url = reverse_lazy("core:events")
+
+
+class EventDocumentCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+    model = EventDocument
+    form_class = EventDocumentForm
+    template_name = "core/object_form.html"
+    page_title = "Новый документ"
+    success_message = "Документ добавлен."
+    success_url = reverse_lazy("core:events")
+    cancel_url = reverse_lazy("core:events")
+
+
+class EventDocumentUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+    model = EventDocument
+    form_class = EventDocumentForm
+    template_name = "core/object_form.html"
+    page_title = "Редактирование документа"
+    success_message = "Документ обновлён."
+    success_url = reverse_lazy("core:events")
+    cancel_url = reverse_lazy("core:events")
 
 
 class EventFormatCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
