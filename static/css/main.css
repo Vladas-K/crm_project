@@ -381,6 +381,61 @@ body {
     font-size: 1.05rem;
 }
 
+.event-tabs,
+.event-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.event-tabs {
+    padding: 0.35rem;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 0.85rem;
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.05);
+    backdrop-filter: blur(16px);
+}
+
+.event-tabs__link,
+.event-filter__link {
+    color: var(--crm-muted);
+    text-decoration: none;
+    transition: 0.18s ease;
+}
+
+.event-tabs__link {
+    padding: 0.7rem 1rem;
+    border-radius: 0.65rem;
+    font-weight: 600;
+}
+
+.event-filter__link {
+    padding: 0.45rem 0.75rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 999px;
+    background: #fff;
+    font-size: 0.9rem;
+}
+
+.event-tabs__link:hover,
+.event-filter__link:hover {
+    color: var(--crm-text);
+    background: rgba(31, 111, 235, 0.06);
+}
+
+.event-tabs__link--active,
+.event-filter__link--active {
+    color: var(--crm-text);
+    background: #fff;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+.event-filter__link--active {
+    border-color: rgba(31, 111, 235, 0.24);
+    color: var(--crm-accent);
+}
+
 .apple-list {
     display: flex;
     flex-direction: column;

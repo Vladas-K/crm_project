@@ -110,7 +110,52 @@ class EventDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         today = timezone.localdate()
+        active_tab = self.request.GET.get("tab", "tasks")
+        if active_tab not in {"tasks", "expenses", "vendors", "communications", "documents"}:
+            active_tab = "tasks"
+        task_filter = self.request.GET.get("task_filter", "all")
+        expense_filter = self.request.GET.get("expense_filter", "all")
+        vendor_filter = self.request.GET.get("vendor_filter", "all")
+        communication_filter = self.request.GET.get("communication_filter", "all")
+        document_filter = self.request.GET.get("document_filter", "all")
+
+        tasks = self.object.tasks.select_related("responsible").all()
+        expenses = self.object.expenses.all()
+        event_vendors = self.object.event_vendors.select_related("vendor").all()
+        communications = self.object.communications.select_related("manager").all()
+        documents = self.object.documents.all()
+
+        if task_filter == "open":
+            tasks = tasks.exclude(status=EventTask.Status.DONE)
+        elif task_filter == "overdue":
+            tasks = tasks.exclude(status=EventTask.Status.DONE).filter(deadline__lt=today)
+        elif task_filter == "done":
+            tasks = tasks.filter(status=EventTask.Status.DONE)
+
+        if expense_filter in {choice[0] for choice in EventExpense.PaymentStatus.choices}:
+            expenses = expenses.filter(payment_status=expense_filter)
+
+        if vendor_filter in {choice[0] for choice in EventVendor.Status.choices}:
+            event_vendors = event_vendors.filter(status=vendor_filter)
+
+        if communication_filter in {choice[0] for choice in EventCommunication.Type.choices}:
+            communications = communications.filter(communication_type=communication_filter)
+
+        if document_filter in {choice[0] for choice in EventDocument.Status.choices}:
+            documents = documents.filter(status=document_filter)
+
         context["today"] = today
+        context["active_tab"] = active_tab
+        context["task_filter"] = task_filter
+        context["expense_filter"] = expense_filter
+        context["vendor_filter"] = vendor_filter
+        context["communication_filter"] = communication_filter
+        context["document_filter"] = document_filter
+        context["detail_tasks"] = tasks
+        context["detail_expenses"] = expenses
+        context["detail_event_vendors"] = event_vendors
+        context["detail_communications"] = communications
+        context["detail_documents"] = documents
         context["overdue_tasks_count"] = self.object.tasks.exclude(status=EventTask.Status.DONE).filter(
             deadline__lt=today
         ).count()
