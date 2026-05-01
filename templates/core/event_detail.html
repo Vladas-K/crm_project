@@ -167,7 +167,7 @@
                 <h2 class="apple-panel__title">Задачи</h2>
                 <p class="apple-panel__subtitle">Текущая работа по подготовке и проведению мероприятия.</p>
             </div>
-            <a href="{% url 'core:event_task_create' event.pk %}" class="btn btn-sm btn-primary">Добавить</a>
+            <a href="{% url 'core:event_task_create' event.pk %}?return_tab=tasks" class="btn btn-sm btn-primary">Добавить</a>
         </div>
         <div class="event-filter mb-3">
             <a href="{% url 'core:event_detail' event.pk %}?tab=tasks" class="event-filter__link{% if task_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
@@ -206,7 +206,7 @@
                                 <button type="submit" class="btn btn-sm btn-outline-success">Готово</button>
                             </form>
                         {% endif %}
-                        <a href="{% url 'core:task_update' task.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
+                        <a href="{% url 'core:task_update' task.pk %}?return_tab=tasks" class="btn btn-sm btn-outline-primary">Изменить</a>
                     </div>
                 </div>
             {% empty %}
@@ -219,7 +219,7 @@
                 <h2 class="apple-panel__title">Расходы</h2>
                 <p class="apple-panel__subtitle">Бюджетные строки и статусы оплат.</p>
             </div>
-            <a href="{% url 'core:event_expense_create' event.pk %}" class="btn btn-sm btn-primary">Добавить</a>
+            <a href="{% url 'core:event_expense_create' event.pk %}?return_tab=expenses" class="btn btn-sm btn-primary">Добавить</a>
         </div>
         <div class="event-filter mb-3">
             <a href="{% url 'core:event_detail' event.pk %}?tab=expenses" class="event-filter__link{% if expense_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
@@ -237,7 +237,7 @@
                     <div class="text-end">
                         <div class="fw-semibold">{{ expense.amount }} ₽</div>
                         <div class="text-secondary small">{{ expense.get_payment_status_display }}</div>
-                        <a href="{% url 'core:event_expense_update' expense.pk %}" class="btn btn-sm btn-outline-primary mt-2">Изменить</a>
+                        <a href="{% url 'core:event_expense_update' expense.pk %}?return_tab=expenses" class="btn btn-sm btn-outline-primary mt-2">Изменить</a>
                     </div>
                 </div>
             {% empty %}
@@ -250,7 +250,7 @@
                 <h2 class="apple-panel__title">Подрядчики</h2>
                 <p class="apple-panel__subtitle">Текущий состав команды подрядчиков по мероприятию.</p>
             </div>
-            <a href="{% url 'core:event_vendor_create' event.pk %}" class="btn btn-sm btn-primary">Добавить</a>
+            <a href="{% url 'core:event_vendor_create' event.pk %}?return_tab=vendors" class="btn btn-sm btn-primary">Добавить</a>
         </div>
         <div class="event-filter mb-3">
             <a href="{% url 'core:event_detail' event.pk %}?tab=vendors" class="event-filter__link{% if vendor_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
@@ -283,7 +283,7 @@
                                     <button type="submit" class="btn btn-sm btn-outline-secondary">Заменён</button>
                                 </form>
                             {% endif %}
-                            <a href="{% url 'core:event_vendor_update' assignment.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
+                            <a href="{% url 'core:event_vendor_update' assignment.pk %}?return_tab=vendors" class="btn btn-sm btn-outline-primary">Изменить</a>
                         </div>
                     </div>
                 </div>
@@ -297,7 +297,7 @@
                 <h2 class="apple-panel__title">Коммуникации</h2>
                 <p class="apple-panel__subtitle">История касаний и обсуждений по проекту.</p>
             </div>
-            <a href="{% url 'core:event_communication_create' event.pk %}" class="btn btn-sm btn-primary">Добавить</a>
+            <a href="{% url 'core:event_communication_create' event.pk %}?return_tab=communications" class="btn btn-sm btn-primary">Добавить</a>
         </div>
         <div class="event-filter mb-3">
             <a href="{% url 'core:event_detail' event.pk %}?tab=communications" class="event-filter__link{% if communication_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
@@ -318,7 +318,7 @@
                     <div class="apple-list__meta">
                         {{ communication.comment|default:"Без комментария" }}
                         <div class="mt-2">
-                            <a href="{% url 'core:event_communication_update' communication.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
+                            <a href="{% url 'core:event_communication_update' communication.pk %}?return_tab=communications" class="btn btn-sm btn-outline-primary">Изменить</a>
                         </div>
                     </div>
                 </div>
@@ -332,7 +332,7 @@
                 <h2 class="apple-panel__title">Документы</h2>
                 <p class="apple-panel__subtitle">Договоры, счета, КП и акты по мероприятию.</p>
             </div>
-            <a href="{% url 'core:event_document_create' event.pk %}" class="btn btn-sm btn-primary">Добавить</a>
+            <a href="{% url 'core:event_document_create' event.pk %}?return_tab=documents" class="btn btn-sm btn-primary">Добавить</a>
         </div>
         <div class="event-filter mb-3">
             <a href="{% url 'core:event_detail' event.pk %}?tab=documents" class="event-filter__link{% if document_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
@@ -354,7 +354,7 @@
                             Файл не загружен
                         {% endif %}
                         <div class="mt-2">
-                            <a href="{% url 'core:event_document_update' document.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
+                            <a href="{% url 'core:event_document_update' document.pk %}?return_tab=documents" class="btn btn-sm btn-outline-primary">Изменить</a>
                         </div>
                     </div>
                 </div>

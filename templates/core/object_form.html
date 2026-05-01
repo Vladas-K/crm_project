@@ -15,6 +15,9 @@
     <div class="card-body p-4">
         <form method="post" enctype="multipart/form-data" class="row g-3">
             {% csrf_token %}
+            {% if return_tab %}
+                <input type="hidden" name="return_tab" value="{{ return_tab }}">
+            {% endif %}
             {% for field in form %}
                 <div class="{% if field.field.widget.input_type == 'checkbox' %}col-12{% else %}col-md-6{% endif %}">
                     <label class="form-label{% if field.field.widget.input_type == 'checkbox' %} d-block{% endif %}" for="{{ field.id_for_label }}">

@@ -293,6 +293,7 @@ class SuccessMessageMixin:
 
 class EventScopedFormMixin:
     event_kwarg = "event_pk"
+    return_tab = "tasks"
 
     def dispatch(self, request, *args, **kwargs):
         self.parent_event = None
@@ -300,6 +301,12 @@ class EventScopedFormMixin:
         if event_pk:
             self.parent_event = get_object_or_404(Event, pk=event_pk)
         return super().dispatch(request, *args, **kwargs)
+
+    def get_event_detail_url(self, event):
+        return f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab={self.return_tab}"
+
+    def get_return_tab(self):
+        return self.request.GET.get("return_tab") or self.request.POST.get("return_tab") or self.return_tab
 
     def get_initial(self):
         initial = super().get_initial()
@@ -315,6 +322,11 @@ class EventScopedFormMixin:
             form.fields["event"].disabled = True
         return form
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["return_tab"] = self.get_return_tab()
+        return context
+
     def form_valid(self, form):
         if self.parent_event and "event" in form.fields:
             form.instance.event = self.parent_event
@@ -322,16 +334,16 @@ class EventScopedFormMixin:
 
     def get_cancel_url(self):
         if self.parent_event:
-            return reverse("core:event_detail", kwargs={"pk": self.parent_event.pk})
+            return f"{reverse('core:event_detail', kwargs={'pk': self.parent_event.pk})}?tab={self.get_return_tab()}"
         event = getattr(getattr(self, "object", None), "event", None)
         if event:
-            return reverse("core:event_detail", kwargs={"pk": event.pk})
+            return f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab={self.get_return_tab()}"
         return super().get_cancel_url()
 
     def get_success_url(self):
         event = self.parent_event or getattr(getattr(self, "object", None), "event", None)
         if event:
-            return reverse("core:event_detail", kwargs={"pk": event.pk})
+            return f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab={self.get_return_tab()}"
         return super().get_success_url()
 
 
@@ -443,6 +455,7 @@ class TaskCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin
     model = EventTask
     form_class = EventTaskForm
     template_name = "core/object_form.html"
+    return_tab = "tasks"
     page_title = "Новая задача"
     success_message = "Задача создана."
     success_url = reverse_lazy("core:tasks")
@@ -453,6 +466,7 @@ class TaskUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin
     model = EventTask
     form_class = EventTaskForm
     template_name = "core/object_form.html"
+    return_tab = "tasks"
     page_title = "Редактирование задачи"
     success_message = "Задача обновлена."
     success_url = reverse_lazy("core:tasks")
@@ -477,13 +491,14 @@ class TaskStatusUpdateView(View):
             task.status = status
             task.save(update_fields=["status"])
             messages.success(request, "Статус задачи обновлён.")
-        return redirect("core:event_detail", pk=task.event.pk)
+        return redirect(f"{reverse('core:event_detail', kwargs={'pk': task.event.pk})}?tab=tasks")
 
 
 class EventExpenseCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     model = EventExpense
     form_class = EventExpenseForm
     template_name = "core/object_form.html"
+    return_tab = "expenses"
     page_title = "Новый расход"
     success_message = "Расход добавлен."
     success_url = reverse_lazy("core:events")
@@ -494,6 +509,7 @@ class EventExpenseUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMess
     model = EventExpense
     form_class = EventExpenseForm
     template_name = "core/object_form.html"
+    return_tab = "expenses"
     page_title = "Редактирование расхода"
     success_message = "Расход обновлён."
     success_url = reverse_lazy("core:events")
@@ -504,6 +520,7 @@ class EventVendorCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessa
     model = EventVendor
     form_class = EventVendorForm
     template_name = "core/object_form.html"
+    return_tab = "vendors"
     page_title = "Новый подрядчик мероприятия"
     success_message = "Подрядчик добавлен в мероприятие."
     success_url = reverse_lazy("core:events")
@@ -514,6 +531,7 @@ class EventVendorUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessa
     model = EventVendor
     form_class = EventVendorForm
     template_name = "core/object_form.html"
+    return_tab = "vendors"
     page_title = "Редактирование подрядчика мероприятия"
     success_message = "Подрядчик мероприятия обновлён."
     success_url = reverse_lazy("core:events")
@@ -530,13 +548,14 @@ class EventVendorStatusUpdateView(View):
             assignment.status = status
             assignment.save(update_fields=["status"])
             messages.success(request, "Статус подрядчика обновлён.")
-        return redirect("core:event_detail", pk=assignment.event.pk)
+        return redirect(f"{reverse('core:event_detail', kwargs={'pk': assignment.event.pk})}?tab=vendors")
 
 
 class EventCommunicationCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     model = EventCommunication
     form_class = EventCommunicationForm
     template_name = "core/object_form.html"
+    return_tab = "communications"
     page_title = "Новая коммуникация"
     success_message = "Коммуникация добавлена."
     success_url = reverse_lazy("core:events")
@@ -547,6 +566,7 @@ class EventCommunicationUpdateView(EventScopedFormMixin, CRUDContextMixin, Succe
     model = EventCommunication
     form_class = EventCommunicationForm
     template_name = "core/object_form.html"
+    return_tab = "communications"
     page_title = "Редактирование коммуникации"
     success_message = "Коммуникация обновлена."
     success_url = reverse_lazy("core:events")
@@ -557,6 +577,7 @@ class EventDocumentCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMes
     model = EventDocument
     form_class = EventDocumentForm
     template_name = "core/object_form.html"
+    return_tab = "documents"
     page_title = "Новый документ"
     success_message = "Документ добавлен."
     success_url = reverse_lazy("core:events")
@@ -567,6 +588,7 @@ class EventDocumentUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMes
     model = EventDocument
     form_class = EventDocumentForm
     template_name = "core/object_form.html"
+    return_tab = "documents"
     page_title = "Редактирование документа"
     success_message = "Документ обновлён."
     success_url = reverse_lazy("core:events")
