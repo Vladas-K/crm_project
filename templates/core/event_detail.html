@@ -128,24 +128,24 @@
             </div>
             <div class="event-side-list">
                 <div class="event-side-list__item">
-                    <span>Задачи</span>
-                    <strong>{{ event.tasks.count }}</strong>
+                    <span>Открытые задачи</span>
+                    <strong>{{ event_status_summary.open_tasks }}</strong>
                 </div>
                 <div class="event-side-list__item">
-                    <span>Просрочено задач</span>
-                    <strong>{{ overdue_tasks_count }}</strong>
+                    <span>Просрочено</span>
+                    <strong>{{ event_status_summary.overdue_tasks }}</strong>
                 </div>
                 <div class="event-side-list__item">
-                    <span>Подрядчики</span>
-                    <strong>{{ event.event_vendors.count }}</strong>
+                    <span>Расходы</span>
+                    <strong>{{ event_status_summary.total_expenses }} ₽</strong>
                 </div>
                 <div class="event-side-list__item">
-                    <span>Документы</span>
-                    <strong>{{ event.documents.count }}</strong>
+                    <span>Подрядчиков утверждено</span>
+                    <strong>{{ event_status_summary.approved_vendors }}</strong>
                 </div>
                 <div class="event-side-list__item">
-                    <span>Коммуникации</span>
-                    <strong>{{ event.communications.count }}</strong>
+                    <span>Документов подписано</span>
+                    <strong>{{ event_status_summary.signed_documents }}</strong>
                 </div>
             </div>
         </div>

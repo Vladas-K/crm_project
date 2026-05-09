@@ -156,6 +156,13 @@ class EventDetailView(DetailView):
         context["detail_event_vendors"] = event_vendors
         context["detail_communications"] = communications
         context["detail_documents"] = documents
+        context["event_status_summary"] = {
+            "open_tasks": self.object.tasks.exclude(status=EventTask.Status.DONE).count(),
+            "overdue_tasks": self.object.tasks.exclude(status=EventTask.Status.DONE).filter(deadline__lt=today).count(),
+            "total_expenses": self.object.total_expenses,
+            "approved_vendors": self.object.event_vendors.filter(status=EventVendor.Status.APPROVED).count(),
+            "signed_documents": self.object.documents.filter(status=EventDocument.Status.SIGNED).count(),
+        }
         context["overdue_tasks_count"] = self.object.tasks.exclude(status=EventTask.Status.DONE).filter(
             deadline__lt=today
         ).count()
