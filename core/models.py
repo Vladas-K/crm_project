@@ -9,6 +9,8 @@ User = get_user_model()
 
 
 class ContactMixin(models.Model):
+    """Общие контактные поля для лидов и клиентов."""
+
     phone = models.CharField("Телефон", max_length=30, blank=True)
     email = models.EmailField("Email", blank=True)
     messenger = models.CharField("Мессенджер", max_length=100, blank=True)
@@ -18,6 +20,8 @@ class ContactMixin(models.Model):
 
 
 class CRMRole(models.TextChoices):
+    """Роли сотрудников CRM для назначения задач и будущего permission layer."""
+
     SALES_MANAGER = "sales_manager", "Sales Manager"
     PROJECT_MANAGER = "project_manager", "Project Manager"
     ADMIN = "admin", "Admin"
@@ -25,6 +29,8 @@ class CRMRole(models.TextChoices):
 
 
 class TeamMemberProfile(models.Model):
+    """CRM-профиль пользователя с ролью и флагами доступа к разделам системы."""
+
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
@@ -46,6 +52,8 @@ class TeamMemberProfile(models.Model):
 
 
 class PipelineStage(models.Model):
+    """Этап воронки продаж с вероятностью сделки и признаком проигранного лида."""
+
     name = models.CharField("Этап", max_length=100, unique=True)
     code = models.SlugField("Код", max_length=50, unique=True)
     order = models.PositiveIntegerField("Порядок", default=0)
@@ -62,6 +70,8 @@ class PipelineStage(models.Model):
 
 
 class EventFormat(models.Model):
+    """Формат мероприятия, из которого можно автоматически создать структуру проекта."""
+
     name = models.CharField("Формат мероприятия", max_length=120, unique=True)
     description = models.TextField("Описание", blank=True)
     default_budget = models.DecimalField("Бюджет по умолчанию", max_digits=12, decimal_places=2, default=0)
@@ -76,6 +86,8 @@ class EventFormat(models.Model):
 
 
 class Lead(ContactMixin):
+    """Потенциальный клиент в воронке продаж до конвертации в клиента и мероприятие."""
+
     name = models.CharField("Имя", max_length=255)
     source = models.CharField("Источник", max_length=120, blank=True)
     preliminary_event_format = models.ForeignKey(
@@ -117,19 +129,27 @@ class Lead(ContactMixin):
         return self.name
 
     def clean(self) -> None:
+        """Требует причину отказа, если лид находится на проигранном этапе."""
+
         if self.stage and self.stage.is_lost and not self.loss_reason:
             raise ValidationError({"loss_reason": "Укажите причину отказа для потерянного лида."})
 
     @property
     def follow_up_deadline(self):
+        """Возвращает дедлайн первого follow-up через 24 часа после создания лида."""
+
         return self.created_at + timezone.timedelta(hours=24) if self.created_at else None
 
     @property
     def needs_response(self) -> bool:
+        """Показывает, что лид требует ответа, если follow-up просрочен."""
+
         deadline = self.follow_up_deadline
         return bool(deadline and timezone.now() > deadline and not self.last_contact_at)
 
     def save(self, *args, **kwargs):
+        """Назначает sales manager и подтягивает вероятность из этапа перед сохранением."""
+
         if not self.manager:
             self.manager = (
                 User.objects.filter(crm_profile__role=CRMRole.SALES_MANAGER)
@@ -144,6 +164,8 @@ class Lead(ContactMixin):
 
 
 class Client(ContactMixin):
+    """Квалифицированный клиент CRM, связанный с лидами и историей мероприятий."""
+
     class ClientType(models.TextChoices):
         B2B = "b2b", "B2B"
         B2C = "b2c", "B2C"
@@ -179,6 +201,8 @@ class Client(ContactMixin):
 
 
 class Vendor(models.Model):
+    """Справочник подрядчиков, которых можно рекомендовать и назначать на мероприятия."""
+
     name = models.CharField("Имя / компания", max_length=255)
     roles = models.CharField("Роли", max_length=255, help_text="Например: ведущий, фотограф")
     event_formats = models.ManyToManyField(
@@ -205,6 +229,8 @@ class Vendor(models.Model):
 
 
 class ServicePackage(models.Model):
+    """Пакет услуг для конкретного формата мероприятия."""
+
     name = models.CharField("Название пакета", max_length=255)
     event_format = models.ForeignKey(
         EventFormat,
@@ -225,6 +251,8 @@ class ServicePackage(models.Model):
 
 
 class Event(models.Model):
+    """Центральная сущность CRM: мероприятие с бюджетом, задачами и подрядчиками."""
+
     class Status(models.TextChoices):
         PLANNING = "planning", "Планирование"
         IN_PROGRESS = "in_progress", "В реализации"
@@ -282,33 +310,47 @@ class Event(models.Model):
 
     @property
     def total_expenses(self) -> Decimal:
+        """Возвращает общую сумму расходов мероприятия."""
+
         return sum((expense.amount for expense in self.expenses.all()), Decimal("0"))
 
     @property
     def prepayment_total(self) -> Decimal:
+        """Возвращает общую сумму предоплат по расходам мероприятия."""
+
         return sum((expense.prepayment for expense in self.expenses.all()), Decimal("0"))
 
     @property
     def balance(self) -> Decimal:
+        """Возвращает остаток планового бюджета после предоплат."""
+
         return Decimal(self.planned_budget) - self.prepayment_total
 
     @property
     def profit(self) -> Decimal:
+        """Возвращает плановую прибыль как бюджет минус расходы."""
+
         return Decimal(self.planned_budget) - self.total_expenses
 
     @property
     def margin(self) -> Decimal:
+        """Возвращает маржинальность мероприятия в процентах от планового бюджета."""
+
         if not self.planned_budget:
             return Decimal("0")
         return (self.profit / Decimal(self.planned_budget)) * Decimal("100")
 
     def save(self, *args, **kwargs):
+        """При первом сохранении создаёт структуру мероприятия из выбранного формата."""
+
         creating = self._state.adding
         super().save(*args, **kwargs)
         if creating and self.event_format:
             self.bootstrap_from_format()
 
     def bootstrap_from_format(self) -> None:
+        """Создаёт задачи, тайминг, бюджет и подрядчиков из шаблонов формата."""
+
         for template in self.event_format.task_templates.all():
             EventTask.objects.get_or_create(
                 event=self,
@@ -353,6 +395,8 @@ class Event(models.Model):
 
 
 class EventExpense(models.Model):
+    """Строка расходов мероприятия с суммой, предоплатой и статусом оплаты."""
+
     class PaymentStatus(models.TextChoices):
         PLANNED = "planned", "Запланировано"
         PARTIAL = "partial", "Частично оплачено"
@@ -385,6 +429,8 @@ class EventExpense(models.Model):
 
 
 class EventVendor(models.Model):
+    """Назначение конкретного подрядчика на мероприятие с ролью, ценой и статусом."""
+
     class Status(models.TextChoices):
         PROPOSED = "proposed", "Предложен"
         APPROVED = "approved", "Утверждён"
@@ -416,6 +462,8 @@ class EventVendor(models.Model):
 
 
 class EventTask(models.Model):
+    """Операционная задача мероприятия с дедлайном, ответственным и статусом."""
+
     class Status(models.TextChoices):
         TODO = "todo", "К выполнению"
         IN_PROGRESS = "in_progress", "В работе"
@@ -450,12 +498,16 @@ class EventTask(models.Model):
         return self.title
 
     def save(self, *args, **kwargs):
+        """Автоматически рассчитывает дедлайн от даты мероприятия, если он не задан."""
+
         if self.event_id and not self.deadline:
             self.deadline = self.event.date + timezone.timedelta(days=self.deadline_offset_days)
         super().save(*args, **kwargs)
 
 
 class EventTimelineItem(models.Model):
+    """Элемент тайминга конкретного мероприятия."""
+
     event = models.ForeignKey(
         Event,
         on_delete=models.CASCADE,
@@ -477,6 +529,8 @@ class EventTimelineItem(models.Model):
 
 
 class EventRisk(models.Model):
+    """Риск мероприятия с вероятностью и планом B."""
+
     class Probability(models.TextChoices):
         LOW = "low", "Низкая"
         MEDIUM = "medium", "Средняя"
@@ -501,6 +555,8 @@ class EventRisk(models.Model):
 
 
 class EventCommunication(models.Model):
+    """Запись коммуникации по мероприятию: звонок, сообщение или встреча."""
+
     class Type(models.TextChoices):
         CALL = "call", "Звонок"
         MESSAGE = "message", "Сообщение"
@@ -534,6 +590,8 @@ class EventCommunication(models.Model):
 
 
 class EventDocument(models.Model):
+    """Документ мероприятия: договор, счёт, КП или акт."""
+
     class Type(models.TextChoices):
         CONTRACT = "contract", "Договор"
         INVOICE = "invoice", "Счёт"
@@ -564,6 +622,8 @@ class EventDocument(models.Model):
 
 
 class EventOutcome(models.Model):
+    """Итоги завершённого мероприятия: обратная связь, прибыль и выводы."""
+
     event = models.OneToOneField(
         Event,
         on_delete=models.CASCADE,
@@ -585,6 +645,8 @@ class EventOutcome(models.Model):
 
 
 class EventFormatTaskTemplate(models.Model):
+    """Шаблон задачи, создаваемой при старте мероприятия выбранного формата."""
+
     event_format = models.ForeignKey(
         EventFormat,
         on_delete=models.CASCADE,
@@ -604,6 +666,8 @@ class EventFormatTaskTemplate(models.Model):
 
 
 class EventFormatTimelineTemplate(models.Model):
+    """Шаблон тайминга, создаваемого для мероприятия выбранного формата."""
+
     event_format = models.ForeignKey(
         EventFormat,
         on_delete=models.CASCADE,
@@ -625,6 +689,8 @@ class EventFormatTimelineTemplate(models.Model):
 
 
 class EventFormatBudgetTemplate(models.Model):
+    """Шаблон бюджетной строки для мероприятия выбранного формата."""
+
     event_format = models.ForeignKey(
         EventFormat,
         on_delete=models.CASCADE,
@@ -644,6 +710,8 @@ class EventFormatBudgetTemplate(models.Model):
 
 
 class EventFormatVendorTemplate(models.Model):
+    """Шаблон рекомендованного подрядчика для мероприятия выбранного формата."""
+
     event_format = models.ForeignKey(
         EventFormat,
         on_delete=models.CASCADE,
