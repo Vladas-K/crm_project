@@ -42,6 +42,8 @@ User = get_user_model()
 
 
 class DashboardView(TemplateView):
+    """Показывает главную сводку CRM: KPI, последние лиды, события и задачи."""
+
     template_name = "core/dashboard.html"
 
     def get_context_data(self, **kwargs):
@@ -62,6 +64,8 @@ class DashboardView(TemplateView):
 
 
 class LeadListView(ListView):
+    """Отображает список лидов с этапом, менеджером и предварительным форматом."""
+
     model = Lead
     template_name = "core/leads.html"
     context_object_name = "leads"
@@ -69,6 +73,8 @@ class LeadListView(ListView):
 
 
 class PipelineView(TemplateView):
+    """Показывает воронку продаж, сгруппированную по этапам pipeline."""
+
     template_name = "core/pipeline.html"
 
     def get_context_data(self, **kwargs):
@@ -78,12 +84,16 @@ class PipelineView(TemplateView):
 
 
 class ClientListView(ListView):
+    """Отображает список клиентов CRM."""
+
     model = Client
     template_name = "core/clients.html"
     context_object_name = "clients"
 
 
 class EventListView(ListView):
+    """Показывает список мероприятий с ключевыми финансовыми и операционными метриками."""
+
     model = Event
     template_name = "core/events.html"
     context_object_name = "events"
@@ -91,11 +101,15 @@ class EventListView(ListView):
 
 
 class EventDetailView(DetailView):
+    """Рабочая карточка мероприятия с вкладками, фильтрами и связанной операционной информацией."""
+
     model = Event
     template_name = "core/event_detail.html"
     context_object_name = "event"
 
     def get_queryset(self):
+        """Загружает мероприятие вместе со связанными блоками для карточки."""
+
         return (
             Event.objects.select_related("client", "lead", "event_format", "manager")
             .prefetch_related(
@@ -108,6 +122,8 @@ class EventDetailView(DetailView):
         )
 
     def get_context_data(self, **kwargs):
+        """Готовит вкладки, фильтры и статусную сводку карточки мероприятия."""
+
         context = super().get_context_data(**kwargs)
         today = timezone.localdate()
         active_tab = self.request.GET.get("tab", "tasks")
@@ -170,11 +186,15 @@ class EventDetailView(DetailView):
 
 
 class TaskListView(ListView):
+    """Показывает общий список задач с фильтрами по состоянию."""
+
     model = EventTask
     template_name = "core/tasks.html"
     context_object_name = "tasks"
 
     def get_queryset(self):
+        """Применяет фильтр задач из query-параметра filter."""
+
         today = timezone.localdate()
         queryset = EventTask.objects.select_related("event", "responsible").order_by("deadline", "id")
         task_filter = self.request.GET.get("filter", "all")
@@ -189,6 +209,8 @@ class TaskListView(ListView):
         return queryset
 
     def get_context_data(self, **kwargs):
+        """Добавляет счетчики задач для KPI-карточек списка."""
+
         context = super().get_context_data(**kwargs)
         today = timezone.localdate()
         active_filter = self.request.GET.get("filter", "all")
@@ -204,11 +226,15 @@ class TaskListView(ListView):
 
 
 class TaskDetailView(DetailView):
+    """Показывает отдельную карточку задачи и ее состояние относительно дедлайна."""
+
     model = EventTask
     template_name = "core/task_detail.html"
     context_object_name = "task"
 
     def get_context_data(self, **kwargs):
+        """Добавляет флаги просрочки и дедлайна на сегодня."""
+
         context = super().get_context_data(**kwargs)
         today = timezone.localdate()
         context["today"] = today
@@ -222,18 +248,24 @@ class TaskDetailView(DetailView):
 
 
 class EventFormatListView(ListView):
+    """Отображает список форматов мероприятий и их шаблонов."""
+
     model = EventFormat
     template_name = "core/formats.html"
     context_object_name = "formats"
 
 
 class VendorListView(ListView):
+    """Отображает справочник подрядчиков."""
+
     model = Vendor
     template_name = "core/vendors.html"
     context_object_name = "vendors"
 
 
 class PackageListView(ListView):
+    """Отображает пакеты услуг с привязкой к формату мероприятия."""
+
     model = ServicePackage
     template_name = "core/packages.html"
     context_object_name = "packages"
@@ -241,6 +273,8 @@ class PackageListView(ListView):
 
 
 class CalendarView(ListView):
+    """Показывает календарный список мероприятий."""
+
     model = Event
     template_name = "core/calendar.html"
     context_object_name = "events"
@@ -248,9 +282,13 @@ class CalendarView(ListView):
 
 
 class AnalyticsView(TemplateView):
+    """Показывает базовую аналитику по продажам, прибыли, источникам и команде."""
+
     template_name = "core/analytics.html"
 
     def get_context_data(self, **kwargs):
+        """Собирает агрегированные показатели для аналитического дашборда."""
+
         context = super().get_context_data(**kwargs)
         total_leads = Lead.objects.count() or 1
         qualified_clients = Client.objects.count()
@@ -266,6 +304,8 @@ class AnalyticsView(TemplateView):
 
 
 class TeamView(ListView):
+    """Отображает пользователей CRM, роли и флаги доступа."""
+
     model = TeamMemberProfile
     template_name = "core/team.html"
     context_object_name = "profiles"
@@ -273,14 +313,20 @@ class TeamView(ListView):
 
 
 class CRUDContextMixin:
+    """Добавляет общий контекст для универсального шаблона CRUD-форм."""
+
     page_title = ""
     submit_label = "Сохранить"
     cancel_url = reverse_lazy("core:dashboard")
 
     def get_cancel_url(self):
+        """Возвращает URL для кнопок Назад/Отмена в форме."""
+
         return self.cancel_url
 
     def get_context_data(self, **kwargs):
+        """Передает в шаблон заголовок, текст submit-кнопки и cancel URL."""
+
         context = super().get_context_data(**kwargs)
         context["page_title"] = self.page_title
         context["submit_label"] = self.submit_label
@@ -289,9 +335,13 @@ class CRUDContextMixin:
 
 
 class SuccessMessageMixin:
+    """Показывает flash-сообщение после успешного сохранения формы."""
+
     success_message = ""
 
     def form_valid(self, form):
+        """Добавляет success message после штатного сохранения формы."""
+
         response = super().form_valid(form)
         if self.success_message:
             messages.success(self.request, self.success_message)
@@ -299,10 +349,14 @@ class SuccessMessageMixin:
 
 
 class EventScopedFormMixin:
+    """Привязывает nested-формы к мероприятию и возвращает пользователя в нужную вкладку."""
+
     event_kwarg = "event_pk"
     return_tab = "tasks"
 
     def dispatch(self, request, *args, **kwargs):
+        """Находит родительское мероприятие, если оно передано в URL."""
+
         self.parent_event = None
         event_pk = kwargs.get(self.event_kwarg)
         if event_pk:
@@ -310,18 +364,26 @@ class EventScopedFormMixin:
         return super().dispatch(request, *args, **kwargs)
 
     def get_event_detail_url(self, event):
+        """Строит URL карточки мероприятия с вкладкой по умолчанию для view."""
+
         return f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab={self.return_tab}"
 
     def get_return_tab(self):
+        """Определяет вкладку возврата из запроса или настройки view."""
+
         return self.request.GET.get("return_tab") or self.request.POST.get("return_tab") or self.return_tab
 
     def get_initial(self):
+        """Предзаполняет поле event для nested-форм."""
+
         initial = super().get_initial()
         if self.parent_event:
             initial["event"] = self.parent_event
         return initial
 
     def get_form(self, form_class=None):
+        """Фиксирует поле event на родительском мероприятии при создании из карточки."""
+
         form = super().get_form(form_class)
         if self.parent_event and "event" in form.fields:
             form.fields["event"].initial = self.parent_event
@@ -330,16 +392,22 @@ class EventScopedFormMixin:
         return form
 
     def get_context_data(self, **kwargs):
+        """Передает return_tab в форму, чтобы сохранить направление возврата после POST."""
+
         context = super().get_context_data(**kwargs)
         context["return_tab"] = self.get_return_tab()
         return context
 
     def form_valid(self, form):
+        """Гарантирует привязку сохраняемого объекта к родительскому мероприятию."""
+
         if self.parent_event and "event" in form.fields:
             form.instance.event = self.parent_event
         return super().form_valid(form)
 
     def get_cancel_url(self):
+        """Возвращает пользователя в карточку мероприятия и нужную вкладку."""
+
         if self.parent_event:
             return f"{reverse('core:event_detail', kwargs={'pk': self.parent_event.pk})}?tab={self.get_return_tab()}"
         event = getattr(getattr(self, "object", None), "event", None)
@@ -348,6 +416,8 @@ class EventScopedFormMixin:
         return super().get_cancel_url()
 
     def get_success_url(self):
+        """После сохранения возвращает пользователя в рабочую вкладку карточки мероприятия."""
+
         event = self.parent_event or getattr(getattr(self, "object", None), "event", None)
         if event:
             return f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab={self.get_return_tab()}"
@@ -355,6 +425,8 @@ class EventScopedFormMixin:
 
 
 class LeadCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
+    """Создает новый лид через основной CRM-интерфейс."""
+
     model = Lead
     form_class = LeadForm
     template_name = "core/object_form.html"
@@ -365,6 +437,8 @@ class LeadCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
 
 
 class LeadUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
+    """Редактирует существующий лид."""
+
     model = Lead
     form_class = LeadForm
     template_name = "core/object_form.html"
@@ -375,12 +449,16 @@ class LeadUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
 
 
 class LeadDeleteView(DeleteView):
+    """Удаляет лид после подтверждения."""
+
     model = Lead
     template_name = "core/object_confirm_delete.html"
     success_url = reverse_lazy("core:leads")
 
 
 class PipelineStageCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
+    """Создает новый этап воронки продаж."""
+
     model = PipelineStage
     form_class = PipelineStageForm
     template_name = "core/object_form.html"
@@ -391,6 +469,8 @@ class PipelineStageCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView)
 
 
 class PipelineStageUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
+    """Редактирует этап воронки продаж."""
+
     model = PipelineStage
     form_class = PipelineStageForm
     template_name = "core/object_form.html"
@@ -401,12 +481,16 @@ class PipelineStageUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView)
 
 
 class PipelineStageDeleteView(DeleteView):
+    """Удаляет этап воронки после подтверждения."""
+
     model = PipelineStage
     template_name = "core/object_confirm_delete.html"
     success_url = reverse_lazy("core:pipeline")
 
 
 class ClientCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
+    """Создает нового клиента."""
+
     model = Client
     form_class = ClientForm
     template_name = "core/object_form.html"
@@ -417,6 +501,8 @@ class ClientCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
 
 
 class ClientUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
+    """Редактирует карточку клиента."""
+
     model = Client
     form_class = ClientForm
     template_name = "core/object_form.html"
@@ -427,12 +513,16 @@ class ClientUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
 
 
 class ClientDeleteView(DeleteView):
+    """Удаляет клиента после подтверждения."""
+
     model = Client
     template_name = "core/object_confirm_delete.html"
     success_url = reverse_lazy("core:clients")
 
 
 class EventCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
+    """Создает новое мероприятие."""
+
     model = Event
     form_class = EventForm
     template_name = "core/object_form.html"
@@ -443,6 +533,8 @@ class EventCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
 
 
 class EventUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
+    """Редактирует основные данные мероприятия."""
+
     model = Event
     form_class = EventForm
     template_name = "core/object_form.html"
@@ -453,12 +545,16 @@ class EventUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
 
 
 class EventDeleteView(DeleteView):
+    """Удаляет мероприятие после подтверждения."""
+
     model = Event
     template_name = "core/object_confirm_delete.html"
     success_url = reverse_lazy("core:events")
 
 
 class TaskCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+    """Создает задачу, отдельно или из карточки мероприятия."""
+
     model = EventTask
     form_class = EventTaskForm
     template_name = "core/object_form.html"
@@ -470,6 +566,8 @@ class TaskCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin
 
 
 class TaskUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+    """Редактирует задачу и возвращает пользователя в контекст мероприятия при необходимости."""
+
     model = EventTask
     form_class = EventTaskForm
     template_name = "core/object_form.html"
@@ -481,19 +579,27 @@ class TaskUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin
 
 
 class TaskDeleteView(DeleteView):
+    """Удаляет задачу и возвращает пользователя в список задач или вкладку мероприятия."""
+
     model = EventTask
     template_name = "core/object_confirm_delete.html"
 
     def get_success_url(self):
+        """Выбирает URL возврата по месту, откуда пользователь пришел удалять задачу."""
+
         if self.request.GET.get("return_tab") == "tasks" or self.request.POST.get("return_tab") == "tasks":
             return f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=tasks"
         return reverse("core:tasks")
 
 
 class TaskStatusUpdateView(View):
+    """Быстро меняет статус задачи из карточки мероприятия."""
+
     allowed_statuses = {choice[0] for choice in EventTask.Status.choices}
 
     def post(self, request, pk):
+        """Обновляет статус задачи, если POST содержит допустимое значение."""
+
         task = get_object_or_404(EventTask, pk=pk)
         status = request.POST.get("status")
         if status in self.allowed_statuses:
@@ -504,6 +610,8 @@ class TaskStatusUpdateView(View):
 
 
 class EventExpenseCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+    """Добавляет расход к мероприятию."""
+
     model = EventExpense
     form_class = EventExpenseForm
     template_name = "core/object_form.html"
@@ -515,6 +623,8 @@ class EventExpenseCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMess
 
 
 class EventExpenseUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+    """Редактирует расход мероприятия."""
+
     model = EventExpense
     form_class = EventExpenseForm
     template_name = "core/object_form.html"
@@ -526,6 +636,8 @@ class EventExpenseUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMess
 
 
 class EventVendorCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+    """Добавляет подрядчика в конкретное мероприятие."""
+
     model = EventVendor
     form_class = EventVendorForm
     template_name = "core/object_form.html"
@@ -537,6 +649,8 @@ class EventVendorCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessa
 
 
 class EventVendorUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+    """Редактирует назначение подрядчика на мероприятие."""
+
     model = EventVendor
     form_class = EventVendorForm
     template_name = "core/object_form.html"
@@ -548,9 +662,13 @@ class EventVendorUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessa
 
 
 class EventVendorStatusUpdateView(View):
+    """Быстро меняет статус подрядчика внутри карточки мероприятия."""
+
     allowed_statuses = {choice[0] for choice in EventVendor.Status.choices}
 
     def post(self, request, pk):
+        """Обновляет статус назначения подрядчика, если значение допустимо."""
+
         assignment = get_object_or_404(EventVendor, pk=pk)
         status = request.POST.get("status")
         if status in self.allowed_statuses:
@@ -561,6 +679,8 @@ class EventVendorStatusUpdateView(View):
 
 
 class EventCommunicationCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+    """Добавляет коммуникацию к мероприятию."""
+
     model = EventCommunication
     form_class = EventCommunicationForm
     template_name = "core/object_form.html"
@@ -572,6 +692,8 @@ class EventCommunicationCreateView(EventScopedFormMixin, CRUDContextMixin, Succe
 
 
 class EventCommunicationUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+    """Редактирует коммуникацию мероприятия."""
+
     model = EventCommunication
     form_class = EventCommunicationForm
     template_name = "core/object_form.html"
@@ -583,6 +705,8 @@ class EventCommunicationUpdateView(EventScopedFormMixin, CRUDContextMixin, Succe
 
 
 class EventDocumentCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+    """Добавляет документ к мероприятию."""
+
     model = EventDocument
     form_class = EventDocumentForm
     template_name = "core/object_form.html"
@@ -594,6 +718,8 @@ class EventDocumentCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMes
 
 
 class EventDocumentUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+    """Редактирует документ мероприятия."""
+
     model = EventDocument
     form_class = EventDocumentForm
     template_name = "core/object_form.html"
@@ -605,6 +731,8 @@ class EventDocumentUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMes
 
 
 class EventFormatCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
+    """Создает формат мероприятия."""
+
     model = EventFormat
     form_class = EventFormatForm
     template_name = "core/object_form.html"
@@ -615,6 +743,8 @@ class EventFormatCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
 
 
 class EventFormatUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
+    """Редактирует формат мероприятия."""
+
     model = EventFormat
     form_class = EventFormatForm
     template_name = "core/object_form.html"
@@ -625,12 +755,16 @@ class EventFormatUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
 
 
 class EventFormatDeleteView(DeleteView):
+    """Удаляет формат мероприятия после подтверждения."""
+
     model = EventFormat
     template_name = "core/object_confirm_delete.html"
     success_url = reverse_lazy("core:formats")
 
 
 class VendorCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
+    """Создает подрядчика в справочнике."""
+
     model = Vendor
     form_class = VendorForm
     template_name = "core/object_form.html"
@@ -641,6 +775,8 @@ class VendorCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
 
 
 class VendorUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
+    """Редактирует подрядчика в справочнике."""
+
     model = Vendor
     form_class = VendorForm
     template_name = "core/object_form.html"
@@ -651,12 +787,16 @@ class VendorUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
 
 
 class VendorDeleteView(DeleteView):
+    """Удаляет подрядчика после подтверждения."""
+
     model = Vendor
     template_name = "core/object_confirm_delete.html"
     success_url = reverse_lazy("core:vendors")
 
 
 class ServicePackageCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
+    """Создает пакет услуг."""
+
     model = ServicePackage
     form_class = ServicePackageForm
     template_name = "core/object_form.html"
@@ -667,6 +807,8 @@ class ServicePackageCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView
 
 
 class ServicePackageUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
+    """Редактирует пакет услуг."""
+
     model = ServicePackage
     form_class = ServicePackageForm
     template_name = "core/object_form.html"
@@ -677,6 +819,8 @@ class ServicePackageUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView
 
 
 class ServicePackageDeleteView(DeleteView):
+    """Удаляет пакет услуг после подтверждения."""
+
     model = ServicePackage
     template_name = "core/object_confirm_delete.html"
     success_url = reverse_lazy("core:packages")
