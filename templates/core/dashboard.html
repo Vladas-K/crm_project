@@ -7,13 +7,13 @@
     <div class="col-12">
         <div class="dashboard-header">
             <div>
-                <div class="event-chip event-chip--soft mb-3">Операционный обзор</div>
+                <div class="event-chip event-chip--dashboard mb-3">Операционный обзор</div>
                 <h1 class="dashboard-header__title">Дашборд</h1>
                 <p class="dashboard-header__subtitle mb-0">
                     Лиды, мероприятия, задачи и воронка на одном рабочем экране.
                 </p>
             </div>
-            <div class="dashboard-header__meta">
+            <div class="dashboard-header__meta dashboard-header__meta--active">
                 <span>В работе</span>
                 <strong>{{ stats.events_count }} мероприятий</strong>
             </div>
@@ -21,7 +21,7 @@
     </div>
 
     <div class="col-md-6 col-xl-3">
-        <a href="{% url 'core:leads' %}" class="card border-0 shadow-sm h-100 dashboard-stat">
+        <a href="{% url 'core:leads' %}" class="card border-0 shadow-sm h-100 dashboard-stat dashboard-stat--leads">
             <div class="card-body">
                 <p class="text-secondary mb-2">Лиды</p>
                 <h2 class="display-6 mb-0">{{ stats.leads_count }}</h2>
@@ -29,7 +29,7 @@
         </a>
     </div>
     <div class="col-md-6 col-xl-3">
-        <a href="{% url 'core:clients' %}" class="card border-0 shadow-sm h-100 dashboard-stat">
+        <a href="{% url 'core:clients' %}" class="card border-0 shadow-sm h-100 dashboard-stat dashboard-stat--clients">
             <div class="card-body">
                 <p class="text-secondary mb-2">Клиенты</p>
                 <h2 class="display-6 mb-0">{{ stats.clients_count }}</h2>
@@ -37,7 +37,7 @@
         </a>
     </div>
     <div class="col-md-6 col-xl-3">
-        <a href="{% url 'core:events' %}" class="card border-0 shadow-sm h-100 dashboard-stat">
+        <a href="{% url 'core:events' %}" class="card border-0 shadow-sm h-100 dashboard-stat dashboard-stat--events">
             <div class="card-body">
                 <p class="text-secondary mb-2">Мероприятия</p>
                 <h2 class="display-6 mb-0">{{ stats.events_count }}</h2>
@@ -45,7 +45,7 @@
         </a>
     </div>
     <div class="col-md-6 col-xl-3">
-        <a href="{% url 'core:vendors' %}" class="card border-0 shadow-sm h-100 dashboard-stat">
+        <a href="{% url 'core:vendors' %}" class="card border-0 shadow-sm h-100 dashboard-stat dashboard-stat--vendors">
             <div class="card-body">
                 <p class="text-secondary mb-2">Подрядчики</p>
                 <h2 class="display-6 mb-0">{{ stats.vendors_count }}</h2>
@@ -54,7 +54,7 @@
     </div>
 
     <div class="col-xl-4">
-        <div class="apple-panel h-100">
+        <div class="apple-panel apple-panel--leads h-100">
             <div class="apple-panel__header">
                 <div>
                     <h3 class="apple-panel__title">Последние лиды</h3>
@@ -78,7 +78,7 @@
     </div>
 
     <div class="col-xl-4">
-        <div class="apple-panel h-100">
+        <div class="apple-panel apple-panel--events h-100">
             <div class="apple-panel__header">
                 <div>
                     <h3 class="apple-panel__title">Ближайшие мероприятия</h3>
@@ -102,7 +102,7 @@
     </div>
 
     <div class="col-xl-4">
-        <div class="apple-panel h-100">
+        <div class="apple-panel apple-panel--tasks h-100">
             <div class="apple-panel__header">
                 <div>
                     <h3 class="apple-panel__title">Открытые задачи</h3>
@@ -130,7 +130,7 @@
     </div>
 
     <div class="col-12">
-        <div class="apple-panel">
+        <div class="apple-panel apple-panel--pipeline">
             <div class="apple-panel__header">
                 <div>
                     <h3 class="apple-panel__title">Сводка по воронке</h3>
@@ -140,7 +140,7 @@
             <div class="row g-3">
                 {% for stage in pipeline_summary %}
                     <div class="col-md-6 col-xl-3">
-                        <div class="pipeline-tile">
+                        <div class="pipeline-tile pipeline-tile--{% cycle 'blue' 'green' 'amber' 'rose' %}">
                             <div class="small text-secondary mb-2">{{ stage.name }}</div>
                             <div class="h3 mb-1">{{ stage.total }}</div>
                             <div class="small text-secondary">Вероятность: {{ stage.probability }}%</div>

@@ -3,6 +3,11 @@
     --crm-accent-soft: #e8f0ff;
     --crm-text: #1f2937;
     --crm-muted: #6b7280;
+    --crm-blue: #1f6feb;
+    --crm-green: #0f9f6e;
+    --crm-amber: #d97706;
+    --crm-rose: #e11d48;
+    --crm-violet: #7c3aed;
 }
 
 body {
@@ -126,11 +131,24 @@ body {
     font-size: 1.05rem;
 }
 
+.dashboard-header__meta--active {
+    border-color: rgba(15, 159, 110, 0.22);
+    background: #ecfdf5;
+    box-shadow: 0 18px 36px rgba(15, 159, 110, 0.12);
+}
+
+.event-chip--dashboard {
+    color: #6d28d9;
+    background: rgba(124, 58, 237, 0.11);
+}
+
 .dashboard-stat {
     display: block;
     position: relative;
     overflow: hidden;
     color: inherit;
+    --stat-accent: var(--crm-accent);
+    --stat-accent-rgb: 31, 111, 235;
     background: #ffffff;
     border: 1px solid rgba(31, 111, 235, 0.08) !important;
     border-radius: 1.15rem;
@@ -155,8 +173,8 @@ body {
 .dashboard-stat:hover,
 .dashboard-stat:focus {
     transform: scale(1.025);
-    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.16);
-    border-color: rgba(31, 111, 235, 0.18) !important;
+    box-shadow: 0 25px 60px rgba(var(--stat-accent-rgb), 0.18);
+    border-color: rgba(var(--stat-accent-rgb), 0.24) !important;
 }
 
 .dashboard-stat--active {
@@ -190,7 +208,25 @@ body {
 }
 
 .dashboard-stat::before {
-    display: none;
+    content: "";
+    position: absolute;
+    inset: 0;
+    display: block;
+    background: rgba(var(--stat-accent-rgb), 0.08);
+    opacity: 1;
+    pointer-events: none;
+}
+
+.dashboard-stat::after {
+    content: "";
+    position: absolute;
+    left: 1.1rem;
+    right: 1.1rem;
+    bottom: 0;
+    height: 0.22rem;
+    border-radius: 999px 999px 0 0;
+    background: var(--stat-accent);
+    opacity: 0.82;
 }
 
 .dashboard-stat h2 {
@@ -212,10 +248,38 @@ body {
     font-size: 0.8rem;
     font-weight: 600;
     letter-spacing: 0.01em;
-    color: var(--crm-accent);
+    color: var(--stat-accent);
     opacity: 0;
     transform: translateY(4px);
     transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.dashboard-stat p {
+    color: rgba(31, 41, 55, 0.62) !important;
+}
+
+.dashboard-stat h2 {
+    color: var(--stat-accent);
+}
+
+.dashboard-stat--leads {
+    --stat-accent: var(--crm-blue);
+    --stat-accent-rgb: 31, 111, 235;
+}
+
+.dashboard-stat--clients {
+    --stat-accent: var(--crm-green);
+    --stat-accent-rgb: 15, 159, 110;
+}
+
+.dashboard-stat--events {
+    --stat-accent: var(--crm-amber);
+    --stat-accent-rgb: 217, 119, 6;
+}
+
+.dashboard-stat--vendors {
+    --stat-accent: var(--crm-rose);
+    --stat-accent-rgb: 225, 29, 72;
 }
 
 .dashboard-stat:hover .card-body::after,
@@ -273,10 +337,51 @@ body {
 }
 
 .pipeline-tile {
-    background: linear-gradient(180deg, #fcfdff, #f6f9fc);
+    --tile-accent: var(--crm-accent);
+    --tile-accent-rgb: 31, 111, 235;
+    position: relative;
+    overflow: hidden;
+    background: rgba(var(--tile-accent-rgb), 0.08);
     border-radius: 1.1rem;
     padding: 1rem;
-    border: 1px solid rgba(15, 23, 42, 0.06);
+    border: 1px solid rgba(var(--tile-accent-rgb), 0.14);
+}
+
+.pipeline-tile::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0.28rem;
+    background: var(--tile-accent);
+    pointer-events: none;
+}
+
+.pipeline-tile > * {
+    position: relative;
+}
+
+.pipeline-tile .h3 {
+    color: var(--tile-accent);
+}
+
+.pipeline-tile--blue {
+    --tile-accent: var(--crm-blue);
+    --tile-accent-rgb: 31, 111, 235;
+}
+
+.pipeline-tile--green {
+    --tile-accent: var(--crm-green);
+    --tile-accent-rgb: 15, 159, 110;
+}
+
+.pipeline-tile--amber {
+    --tile-accent: var(--crm-amber);
+    --tile-accent-rgb: 217, 119, 6;
+}
+
+.pipeline-tile--rose {
+    --tile-accent: var(--crm-rose);
+    --tile-accent-rgb: 225, 29, 72;
 }
 
 .event-hero {
@@ -340,6 +445,9 @@ body {
 }
 
 .apple-panel {
+    --panel-accent-rgb: 31, 111, 235;
+    position: relative;
+    overflow: hidden;
     height: 100%;
     padding: 1.5rem;
     background: rgba(255, 255, 255, 0.9);
@@ -347,6 +455,35 @@ body {
     border-radius: 1.65rem;
     box-shadow: 0 18px 38px rgba(15, 23, 42, 0.06);
     backdrop-filter: blur(18px);
+}
+
+.apple-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 0.32rem;
+    background: rgba(var(--panel-accent-rgb), 0.76);
+    pointer-events: none;
+}
+
+.apple-panel > * {
+    position: relative;
+}
+
+.apple-panel--leads {
+    --panel-accent-rgb: 31, 111, 235;
+}
+
+.apple-panel--events {
+    --panel-accent-rgb: 15, 159, 110;
+}
+
+.apple-panel--tasks {
+    --panel-accent-rgb: 217, 119, 6;
+}
+
+.apple-panel--pipeline {
+    --panel-accent-rgb: 124, 58, 237;
 }
 
 .apple-panel__header {
