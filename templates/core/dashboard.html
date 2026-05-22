@@ -54,16 +54,16 @@
     </div>
 
     <div class="col-xl-4">
-        <div class="apple-panel apple-panel--leads h-100">
-            <div class="apple-panel__header">
+        <div class="premium-panel premium-panel--leads h-100">
+            <div class="premium-panel__header">
                 <div>
-                    <h3 class="apple-panel__title">Последние лиды</h3>
-                    <p class="apple-panel__subtitle">Новые обращения и текущий статус продаж.</p>
+                    <h3 class="premium-panel__title">Последние лиды</h3>
+                    <p class="premium-panel__subtitle">Новые обращения и текущий статус продаж.</p>
                 </div>
             </div>
-            <div class="apple-list">
+            <div class="premium-list">
                 {% for lead in latest_leads %}
-                    <div class="apple-list__row">
+                    <div class="premium-list__row">
                         <div>
                             <div class="fw-semibold">{{ lead.name }}</div>
                             <div class="text-secondary small">{{ lead.source|default:"Источник не указан" }}</div>
@@ -78,16 +78,16 @@
     </div>
 
     <div class="col-xl-4">
-        <div class="apple-panel apple-panel--events h-100">
-            <div class="apple-panel__header">
+        <div class="premium-panel premium-panel--events h-100">
+            <div class="premium-panel__header">
                 <div>
-                    <h3 class="apple-panel__title">Ближайшие мероприятия</h3>
-                    <p class="apple-panel__subtitle">Проекты, которые требуют подготовки.</p>
+                    <h3 class="premium-panel__title">Ближайшие мероприятия</h3>
+                    <p class="premium-panel__subtitle">Проекты, которые требуют подготовки.</p>
                 </div>
             </div>
-            <div class="apple-list">
+            <div class="premium-list">
                 {% for event in upcoming_events %}
-                    <div class="apple-list__row">
+                    <div class="premium-list__row">
                         <div>
                             <div class="fw-semibold">{{ event.title|default:event.client }}</div>
                             <div class="text-secondary small">{{ event.city }} • {{ event.date }}</div>
@@ -102,16 +102,16 @@
     </div>
 
     <div class="col-xl-4">
-        <div class="apple-panel apple-panel--tasks h-100">
-            <div class="apple-panel__header">
+        <div class="premium-panel premium-panel--tasks h-100">
+            <div class="premium-panel__header">
                 <div>
-                    <h3 class="apple-panel__title">Открытые задачи</h3>
-                    <p class="apple-panel__subtitle">То, что сейчас двигает мероприятия вперёд.</p>
+                    <h3 class="premium-panel__title">Открытые задачи</h3>
+                    <p class="premium-panel__subtitle">То, что сейчас двигает мероприятия вперёд.</p>
                 </div>
             </div>
-            <div class="apple-list">
+            <div class="premium-list">
                 {% for task in open_tasks %}
-                    <div class="apple-list__row">
+                    <div class="premium-list__row">
                         <div>
                             <div class="fw-semibold">
                                 <a href="{% url 'core:task_detail' task.pk %}" class="text-decoration-none text-reset">
@@ -130,11 +130,11 @@
     </div>
 
     <div class="col-12">
-        <div class="apple-panel apple-panel--pipeline">
-            <div class="apple-panel__header">
+        <div class="premium-panel premium-panel--pipeline">
+            <div class="premium-panel__header">
                 <div>
-                    <h3 class="apple-panel__title">Сводка по воронке</h3>
-                    <p class="apple-panel__subtitle">Распределение лидов по этапам продаж.</p>
+                    <h3 class="premium-panel__title">Сводка по воронке</h3>
+                    <p class="premium-panel__subtitle">Распределение лидов по этапам продаж.</p>
                 </div>
             </div>
             <div class="row g-3">

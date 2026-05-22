@@ -65,11 +65,11 @@
 
 <div class="row g-4 mb-4">
     <div class="col-xl-8">
-        <div class="apple-panel h-100">
-            <div class="apple-panel__header">
+        <div class="premium-panel h-100">
+            <div class="premium-panel__header">
                 <div>
-                    <h2 class="apple-panel__title">Основное</h2>
-                    <p class="apple-panel__subtitle">Краткая сводка по мероприятию и рабочему контексту.</p>
+                    <h2 class="premium-panel__title">Основное</h2>
+                    <p class="premium-panel__subtitle">Краткая сводка по мероприятию и рабочему контексту.</p>
                 </div>
             </div>
             <div class="row g-3">
@@ -101,15 +101,15 @@
 
             {% if event.goal or event.preferences or event.stop_factors %}
                 <div class="event-notes-grid mt-4">
-                    <div class="apple-note">
+                    <div class="premium-note">
                         <span>Цель</span>
                         <p>{{ event.goal|default:"Не указана" }}</p>
                     </div>
-                    <div class="apple-note">
+                    <div class="premium-note">
                         <span>Предпочтения</span>
                         <p>{{ event.preferences|default:"Не указаны" }}</p>
                     </div>
-                    <div class="apple-note">
+                    <div class="premium-note">
                         <span>Стоп-факторы</span>
                         <p>{{ event.stop_factors|default:"Не указаны" }}</p>
                     </div>
@@ -119,11 +119,11 @@
     </div>
 
     <div class="col-xl-4">
-        <div class="apple-panel h-100">
-            <div class="apple-panel__header">
+        <div class="premium-panel h-100">
+            <div class="premium-panel__header">
                 <div>
-                    <h2 class="apple-panel__title">Операционный статус</h2>
-                    <p class="apple-panel__subtitle">Быстрый взгляд на исполнение.</p>
+                    <h2 class="premium-panel__title">Операционный статус</h2>
+                    <p class="premium-panel__subtitle">Быстрый взгляд на исполнение.</p>
                 </div>
             </div>
             <div class="event-side-list">
@@ -160,12 +160,12 @@
     <a href="{% url 'core:event_detail' event.pk %}?tab=documents" class="event-tabs__link{% if active_tab == 'documents' %} event-tabs__link--active{% endif %}">Документы</a>
 </div>
 
-<div class="apple-panel">
+<div class="premium-panel">
     {% if active_tab == "tasks" %}
-        <div class="apple-panel__header">
+        <div class="premium-panel__header">
             <div>
-                <h2 class="apple-panel__title">Задачи</h2>
-                <p class="apple-panel__subtitle">Текущая работа по подготовке и проведению мероприятия.</p>
+                <h2 class="premium-panel__title">Задачи</h2>
+                <p class="premium-panel__subtitle">Текущая работа по подготовке и проведению мероприятия.</p>
             </div>
             <a href="{% url 'core:event_task_create' event.pk %}?return_tab=tasks" class="btn btn-sm btn-primary">Добавить</a>
         </div>
@@ -175,9 +175,9 @@
             <a href="{% url 'core:event_detail' event.pk %}?tab=tasks&task_filter=overdue" class="event-filter__link{% if task_filter == 'overdue' %} event-filter__link--active{% endif %}">Просроченные</a>
             <a href="{% url 'core:event_detail' event.pk %}?tab=tasks&task_filter=done" class="event-filter__link{% if task_filter == 'done' %} event-filter__link--active{% endif %}">Готовые</a>
         </div>
-        <div class="apple-list">
+        <div class="premium-list">
             {% for task in detail_tasks %}
-                <div class="apple-list__row">
+                <div class="premium-list__row">
                     <div>
                         <div class="fw-semibold">
                             <a href="{% url 'core:task_detail' task.pk %}" class="text-decoration-none text-reset">{{ task.title }}</a>
@@ -215,10 +215,10 @@
             {% endfor %}
         </div>
     {% elif active_tab == "expenses" %}
-        <div class="apple-panel__header">
+        <div class="premium-panel__header">
             <div>
-                <h2 class="apple-panel__title">Расходы</h2>
-                <p class="apple-panel__subtitle">Бюджетные строки и статусы оплат.</p>
+                <h2 class="premium-panel__title">Расходы</h2>
+                <p class="premium-panel__subtitle">Бюджетные строки и статусы оплат.</p>
             </div>
             <a href="{% url 'core:event_expense_create' event.pk %}?return_tab=expenses" class="btn btn-sm btn-primary">Добавить</a>
         </div>
@@ -228,9 +228,9 @@
             <a href="{% url 'core:event_detail' event.pk %}?tab=expenses&expense_filter=partial" class="event-filter__link{% if expense_filter == 'partial' %} event-filter__link--active{% endif %}">Частично</a>
             <a href="{% url 'core:event_detail' event.pk %}?tab=expenses&expense_filter=paid" class="event-filter__link{% if expense_filter == 'paid' %} event-filter__link--active{% endif %}">Оплачено</a>
         </div>
-        <div class="apple-list">
+        <div class="premium-list">
             {% for expense in detail_expenses %}
-                <div class="apple-list__row">
+                <div class="premium-list__row">
                     <div>
                         <div class="fw-semibold">{{ expense.category }}</div>
                         <div class="text-secondary small">{{ expense.vendor_name|default:"Подрядчик не указан" }}</div>
@@ -246,10 +246,10 @@
             {% endfor %}
         </div>
     {% elif active_tab == "vendors" %}
-        <div class="apple-panel__header">
+        <div class="premium-panel__header">
             <div>
-                <h2 class="apple-panel__title">Подрядчики</h2>
-                <p class="apple-panel__subtitle">Текущий состав команды подрядчиков по мероприятию.</p>
+                <h2 class="premium-panel__title">Подрядчики</h2>
+                <p class="premium-panel__subtitle">Текущий состав команды подрядчиков по мероприятию.</p>
             </div>
             <a href="{% url 'core:event_vendor_create' event.pk %}?return_tab=vendors" class="btn btn-sm btn-primary">Добавить</a>
         </div>
@@ -259,9 +259,9 @@
             <a href="{% url 'core:event_detail' event.pk %}?tab=vendors&vendor_filter=approved" class="event-filter__link{% if vendor_filter == 'approved' %} event-filter__link--active{% endif %}">Утверждены</a>
             <a href="{% url 'core:event_detail' event.pk %}?tab=vendors&vendor_filter=replaced" class="event-filter__link{% if vendor_filter == 'replaced' %} event-filter__link--active{% endif %}">Заменены</a>
         </div>
-        <div class="apple-list">
+        <div class="premium-list">
             {% for assignment in detail_event_vendors %}
-                <div class="apple-list__row">
+                <div class="premium-list__row">
                     <div>
                         <div class="fw-semibold">{{ assignment.vendor }}</div>
                         <div class="text-secondary small">{{ assignment.role }}</div>
@@ -293,10 +293,10 @@
             {% endfor %}
         </div>
     {% elif active_tab == "communications" %}
-        <div class="apple-panel__header">
+        <div class="premium-panel__header">
             <div>
-                <h2 class="apple-panel__title">Коммуникации</h2>
-                <p class="apple-panel__subtitle">История касаний и обсуждений по проекту.</p>
+                <h2 class="premium-panel__title">Коммуникации</h2>
+                <p class="premium-panel__subtitle">История касаний и обсуждений по проекту.</p>
             </div>
             <a href="{% url 'core:event_communication_create' event.pk %}?return_tab=communications" class="btn btn-sm btn-primary">Добавить</a>
         </div>
@@ -306,9 +306,9 @@
             <a href="{% url 'core:event_detail' event.pk %}?tab=communications&communication_filter=message" class="event-filter__link{% if communication_filter == 'message' %} event-filter__link--active{% endif %}">Сообщения</a>
             <a href="{% url 'core:event_detail' event.pk %}?tab=communications&communication_filter=meeting" class="event-filter__link{% if communication_filter == 'meeting' %} event-filter__link--active{% endif %}">Встречи</a>
         </div>
-        <div class="apple-list">
+        <div class="premium-list">
             {% for communication in detail_communications %}
-                <div class="apple-list__row">
+                <div class="premium-list__row">
                     <div>
                         <div class="fw-semibold">{{ communication.get_communication_type_display }}</div>
                         <div class="text-secondary small">
@@ -316,7 +316,7 @@
                             {% if communication.manager %} • {{ communication.manager }}{% endif %}
                         </div>
                     </div>
-                    <div class="apple-list__meta">
+                    <div class="premium-list__meta">
                         {{ communication.comment|default:"Без комментария" }}
                         <div class="mt-2">
                             <a href="{% url 'core:event_communication_update' communication.pk %}?return_tab=communications" class="btn btn-sm btn-outline-primary">Изменить</a>
@@ -328,10 +328,10 @@
             {% endfor %}
         </div>
     {% elif active_tab == "documents" %}
-        <div class="apple-panel__header">
+        <div class="premium-panel__header">
             <div>
-                <h2 class="apple-panel__title">Документы</h2>
-                <p class="apple-panel__subtitle">Договоры, счета, КП и акты по мероприятию.</p>
+                <h2 class="premium-panel__title">Документы</h2>
+                <p class="premium-panel__subtitle">Договоры, счета, КП и акты по мероприятию.</p>
             </div>
             <a href="{% url 'core:event_document_create' event.pk %}?return_tab=documents" class="btn btn-sm btn-primary">Добавить</a>
         </div>
@@ -341,14 +341,14 @@
             <a href="{% url 'core:event_detail' event.pk %}?tab=documents&document_filter=sent" class="event-filter__link{% if document_filter == 'sent' %} event-filter__link--active{% endif %}">Отправлены</a>
             <a href="{% url 'core:event_detail' event.pk %}?tab=documents&document_filter=signed" class="event-filter__link{% if document_filter == 'signed' %} event-filter__link--active{% endif %}">Подписаны</a>
         </div>
-        <div class="apple-list">
+        <div class="premium-list">
             {% for document in detail_documents %}
-                <div class="apple-list__row">
+                <div class="premium-list__row">
                     <div>
                         <div class="fw-semibold">{{ document.get_document_type_display }}</div>
                         <div class="text-secondary small">{{ document.get_status_display }}</div>
                     </div>
-                    <div class="apple-list__meta">
+                    <div class="premium-list__meta">
                         {% if document.file %}
                             <a href="{{ document.file.url }}" class="text-decoration-none">Файл</a>
                         {% else %}

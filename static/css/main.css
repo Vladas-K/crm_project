@@ -444,7 +444,7 @@ body {
     color: #475569;
 }
 
-.apple-panel {
+.premium-panel {
     --panel-accent-rgb: 31, 111, 235;
     position: relative;
     overflow: hidden;
@@ -457,7 +457,7 @@ body {
     backdrop-filter: blur(18px);
 }
 
-.apple-panel::before {
+.premium-panel::before {
     content: "";
     position: absolute;
     inset: 0 0 auto;
@@ -466,27 +466,27 @@ body {
     pointer-events: none;
 }
 
-.apple-panel > * {
+.premium-panel > * {
     position: relative;
 }
 
-.apple-panel--leads {
+.premium-panel--leads {
     --panel-accent-rgb: 31, 111, 235;
 }
 
-.apple-panel--events {
+.premium-panel--events {
     --panel-accent-rgb: 15, 159, 110;
 }
 
-.apple-panel--tasks {
+.premium-panel--tasks {
     --panel-accent-rgb: 217, 119, 6;
 }
 
-.apple-panel--pipeline {
+.premium-panel--pipeline {
     --panel-accent-rgb: 124, 58, 237;
 }
 
-.apple-panel__header {
+.premium-panel__header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -494,14 +494,14 @@ body {
     margin-bottom: 1.25rem;
 }
 
-.apple-panel__title {
+.premium-panel__title {
     margin: 0 0 0.35rem;
     font-size: 1.15rem;
     font-weight: 700;
     letter-spacing: -0.03em;
 }
 
-.apple-panel__subtitle {
+.premium-panel__subtitle {
     margin: 0;
     color: var(--crm-muted);
     font-size: 0.95rem;
@@ -513,14 +513,14 @@ body {
     gap: 1rem;
 }
 
-.apple-note {
+.premium-note {
     padding: 1rem 1.1rem;
     border-radius: 1.15rem;
     background: linear-gradient(180deg, #fbfcfe, #f3f7fb);
     border: 1px solid rgba(15, 23, 42, 0.06);
 }
 
-.apple-note span {
+.premium-note span {
     display: block;
     margin-bottom: 0.45rem;
     font-size: 0.82rem;
@@ -530,7 +530,7 @@ body {
     letter-spacing: 0.04em;
 }
 
-.apple-note p {
+.premium-note p {
     margin: 0;
     color: var(--crm-text);
 }
@@ -615,13 +615,13 @@ body {
     color: var(--crm-accent);
 }
 
-.apple-list {
+.premium-list {
     display: flex;
     flex-direction: column;
     gap: 0.8rem;
 }
 
-.apple-list__row {
+.premium-list__row {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -632,7 +632,7 @@ body {
     border: 1px solid rgba(15, 23, 42, 0.06);
 }
 
-.apple-list__meta {
+.premium-list__meta {
     max-width: 46%;
     color: var(--crm-muted);
     font-size: 0.92rem;
@@ -670,7 +670,7 @@ body {
         grid-template-columns: 1fr;
     }
 
-    .apple-list__row {
+    .premium-list__row {
         flex-direction: column;
     }
 
@@ -678,7 +678,7 @@ body {
         justify-content: flex-start;
     }
 
-    .apple-list__meta {
+    .premium-list__meta {
         max-width: 100%;
         text-align: left;
     }
