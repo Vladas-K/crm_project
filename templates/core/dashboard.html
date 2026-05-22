@@ -63,13 +63,13 @@
             </div>
             <div class="premium-list">
                 {% for lead in latest_leads %}
-                    <div class="premium-list__row">
+                    <a href="{% url 'core:lead_update' lead.pk %}" class="premium-list__row premium-list__row--link">
                         <div>
                             <div class="fw-semibold">{{ lead.name }}</div>
                             <div class="text-secondary small">{{ lead.source|default:"Источник не указан" }}</div>
                         </div>
                         <span class="event-chip event-chip--soft">{{ lead.stage|default:"Без этапа" }}</span>
-                    </div>
+                    </a>
                 {% empty %}
                     <p class="text-secondary mb-0">Лидов пока нет.</p>
                 {% endfor %}
@@ -87,13 +87,13 @@
             </div>
             <div class="premium-list">
                 {% for event in upcoming_events %}
-                    <div class="premium-list__row">
+                    <a href="{% url 'core:event_detail' event.pk %}" class="premium-list__row premium-list__row--link">
                         <div>
                             <div class="fw-semibold">{{ event.title|default:event.client }}</div>
                             <div class="text-secondary small">{{ event.city }} • {{ event.date }}</div>
                         </div>
                         <span class="event-chip event-chip--soft">{{ event.event_format|default:"Формат не выбран" }}</span>
-                    </div>
+                    </a>
                 {% empty %}
                     <p class="text-secondary mb-0">Мероприятий пока нет.</p>
                 {% endfor %}
@@ -111,17 +111,13 @@
             </div>
             <div class="premium-list">
                 {% for task in open_tasks %}
-                    <div class="premium-list__row">
+                    <a href="{% url 'core:task_detail' task.pk %}" class="premium-list__row premium-list__row--link">
                         <div>
-                            <div class="fw-semibold">
-                                <a href="{% url 'core:task_detail' task.pk %}" class="text-decoration-none text-reset">
-                                    {{ task.title }}
-                                </a>
-                            </div>
+                            <div class="fw-semibold">{{ task.title }}</div>
                             <div class="text-secondary small">{{ task.event }}</div>
                         </div>
                         <span class="event-chip event-chip--soft">{{ task.get_status_display }}</span>
-                    </div>
+                    </a>
                 {% empty %}
                     <p class="text-secondary mb-0">Нет открытых задач.</p>
                 {% endfor %}
