@@ -132,6 +132,7 @@
                     <h3 class="premium-panel__title">Сводка по воронке</h3>
                     <p class="premium-panel__subtitle">Распределение лидов по этапам продаж.</p>
                 </div>
+                <a href="{% url 'core:pipeline' %}" class="panel-action-link">Открыть воронку</a>
             </div>
             <div class="row g-3">
                 {% for stage in pipeline_summary %}
