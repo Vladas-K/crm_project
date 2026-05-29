@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Count, Sum
 from django.urls import reverse, reverse_lazy
@@ -41,7 +42,11 @@ from .models import (
 User = get_user_model()
 
 
-class DashboardView(TemplateView):
+class CRMLoginRequiredMixin(LoginRequiredMixin):
+    """Требует авторизацию для CRM-страниц и действий."""
+
+
+class DashboardView(CRMLoginRequiredMixin, TemplateView):
     """Показывает главную сводку CRM: KPI, последние лиды, события и задачи."""
 
     template_name = "core/dashboard.html"
@@ -63,7 +68,7 @@ class DashboardView(TemplateView):
         return context
 
 
-class LeadListView(ListView):
+class LeadListView(CRMLoginRequiredMixin, ListView):
     """Отображает список лидов с этапом, менеджером и предварительным форматом."""
 
     model = Lead
@@ -72,7 +77,7 @@ class LeadListView(ListView):
     queryset = Lead.objects.select_related("stage", "manager", "preliminary_event_format")
 
 
-class PipelineView(TemplateView):
+class PipelineView(CRMLoginRequiredMixin, TemplateView):
     """Показывает воронку продаж, сгруппированную по этапам pipeline."""
 
     template_name = "core/pipeline.html"
@@ -83,7 +88,7 @@ class PipelineView(TemplateView):
         return context
 
 
-class ClientListView(ListView):
+class ClientListView(CRMLoginRequiredMixin, ListView):
     """Отображает список клиентов CRM."""
 
     model = Client
@@ -91,7 +96,7 @@ class ClientListView(ListView):
     context_object_name = "clients"
 
 
-class EventListView(ListView):
+class EventListView(CRMLoginRequiredMixin, ListView):
     """Показывает список мероприятий с ключевыми финансовыми и операционными метриками."""
 
     model = Event
@@ -100,7 +105,7 @@ class EventListView(ListView):
     queryset = Event.objects.select_related("client", "lead", "event_format", "manager")
 
 
-class EventDetailView(DetailView):
+class EventDetailView(CRMLoginRequiredMixin, DetailView):
     """Рабочая карточка мероприятия с вкладками, фильтрами и связанной операционной информацией."""
 
     model = Event
@@ -185,7 +190,7 @@ class EventDetailView(DetailView):
         return context
 
 
-class TaskListView(ListView):
+class TaskListView(CRMLoginRequiredMixin, ListView):
     """Показывает общий список задач с фильтрами по состоянию."""
 
     model = EventTask
@@ -225,7 +230,7 @@ class TaskListView(ListView):
         return context
 
 
-class TaskDetailView(DetailView):
+class TaskDetailView(CRMLoginRequiredMixin, DetailView):
     """Показывает отдельную карточку задачи и ее состояние относительно дедлайна."""
 
     model = EventTask
@@ -247,7 +252,7 @@ class TaskDetailView(DetailView):
         return context
 
 
-class EventFormatListView(ListView):
+class EventFormatListView(CRMLoginRequiredMixin, ListView):
     """Отображает список форматов мероприятий и их шаблонов."""
 
     model = EventFormat
@@ -255,7 +260,7 @@ class EventFormatListView(ListView):
     context_object_name = "formats"
 
 
-class VendorListView(ListView):
+class VendorListView(CRMLoginRequiredMixin, ListView):
     """Отображает справочник подрядчиков."""
 
     model = Vendor
@@ -263,7 +268,7 @@ class VendorListView(ListView):
     context_object_name = "vendors"
 
 
-class PackageListView(ListView):
+class PackageListView(CRMLoginRequiredMixin, ListView):
     """Отображает пакеты услуг с привязкой к формату мероприятия."""
 
     model = ServicePackage
@@ -272,7 +277,7 @@ class PackageListView(ListView):
     queryset = ServicePackage.objects.select_related("event_format")
 
 
-class CalendarView(ListView):
+class CalendarView(CRMLoginRequiredMixin, ListView):
     """Показывает календарный список мероприятий."""
 
     model = Event
@@ -281,7 +286,7 @@ class CalendarView(ListView):
     queryset = Event.objects.select_related("client", "manager").order_by("date")
 
 
-class AnalyticsView(TemplateView):
+class AnalyticsView(CRMLoginRequiredMixin, TemplateView):
     """Показывает базовую аналитику по продажам, прибыли, источникам и команде."""
 
     template_name = "core/analytics.html"
@@ -303,7 +308,7 @@ class AnalyticsView(TemplateView):
         return context
 
 
-class TeamView(ListView):
+class TeamView(CRMLoginRequiredMixin, ListView):
     """Отображает пользователей CRM, роли и флаги доступа."""
 
     model = TeamMemberProfile
@@ -312,7 +317,7 @@ class TeamView(ListView):
     queryset = TeamMemberProfile.objects.select_related("user")
 
 
-class CRUDContextMixin:
+class CRUDContextMixin(CRMLoginRequiredMixin):
     """Добавляет общий контекст для универсального шаблона CRUD-форм."""
 
     page_title = ""
@@ -348,7 +353,7 @@ class SuccessMessageMixin:
         return response
 
 
-class EventScopedFormMixin:
+class EventScopedFormMixin(CRMLoginRequiredMixin):
     """Привязывает nested-формы к мероприятию и возвращает пользователя в нужную вкладку."""
 
     event_kwarg = "event_pk"
@@ -448,7 +453,7 @@ class LeadUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
     cancel_url = reverse_lazy("core:leads")
 
 
-class LeadDeleteView(DeleteView):
+class LeadDeleteView(CRMLoginRequiredMixin, DeleteView):
     """Удаляет лид после подтверждения."""
 
     model = Lead
@@ -480,7 +485,7 @@ class PipelineStageUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView)
     cancel_url = reverse_lazy("core:pipeline")
 
 
-class PipelineStageDeleteView(DeleteView):
+class PipelineStageDeleteView(CRMLoginRequiredMixin, DeleteView):
     """Удаляет этап воронки после подтверждения."""
 
     model = PipelineStage
@@ -512,7 +517,7 @@ class ClientUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
     cancel_url = reverse_lazy("core:clients")
 
 
-class ClientDeleteView(DeleteView):
+class ClientDeleteView(CRMLoginRequiredMixin, DeleteView):
     """Удаляет клиента после подтверждения."""
 
     model = Client
@@ -544,7 +549,7 @@ class EventUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
     cancel_url = reverse_lazy("core:events")
 
 
-class EventDeleteView(DeleteView):
+class EventDeleteView(CRMLoginRequiredMixin, DeleteView):
     """Удаляет мероприятие после подтверждения."""
 
     model = Event
@@ -578,7 +583,7 @@ class TaskUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin
     cancel_url = reverse_lazy("core:tasks")
 
 
-class TaskDeleteView(DeleteView):
+class TaskDeleteView(CRMLoginRequiredMixin, DeleteView):
     """Удаляет задачу и возвращает пользователя в список задач или вкладку мероприятия."""
 
     model = EventTask
@@ -592,7 +597,7 @@ class TaskDeleteView(DeleteView):
         return reverse("core:tasks")
 
 
-class TaskStatusUpdateView(View):
+class TaskStatusUpdateView(CRMLoginRequiredMixin, View):
     """Быстро меняет статус задачи из карточки мероприятия."""
 
     allowed_statuses = {choice[0] for choice in EventTask.Status.choices}
@@ -661,7 +666,7 @@ class EventVendorUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessa
     cancel_url = reverse_lazy("core:events")
 
 
-class EventVendorStatusUpdateView(View):
+class EventVendorStatusUpdateView(CRMLoginRequiredMixin, View):
     """Быстро меняет статус подрядчика внутри карточки мероприятия."""
 
     allowed_statuses = {choice[0] for choice in EventVendor.Status.choices}
@@ -754,7 +759,7 @@ class EventFormatUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
     cancel_url = reverse_lazy("core:formats")
 
 
-class EventFormatDeleteView(DeleteView):
+class EventFormatDeleteView(CRMLoginRequiredMixin, DeleteView):
     """Удаляет формат мероприятия после подтверждения."""
 
     model = EventFormat
@@ -786,7 +791,7 @@ class VendorUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
     cancel_url = reverse_lazy("core:vendors")
 
 
-class VendorDeleteView(DeleteView):
+class VendorDeleteView(CRMLoginRequiredMixin, DeleteView):
     """Удаляет подрядчика после подтверждения."""
 
     model = Vendor
@@ -818,7 +823,7 @@ class ServicePackageUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView
     cancel_url = reverse_lazy("core:packages")
 
 
-class ServicePackageDeleteView(DeleteView):
+class ServicePackageDeleteView(CRMLoginRequiredMixin, DeleteView):
     """Удаляет пакет услуг после подтверждения."""
 
     model = ServicePackage
