@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход | CRM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+<body class="crm-body">
+    <main class="auth-page">
+        <section class="auth-card">
+            <div class="crm-brand auth-card__brand">
+                <span class="crm-brand__mark">CRM</span>
+                <span>Event Operations</span>
+            </div>
+            <div class="auth-card__header">
+                <h1>Вход в CRM</h1>
+                <p>Используйте учётную запись сотрудника, чтобы продолжить работу.</p>
+            </div>
+
+            {% if form.errors %}
+                <div class="alert alert-danger">Проверьте логин и пароль.</div>
+            {% endif %}
+
+            {% if next %}
+                <p class="auth-card__notice">После входа вы вернётесь к запрошенной странице.</p>
+            {% endif %}
+
+            <form method="post" class="auth-form">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next }}">
+                <div>
+                    <label for="{{ form.username.id_for_label }}" class="form-label">Логин</label>
+                    {{ form.username }}
+                </div>
+                <div>
+                    <label for="{{ form.password.id_for_label }}" class="form-label">Пароль</label>
+                    {{ form.password }}
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Войти</button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

@@ -15,6 +15,20 @@
                 <span class="crm-brand__mark">CRM</span>
                 <span>Event Operations</span>
             </a>
+            <div class="crm-user-box">
+                {% if request.user.is_authenticated %}
+                    <div>
+                        <span>В системе</span>
+                        <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                    </div>
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="crm-user-box__link">Выйти</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="crm-user-box__link">Войти</a>
+                {% endif %}
+            </div>
             <nav class="crm-nav">
                 <a class="crm-nav__link" href="{% url 'core:dashboard' %}">Дашборд</a>
                 <a class="crm-nav__link" href="{% url 'core:leads' %}">Лиды</a>
