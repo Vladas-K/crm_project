@@ -29,6 +29,8 @@ body {
 }
 
 .crm-sidebar {
+    display: flex;
+    flex-direction: column;
     padding: 2rem 1.25rem;
     background: rgba(255, 255, 255, 0.9);
     border-right: 1px solid rgba(15, 23, 42, 0.08);
@@ -63,6 +65,10 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.45rem;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 0.2rem;
+    scrollbar-gutter: stable;
 }
 
 .crm-nav__link {
