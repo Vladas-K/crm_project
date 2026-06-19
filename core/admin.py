@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from .models import (
     Client,
@@ -23,6 +25,8 @@ from .models import (
     Vendor,
 )
 
+User = get_user_model()
+
 
 class EventExpenseInline(admin.TabularInline):
     model = EventExpense
@@ -37,6 +41,21 @@ class EventTaskInline(admin.TabularInline):
 class EventVendorInline(admin.TabularInline):
     model = EventVendor
     extra = 0
+
+
+class TeamMemberProfileInline(admin.StackedInline):
+    model = TeamMemberProfile
+    can_delete = False
+    extra = 0
+    max_num = 1
+
+
+admin.site.unregister(User)
+
+
+@admin.register(User)
+class UserAdmin(BaseUserAdmin):
+    inlines = (TeamMemberProfileInline,)
 
 
 @admin.register(TeamMemberProfile)
