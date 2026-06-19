@@ -28,6 +28,8 @@ User = get_user_model()
 
 @pytest.mark.django_db
 def test_lead_assigns_sales_manager_with_lowest_load():
+    """Новый лид назначается sales manager с меньшей текущей нагрузкой."""
+
     stage = PipelineStage.objects.create(name="Новый", code="new", probability=20)
     busy_manager = User.objects.create_user(username="busy_sales")
     free_manager = User.objects.create_user(username="free_sales")
@@ -42,6 +44,8 @@ def test_lead_assigns_sales_manager_with_lowest_load():
 
 @pytest.mark.django_db
 def test_lost_lead_requires_loss_reason():
+    """Потерянный лид нельзя сохранить без причины отказа."""
+
     lost_stage = PipelineStage.objects.create(
         name="Проигран",
         code="lost_test",
@@ -57,6 +61,8 @@ def test_lost_lead_requires_loss_reason():
 
 @pytest.mark.django_db
 def test_lead_copies_probability_from_stage_when_probability_is_empty():
+    """Если вероятность лида не задана, она наследуется из выбранного этапа."""
+
     stage = PipelineStage.objects.create(name="Переговоры тест", code="negotiation_test", probability=65)
 
     lead = Lead.objects.create(name="Лид с этапом", stage=stage)
@@ -66,6 +72,8 @@ def test_lead_copies_probability_from_stage_when_probability_is_empty():
 
 @pytest.mark.django_db
 def test_lead_needs_response_after_24_hours_without_contact():
+    """Лид требует реакции, если первый контакт не зафиксирован за 24 часа."""
+
     lead = Lead.objects.create(name="Лид без контакта")
     Lead.objects.filter(pk=lead.pk).update(created_at=timezone.now() - timezone.timedelta(hours=25))
     lead.refresh_from_db()
@@ -75,6 +83,8 @@ def test_lead_needs_response_after_24_hours_without_contact():
 
 @pytest.mark.django_db
 def test_lead_does_not_need_response_after_contact():
+    """Зафиксированный контакт снимает follow-up тревогу даже у старого лида."""
+
     lead = Lead.objects.create(name="Лид с контактом", last_contact_at=timezone.now())
     Lead.objects.filter(pk=lead.pk).update(created_at=timezone.now() - timezone.timedelta(hours=25))
     lead.refresh_from_db()
@@ -84,6 +94,8 @@ def test_lead_does_not_need_response_after_contact():
 
 @pytest.mark.django_db
 def test_event_bootstraps_related_records_from_format():
+    """Мероприятие из формата получает задачи, тайминг, бюджет и подрядчиков."""
+
     event_format = EventFormat.objects.create(name="Свадьба", default_budget=Decimal("500000.00"))
     vendor = Vendor.objects.create(name="Visual Stories", roles="Фото")
     EventFormatTaskTemplate.objects.create(
@@ -141,6 +153,8 @@ def test_event_bootstraps_related_records_from_format():
 
 @pytest.mark.django_db
 def test_event_task_deadline_is_calculated_from_event_date():
+    """Дедлайн задачи рассчитывается от даты мероприятия по offset в днях."""
+
     client = Client.objects.create(name="ООО Вектор")
     event_date = timezone.localdate() + timezone.timedelta(days=14)
     event = Event.objects.create(
@@ -161,6 +175,8 @@ def test_event_task_deadline_is_calculated_from_event_date():
 
 @pytest.mark.django_db
 def test_event_financial_properties_are_calculated_from_expenses():
+    """Финансовые показатели мероприятия считаются из бюджета и расходов."""
+
     client = Client.objects.create(name="ООО Финанс")
     event = Event.objects.create(
         client=client,
