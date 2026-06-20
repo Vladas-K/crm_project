@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Count, Sum
 from django.urls import reverse, reverse_lazy
@@ -46,6 +47,44 @@ class CRMLoginRequiredMixin(LoginRequiredMixin):
     """Требует авторизацию для CRM-страниц и действий."""
 
 
+class CRMAccessMixin(CRMLoginRequiredMixin):
+    """Проверяет CRM-профиль пользователя и требуемый флаг доступа."""
+
+    required_profile_flag = None
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return super().dispatch(request, *args, **kwargs)
+
+        try:
+            profile = request.user.crm_profile
+        except TeamMemberProfile.DoesNotExist as exc:
+            raise PermissionDenied("Для пользователя не настроен CRM-профиль.") from exc
+
+        if self.required_profile_flag and not getattr(profile, self.required_profile_flag):
+            raise PermissionDenied("Недостаточно прав для доступа к разделу.")
+
+        return super().dispatch(request, *args, **kwargs)
+
+
+class ClientAccessMixin(CRMAccessMixin):
+    """Требует доступ к клиентскому разделу."""
+
+    required_profile_flag = "can_view_clients"
+
+
+class AnalyticsAccessMixin(CRMAccessMixin):
+    """Требует доступ к аналитике."""
+
+    required_profile_flag = "can_view_analytics"
+
+
+class SystemAccessMixin(CRMAccessMixin):
+    """Требует право на управление системными настройками."""
+
+    required_profile_flag = "can_manage_system"
+
+
 class DashboardView(CRMLoginRequiredMixin, TemplateView):
     """Показывает главную сводку CRM: KPI, последние лиды, события и задачи."""
 
@@ -88,7 +127,7 @@ class PipelineView(CRMLoginRequiredMixin, TemplateView):
         return context
 
 
-class ClientListView(CRMLoginRequiredMixin, ListView):
+class ClientListView(ClientAccessMixin, ListView):
     """Отображает список клиентов CRM."""
 
     model = Client
@@ -286,7 +325,7 @@ class CalendarView(CRMLoginRequiredMixin, ListView):
     queryset = Event.objects.select_related("client", "manager").order_by("date")
 
 
-class AnalyticsView(CRMLoginRequiredMixin, TemplateView):
+class AnalyticsView(AnalyticsAccessMixin, TemplateView):
     """Показывает базовую аналитику по продажам, прибыли, источникам и команде."""
 
     template_name = "core/analytics.html"
@@ -308,7 +347,7 @@ class AnalyticsView(CRMLoginRequiredMixin, TemplateView):
         return context
 
 
-class TeamView(CRMLoginRequiredMixin, ListView):
+class TeamView(SystemAccessMixin, ListView):
     """Отображает пользователей CRM, роли и флаги доступа."""
 
     model = TeamMemberProfile
@@ -493,7 +532,7 @@ class PipelineStageDeleteView(CRMLoginRequiredMixin, DeleteView):
     success_url = reverse_lazy("core:pipeline")
 
 
-class ClientCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
+class ClientCreateView(ClientAccessMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Создает нового клиента."""
 
     model = Client
@@ -505,7 +544,7 @@ class ClientCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
     cancel_url = reverse_lazy("core:clients")
 
 
-class ClientUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class ClientUpdateView(ClientAccessMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует карточку клиента."""
 
     model = Client
@@ -517,7 +556,7 @@ class ClientUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
     cancel_url = reverse_lazy("core:clients")
 
 
-class ClientDeleteView(CRMLoginRequiredMixin, DeleteView):
+class ClientDeleteView(ClientAccessMixin, DeleteView):
     """Удаляет клиента после подтверждения."""
 
     model = Client
