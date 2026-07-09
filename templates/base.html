@@ -33,16 +33,24 @@
                 <a class="crm-nav__link" href="{% url 'core:dashboard' %}">Дашборд</a>
                 <a class="crm-nav__link" href="{% url 'core:leads' %}">Лиды</a>
                 <a class="crm-nav__link" href="{% url 'core:pipeline' %}">Воронка</a>
-                <a class="crm-nav__link" href="{% url 'core:clients' %}">Клиенты</a>
+                {% if crm_permissions.can_view_clients %}
+                    <a class="crm-nav__link" href="{% url 'core:clients' %}">Клиенты</a>
+                {% endif %}
                 <a class="crm-nav__link" href="{% url 'core:events' %}">Мероприятия</a>
                 <a class="crm-nav__link" href="{% url 'core:tasks' %}">Задачи</a>
                 <a class="crm-nav__link" href="{% url 'core:formats' %}">Форматы</a>
                 <a class="crm-nav__link" href="{% url 'core:vendors' %}">Подрядчики</a>
                 <a class="crm-nav__link" href="{% url 'core:packages' %}">Пакеты</a>
                 <a class="crm-nav__link" href="{% url 'core:calendar' %}">Календарь</a>
-                <a class="crm-nav__link" href="{% url 'core:analytics' %}">Аналитика</a>
-                <a class="crm-nav__link" href="{% url 'core:team' %}">Пользователи и роли</a>
-                <a class="crm-nav__link" href="/admin/">Admin</a>
+                {% if crm_permissions.can_view_analytics %}
+                    <a class="crm-nav__link" href="{% url 'core:analytics' %}">Аналитика</a>
+                {% endif %}
+                {% if crm_permissions.can_manage_system %}
+                    <a class="crm-nav__link" href="{% url 'core:team' %}">Пользователи и роли</a>
+                {% endif %}
+                {% if crm_permissions.is_staff %}
+                    <a class="crm-nav__link" href="/admin/">Admin</a>
+                {% endif %}
             </nav>
         </aside>
 

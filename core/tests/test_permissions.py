@@ -18,6 +18,13 @@ def create_user_with_profile(django_user_model, username, **profile_flags):
     return user
 
 
+def get_sidebar_html(response):
+    html = response.content.decode()
+    start = html.index('<nav class="crm-nav">')
+    end = html.index("</nav>", start)
+    return html[start:end]
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "url_name",
@@ -132,3 +139,47 @@ def test_team_section_allows_user_with_system_access_flag(client, django_user_mo
     response = client.get(reverse("core:team"))
 
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_sidebar_hides_permission_restricted_links(client, django_user_model):
+    """Sidebar hides navigation items unavailable to the current CRM user."""
+    user = create_user_with_profile(
+        django_user_model,
+        "restricted_sidebar",
+        can_view_clients=False,
+        can_view_analytics=False,
+        can_manage_system=False,
+    )
+    client.force_login(user)
+
+    response = client.get(reverse("core:dashboard"))
+    sidebar = get_sidebar_html(response)
+
+    assert reverse("core:clients") not in sidebar
+    assert reverse("core:analytics") not in sidebar
+    assert reverse("core:team") not in sidebar
+    assert "/admin/" not in sidebar
+
+
+@pytest.mark.django_db
+def test_sidebar_shows_links_allowed_by_permissions(client, django_user_model):
+    """Sidebar shows protected navigation items when profile flags allow them."""
+    user = create_user_with_profile(
+        django_user_model,
+        "full_sidebar",
+        can_view_clients=True,
+        can_view_analytics=True,
+        can_manage_system=True,
+    )
+    user.is_staff = True
+    user.save(update_fields=["is_staff"])
+    client.force_login(user)
+
+    response = client.get(reverse("core:dashboard"))
+    sidebar = get_sidebar_html(response)
+
+    assert reverse("core:clients") in sidebar
+    assert reverse("core:analytics") in sidebar
+    assert reverse("core:team") in sidebar
+    assert "/admin/" in sidebar
