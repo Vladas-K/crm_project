@@ -16,6 +16,7 @@ from core.models import (
     EventFormatTimelineTemplate,
     EventFormatVendorTemplate,
     EventTask,
+    EventTimelineItem,
     EventVendor,
     Lead,
     PipelineStage,
@@ -149,6 +150,115 @@ def test_event_bootstraps_related_records_from_format():
     assert event_vendor.role == "Фотограф"
     assert event_vendor.cost == Decimal("120000.00")
     assert event_vendor.status == EventVendor.Status.PROPOSED
+
+
+@pytest.mark.django_db
+def test_event_bootstrap_creates_all_templates_from_format():
+    """Мероприятие создаёт все строки из нескольких шаблонов выбранного формата."""
+
+    event_format = EventFormat.objects.create(name="Конференция", default_budget=Decimal("800000.00"))
+    first_vendor = Vendor.objects.create(name="Light Crew", roles="Свет")
+    second_vendor = Vendor.objects.create(name="Sound Crew", roles="Звук")
+    EventFormatTaskTemplate.objects.create(event_format=event_format, title="Собрать программу")
+    EventFormatTaskTemplate.objects.create(event_format=event_format, title="Подтвердить спикеров")
+    EventFormatTimelineTemplate.objects.create(event_format=event_format, time="10:00", block="Регистрация")
+    EventFormatTimelineTemplate.objects.create(event_format=event_format, time="11:00", block="Открытие")
+    EventFormatBudgetTemplate.objects.create(
+        event_format=event_format,
+        category="Свет",
+        vendor_name="Light Crew",
+        amount=Decimal("70000.00"),
+    )
+    EventFormatBudgetTemplate.objects.create(
+        event_format=event_format,
+        category="Звук",
+        vendor_name="Sound Crew",
+        amount=Decimal("90000.00"),
+    )
+    EventFormatVendorTemplate.objects.create(
+        event_format=event_format,
+        vendor=first_vendor,
+        role="Свет",
+        cost=Decimal("70000.00"),
+    )
+    EventFormatVendorTemplate.objects.create(
+        event_format=event_format,
+        vendor=second_vendor,
+        role="Звук",
+        cost=Decimal("90000.00"),
+    )
+    client = Client.objects.create(name="TechConf")
+
+    event = Event.objects.create(
+        client=client,
+        event_format=event_format,
+        title="TechConf 2026",
+        date=timezone.localdate(),
+        city="Москва",
+        planned_budget=Decimal("800000.00"),
+    )
+
+    assert set(event.tasks.values_list("title", flat=True)) == {"Собрать программу", "Подтвердить спикеров"}
+    assert set(event.timeline_items.values_list("block", flat=True)) == {"Регистрация", "Открытие"}
+    assert set(event.expenses.values_list("category", flat=True)) == {"Свет", "Звук"}
+    assert set(event.event_vendors.values_list("role", flat=True)) == {"Свет", "Звук"}
+
+
+@pytest.mark.django_db
+def test_event_bootstrap_does_not_duplicate_records_on_resave():
+    """Повторное сохранение мероприятия не дублирует структуру из формата."""
+
+    event_format = EventFormat.objects.create(name="Презентация", default_budget=Decimal("300000.00"))
+    vendor = Vendor.objects.create(name="Presentation Team", roles="Техника")
+    EventFormatTaskTemplate.objects.create(event_format=event_format, title="Подготовить зал")
+    EventFormatTimelineTemplate.objects.create(event_format=event_format, time="18:00", block="Сбор гостей")
+    EventFormatBudgetTemplate.objects.create(
+        event_format=event_format,
+        category="Техника",
+        vendor_name="Presentation Team",
+        amount=Decimal("50000.00"),
+    )
+    EventFormatVendorTemplate.objects.create(
+        event_format=event_format,
+        vendor=vendor,
+        role="Техника",
+        cost=Decimal("50000.00"),
+    )
+    client = Client.objects.create(name="ООО Презентация")
+    event = Event.objects.create(
+        client=client,
+        event_format=event_format,
+        title="Запуск продукта",
+        date=timezone.localdate(),
+        city="Москва",
+    )
+
+    event.title = "Запуск продукта обновлён"
+    event.save()
+
+    assert event.tasks.count() == 1
+    assert event.timeline_items.count() == 1
+    assert event.expenses.count() == 1
+    assert event.event_vendors.count() == 1
+
+
+@pytest.mark.django_db
+def test_event_without_format_does_not_bootstrap_related_records():
+    """Мероприятие без формата не создаёт задачи, тайминг, бюджет и подрядчиков."""
+
+    client = Client.objects.create(name="ООО Без Формата")
+
+    event = Event.objects.create(
+        client=client,
+        title="Индивидуальное мероприятие",
+        date=timezone.localdate(),
+        city="Москва",
+    )
+
+    assert event.tasks.count() == 0
+    assert EventTimelineItem.objects.filter(event=event).count() == 0
+    assert event.expenses.count() == 0
+    assert event.event_vendors.count() == 0
 
 
 @pytest.mark.django_db
