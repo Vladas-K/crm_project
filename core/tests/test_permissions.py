@@ -142,6 +142,44 @@ def test_team_section_allows_user_with_system_access_flag(client, django_user_mo
 
 
 @pytest.mark.django_db
+def test_expense_actions_require_finance_access_flag(client, django_user_model, crm_objects):
+    user = create_user_with_profile(
+        django_user_model,
+        "no_finance",
+        can_view_finance=False,
+    )
+    client.force_login(user)
+    urls = [
+        reverse("core:event_expense_create", kwargs={"event_pk": crm_objects["event"].pk}),
+        reverse("core:event_expense_update", kwargs={"pk": crm_objects["expense"].pk}),
+    ]
+
+    for url in urls:
+        response = client.get(url)
+
+        assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_expense_actions_allow_user_with_finance_access_flag(client, django_user_model, crm_objects):
+    user = create_user_with_profile(
+        django_user_model,
+        "finance_manager",
+        can_view_finance=True,
+    )
+    client.force_login(user)
+    urls = [
+        reverse("core:event_expense_create", kwargs={"event_pk": crm_objects["event"].pk}),
+        reverse("core:event_expense_update", kwargs={"pk": crm_objects["expense"].pk}),
+    ]
+
+    for url in urls:
+        response = client.get(url)
+
+        assert response.status_code == 200
+
+
+@pytest.mark.django_db
 def test_sidebar_hides_permission_restricted_links(client, django_user_model):
     """Sidebar hides navigation items unavailable to the current CRM user."""
     user = create_user_with_profile(

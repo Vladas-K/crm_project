@@ -85,6 +85,12 @@ class SystemAccessMixin(CRMAccessMixin):
     required_profile_flag = "can_manage_system"
 
 
+class FinanceAccessMixin(CRMAccessMixin):
+    """Требует право на управление финансовыми данными."""
+
+    required_profile_flag = "can_view_finance"
+
+
 class DashboardView(CRMLoginRequiredMixin, TemplateView):
     """Показывает главную сводку CRM: KPI, последние лиды, события и задачи."""
 
@@ -653,7 +659,7 @@ class TaskStatusUpdateView(CRMLoginRequiredMixin, View):
         return redirect(f"{reverse('core:event_detail', kwargs={'pk': task.event.pk})}?tab=tasks")
 
 
-class EventExpenseCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+class EventExpenseCreateView(FinanceAccessMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Добавляет расход к мероприятию."""
 
     model = EventExpense
@@ -666,7 +672,7 @@ class EventExpenseCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMess
     cancel_url = reverse_lazy("core:events")
 
 
-class EventExpenseUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class EventExpenseUpdateView(FinanceAccessMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует расход мероприятия."""
 
     model = EventExpense
