@@ -30,8 +30,10 @@
                     <div class="row g-3">
                         <div class="col-sm-6"><div class="metric-card"><span>Клиент</span><strong>{{ event.client }}</strong></div></div>
                         <div class="col-sm-6"><div class="metric-card"><span>Формат</span><strong>{{ event.event_format|default:"Не выбран" }}</strong></div></div>
-                        <div class="col-sm-6"><div class="metric-card"><span>Бюджет</span><strong>{{ event.planned_budget }} ₽</strong></div></div>
-                        <div class="col-sm-6"><div class="metric-card"><span>Маржинальность</span><strong>{{ event.margin|floatformat:1 }}%</strong></div></div>
+                        {% if crm_permissions.can_view_finance %}
+                            <div class="col-sm-6"><div class="metric-card"><span>Бюджет</span><strong>{{ event.planned_budget }} ₽</strong></div></div>
+                            <div class="col-sm-6"><div class="metric-card"><span>Маржинальность</span><strong>{{ event.margin|floatformat:1 }}%</strong></div></div>
+                        {% endif %}
                     </div>
                     <div class="small text-secondary mt-3">
                         Задач: {{ event.tasks.count }} • Подрядчиков: {{ event.event_vendors.count }} • Документов: {{ event.documents.count }}

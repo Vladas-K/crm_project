@@ -28,40 +28,42 @@
     </div>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100 dashboard-stat">
-            <div class="card-body">
-                <p class="text-secondary mb-2">Плановый бюджет</p>
-                <h2 class="display-6 mb-0">{{ event.planned_budget }} ₽</h2>
+{% if crm_permissions.can_view_finance %}
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 dashboard-stat">
+                <div class="card-body">
+                    <p class="text-secondary mb-2">Плановый бюджет</p>
+                    <h2 class="display-6 mb-0">{{ event.planned_budget }} ₽</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 dashboard-stat">
+                <div class="card-body">
+                    <p class="text-secondary mb-2">Расходы</p>
+                    <h2 class="display-6 mb-0">{{ event.total_expenses }} ₽</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 dashboard-stat">
+                <div class="card-body">
+                    <p class="text-secondary mb-2">Прибыль</p>
+                    <h2 class="display-6 mb-0">{{ event.profit }} ₽</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100 dashboard-stat">
+                <div class="card-body">
+                    <p class="text-secondary mb-2">Маржа</p>
+                    <h2 class="display-6 mb-0">{{ event.margin|floatformat:1 }}%</h2>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100 dashboard-stat">
-            <div class="card-body">
-                <p class="text-secondary mb-2">Расходы</p>
-                <h2 class="display-6 mb-0">{{ event.total_expenses }} ₽</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100 dashboard-stat">
-            <div class="card-body">
-                <p class="text-secondary mb-2">Прибыль</p>
-                <h2 class="display-6 mb-0">{{ event.profit }} ₽</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100 dashboard-stat">
-            <div class="card-body">
-                <p class="text-secondary mb-2">Маржа</p>
-                <h2 class="display-6 mb-0">{{ event.margin|floatformat:1 }}%</h2>
-            </div>
-        </div>
-    </div>
-</div>
+{% endif %}
 
 <div class="row g-4 mb-4">
     <div class="col-xl-8">
@@ -91,12 +93,14 @@
                         <strong>{{ event.guests_count }}</strong>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="metric-card">
-                        <span>Предоплата</span>
-                        <strong>{{ event.prepayment_total }} ₽</strong>
+                {% if crm_permissions.can_view_finance %}
+                    <div class="col-md-6">
+                        <div class="metric-card">
+                            <span>Предоплата</span>
+                            <strong>{{ event.prepayment_total }} ₽</strong>
+                        </div>
                     </div>
-                </div>
+                {% endif %}
             </div>
 
             {% if event.goal or event.preferences or event.stop_factors %}
@@ -135,10 +139,12 @@
                     <span>Просрочено</span>
                     <strong>{{ event_status_summary.overdue_tasks }}</strong>
                 </div>
-                <div class="event-side-list__item">
-                    <span>Расходы</span>
-                    <strong>{{ event_status_summary.total_expenses }} ₽</strong>
-                </div>
+                {% if crm_permissions.can_view_finance %}
+                    <div class="event-side-list__item">
+                        <span>Расходы</span>
+                        <strong>{{ event_status_summary.total_expenses }} ₽</strong>
+                    </div>
+                {% endif %}
                 <div class="event-side-list__item">
                     <span>Подрядчиков утверждено</span>
                     <strong>{{ event_status_summary.approved_vendors }}</strong>
@@ -154,7 +160,9 @@
 
 <div class="event-tabs mb-4">
     <a href="{% url 'core:event_detail' event.pk %}?tab=tasks" class="event-tabs__link{% if active_tab == 'tasks' %} event-tabs__link--active{% endif %}">Задачи</a>
-    <a href="{% url 'core:event_detail' event.pk %}?tab=expenses" class="event-tabs__link{% if active_tab == 'expenses' %} event-tabs__link--active{% endif %}">Расходы</a>
+    {% if crm_permissions.can_view_finance %}
+        <a href="{% url 'core:event_detail' event.pk %}?tab=expenses" class="event-tabs__link{% if active_tab == 'expenses' %} event-tabs__link--active{% endif %}">Расходы</a>
+    {% endif %}
     <a href="{% url 'core:event_detail' event.pk %}?tab=vendors" class="event-tabs__link{% if active_tab == 'vendors' %} event-tabs__link--active{% endif %}">Подрядчики</a>
     <a href="{% url 'core:event_detail' event.pk %}?tab=communications" class="event-tabs__link{% if active_tab == 'communications' %} event-tabs__link--active{% endif %}">Коммуникации</a>
     <a href="{% url 'core:event_detail' event.pk %}?tab=documents" class="event-tabs__link{% if active_tab == 'documents' %} event-tabs__link--active{% endif %}">Документы</a>
@@ -214,7 +222,7 @@
                 <p class="text-secondary mb-0">Задач с таким фильтром нет.</p>
             {% endfor %}
         </div>
-    {% elif active_tab == "expenses" %}
+    {% elif active_tab == "expenses" and crm_permissions.can_view_finance %}
         <div class="premium-panel__header">
             <div>
                 <h2 class="premium-panel__title">Расходы</h2>
@@ -267,7 +275,9 @@
                         <div class="text-secondary small">{{ assignment.role }}</div>
                     </div>
                     <div class="text-end">
-                        <div class="fw-semibold">{{ assignment.cost }} ₽</div>
+                        {% if crm_permissions.can_view_finance %}
+                            <div class="fw-semibold">{{ assignment.cost }} ₽</div>
+                        {% endif %}
                         <div class="text-secondary small">{{ assignment.get_status_display }}</div>
                         <div class="event-row-actions justify-content-end mt-2">
                             {% if assignment.status != "approved" %}

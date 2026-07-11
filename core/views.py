@@ -176,8 +176,15 @@ class EventDetailView(CRMLoginRequiredMixin, DetailView):
 
         context = super().get_context_data(**kwargs)
         today = timezone.localdate()
+        try:
+            can_view_finance = self.request.user.crm_profile.can_view_finance
+        except TeamMemberProfile.DoesNotExist:
+            can_view_finance = False
+
         active_tab = self.request.GET.get("tab", "tasks")
         if active_tab not in {"tasks", "expenses", "vendors", "communications", "documents"}:
+            active_tab = "tasks"
+        if active_tab == "expenses" and not can_view_finance:
             active_tab = "tasks"
         task_filter = self.request.GET.get("task_filter", "all")
         expense_filter = self.request.GET.get("expense_filter", "all")
@@ -218,7 +225,7 @@ class EventDetailView(CRMLoginRequiredMixin, DetailView):
         context["communication_filter"] = communication_filter
         context["document_filter"] = document_filter
         context["detail_tasks"] = tasks
-        context["detail_expenses"] = expenses
+        context["detail_expenses"] = expenses if can_view_finance else EventExpense.objects.none()
         context["detail_event_vendors"] = event_vendors
         context["detail_communications"] = communications
         context["detail_documents"] = documents

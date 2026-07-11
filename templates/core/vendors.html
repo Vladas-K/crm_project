@@ -18,7 +18,9 @@
                 <tr>
                     <th>Подрядчик</th>
                     <th>Роли</th>
-                    <th>Стоимость</th>
+                    {% if crm_permissions.can_view_finance %}
+                        <th>Стоимость</th>
+                    {% endif %}
                     <th>Рейтинг</th>
                     <th>Надёжность</th>
                     <th>Статус</th>
@@ -30,7 +32,9 @@
                     <tr>
                         <td class="fw-semibold">{{ vendor.name }}</td>
                         <td>{{ vendor.roles }}</td>
-                        <td>{{ vendor.min_cost }} / {{ vendor.avg_cost }} ₽</td>
+                        {% if crm_permissions.can_view_finance %}
+                            <td>{{ vendor.min_cost }} / {{ vendor.avg_cost }} ₽</td>
+                        {% endif %}
                         <td>{{ vendor.rating }}</td>
                         <td>{{ vendor.reliability }}%</td>
                         <td>{% if vendor.blacklisted %}<span class="text-danger">Чёрный список</span>{% else %}Активен{% endif %}</td>
@@ -42,7 +46,7 @@
                         </td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="7" class="text-center text-secondary py-4">Подрядчики пока не добавлены.</td></tr>
+                    <tr><td colspan="{% if crm_permissions.can_view_finance %}7{% else %}6{% endif %}" class="text-center text-secondary py-4">Подрядчики пока не добавлены.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

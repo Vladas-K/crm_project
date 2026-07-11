@@ -221,3 +221,86 @@ def test_sidebar_shows_links_allowed_by_permissions(client, django_user_model):
     assert reverse("core:analytics") in sidebar
     assert reverse("core:team") in sidebar
     assert "/admin/" in sidebar
+
+
+@pytest.mark.django_db
+def test_event_detail_hides_financial_ui_without_finance_access(client, django_user_model, crm_objects):
+    """Event card hides expense tabs, actions and financial indicators without finance access."""
+    user = create_user_with_profile(
+        django_user_model,
+        "event_no_finance",
+        can_view_finance=False,
+    )
+    client.force_login(user)
+
+    response = client.get(f"{reverse('core:event_detail', kwargs={'pk': crm_objects['event'].pk})}?tab=expenses")
+    html = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Плановый бюджет" not in html
+    assert "Расходы" not in html
+    assert "Прибыль" not in html
+    assert "Маржа" not in html
+    assert "Предоплата" not in html
+    assert reverse("core:event_expense_create", kwargs={"event_pk": crm_objects["event"].pk}) not in html
+    assert reverse("core:event_expense_update", kwargs={"pk": crm_objects["expense"].pk}) not in html
+
+
+@pytest.mark.django_db
+def test_event_detail_shows_financial_ui_with_finance_access(client, django_user_model, crm_objects):
+    """Event card shows expense tab, actions and financial indicators with finance access."""
+    user = create_user_with_profile(
+        django_user_model,
+        "event_finance",
+        can_view_finance=True,
+    )
+    client.force_login(user)
+
+    response = client.get(f"{reverse('core:event_detail', kwargs={'pk': crm_objects['event'].pk})}?tab=expenses")
+    html = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Плановый бюджет" in html
+    assert "Расходы" in html
+    assert "Прибыль" in html
+    assert "Маржа" in html
+    assert "Предоплата" in html
+    assert reverse("core:event_expense_create", kwargs={"event_pk": crm_objects["event"].pk}) in html
+    assert reverse("core:event_expense_update", kwargs={"pk": crm_objects["expense"].pk}) in html
+
+
+@pytest.mark.django_db
+def test_events_list_hides_financial_indicators_without_finance_access(client, django_user_model, crm_objects):
+    user = create_user_with_profile(
+        django_user_model,
+        "events_no_finance",
+        can_view_finance=False,
+    )
+    client.force_login(user)
+
+    response = client.get(reverse("core:events"))
+    html = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Бюджет" not in html
+    assert "Маржинальность" not in html
+
+
+@pytest.mark.django_db
+def test_analytics_hides_financial_indicators_without_finance_access(client, django_user_model, crm_objects):
+    user = create_user_with_profile(
+        django_user_model,
+        "analytics_no_finance",
+        can_view_analytics=True,
+        can_view_finance=False,
+    )
+    client.force_login(user)
+
+    response = client.get(reverse("core:analytics"))
+    html = response.content.decode()
+
+    assert response.status_code == 200
+    assert "Средний чек" not in html
+    assert "Прибыль" not in html
+    assert "Источник → деньги" not in html
+    assert "Источники лидов" in html
