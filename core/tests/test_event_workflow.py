@@ -11,6 +11,54 @@ def login_user(client, django_user_model):
 
 
 @pytest.mark.django_db
+def test_nested_task_create_returns_to_tasks_tab(client, django_user_model, crm_objects):
+    """Создание задачи из карточки мероприятия возвращает на вкладку задач."""
+    login_user(client, django_user_model)
+    event = crm_objects["event"]
+
+    response = client.post(
+        f"{reverse('core:event_task_create', kwargs={'event_pk': event.pk})}?return_tab=tasks",
+        {
+            "title": "Проверить монтаж",
+            "description": "Контрольный созвон с площадкой",
+            "deadline_offset_days": "0",
+            "status": EventTask.Status.TODO,
+            "return_tab": "tasks",
+        },
+    )
+    task = event.tasks.get(title="Проверить монтаж")
+
+    assert task.event == event
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=tasks"
+
+
+@pytest.mark.django_db
+def test_nested_task_update_returns_to_tasks_tab(client, django_user_model, crm_objects):
+    """Редактирование задачи из карточки мероприятия возвращает на вкладку задач."""
+    login_user(client, django_user_model)
+    task = crm_objects["task"]
+
+    response = client.post(
+        f"{reverse('core:task_update', kwargs={'pk': task.pk})}?return_tab=tasks",
+        {
+            "event": task.event.pk,
+            "title": "Подготовить обновлённый бриф",
+            "description": "Обновить вводные по проекту",
+            "deadline_offset_days": "0",
+            "status": EventTask.Status.IN_PROGRESS,
+            "return_tab": "tasks",
+        },
+    )
+    task.refresh_from_db()
+
+    assert task.title == "Подготовить обновлённый бриф"
+    assert task.status == EventTask.Status.IN_PROGRESS
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': task.event.pk})}?tab=tasks"
+
+
+@pytest.mark.django_db
 def test_task_status_quick_action_updates_status_and_returns_to_tasks_tab(client, django_user_model, crm_objects):
     """Быстрое действие карточки меняет статус задачи и возвращает на вкладку задач."""
     login_user(client, django_user_model)
