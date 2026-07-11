@@ -94,7 +94,7 @@ def test_lead_does_not_need_response_after_contact():
 
 
 @pytest.mark.django_db
-def test_event_bootstraps_related_records_from_format():
+def test_event_creates_related_records_from_format():
     """Мероприятие из формата получает задачи, тайминг, бюджет и подрядчиков."""
 
     event_format = EventFormat.objects.create(name="Свадьба", default_budget=Decimal("500000.00"))
@@ -153,7 +153,7 @@ def test_event_bootstraps_related_records_from_format():
 
 
 @pytest.mark.django_db
-def test_event_bootstrap_creates_all_templates_from_format():
+def test_event_structure_creates_all_templates_from_format():
     """Мероприятие создаёт все строки из нескольких шаблонов выбранного формата."""
 
     event_format = EventFormat.objects.create(name="Конференция", default_budget=Decimal("800000.00"))
@@ -205,7 +205,7 @@ def test_event_bootstrap_creates_all_templates_from_format():
 
 
 @pytest.mark.django_db
-def test_event_bootstrap_does_not_duplicate_records_on_resave():
+def test_event_structure_does_not_duplicate_records_on_resave():
     """Повторное сохранение мероприятия не дублирует структуру из формата."""
 
     event_format = EventFormat.objects.create(name="Презентация", default_budget=Decimal("300000.00"))
@@ -243,7 +243,7 @@ def test_event_bootstrap_does_not_duplicate_records_on_resave():
 
 
 @pytest.mark.django_db
-def test_event_without_format_does_not_bootstrap_related_records():
+def test_event_without_format_does_not_create_related_records():
     """Мероприятие без формата не создаёт задачи, тайминг, бюджет и подрядчиков."""
 
     client = Client.objects.create(name="ООО Без Формата")

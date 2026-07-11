@@ -398,7 +398,7 @@ class Command(BaseCommand):
                 },
             )
             if not created:
-                event.bootstrap_from_format()
+                event.create_structure_from_format()
             for category, vendor_name, amount, prepayment in spec["extra_expenses"]:
                 EventExpense.objects.update_or_create(
                     event=event,

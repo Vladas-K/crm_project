@@ -346,9 +346,9 @@ class Event(models.Model):
         creating = self._state.adding
         super().save(*args, **kwargs)
         if creating and self.event_format:
-            self.bootstrap_from_format()
+            self.create_structure_from_format()
 
-    def bootstrap_from_format(self) -> None:
+    def create_structure_from_format(self) -> None:
         """Создаёт задачи, тайминг, бюджет и подрядчиков из шаблонов формата."""
 
         for template in self.event_format.task_templates.all():
