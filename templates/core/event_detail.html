@@ -162,6 +162,7 @@
     <a href="{% url 'core:event_detail' event.pk %}?tab=tasks" class="event-tabs__link{% if active_tab == 'tasks' %} event-tabs__link--active{% endif %}">Задачи</a>
     <a href="{% url 'core:event_detail' event.pk %}?tab=timeline" class="event-tabs__link{% if active_tab == 'timeline' %} event-tabs__link--active{% endif %}">Тайминг</a>
     <a href="{% url 'core:event_detail' event.pk %}?tab=risks" class="event-tabs__link{% if active_tab == 'risks' %} event-tabs__link--active{% endif %}">Риски</a>
+    <a href="{% url 'core:event_detail' event.pk %}?tab=outcome" class="event-tabs__link{% if active_tab == 'outcome' %} event-tabs__link--active{% endif %}">Итоги</a>
     {% if crm_permissions.can_view_finance %}
         <a href="{% url 'core:event_detail' event.pk %}?tab=expenses" class="event-tabs__link{% if active_tab == 'expenses' %} event-tabs__link--active{% endif %}">Расходы</a>
     {% endif %}
@@ -223,6 +224,54 @@
                 <p class="text-secondary mb-0">Рисков пока нет.</p>
             {% endfor %}
         </div>
+    {% elif active_tab == "outcome" %}
+        <div class="premium-panel__header">
+            <div>
+                <h2 class="premium-panel__title">Итоги мероприятия</h2>
+                <p class="premium-panel__subtitle">Финальная оценка проекта, обратная связь и выводы команды.</p>
+            </div>
+            {% if event_outcome %}
+                <a href="{% url 'core:event_outcome_update' event_outcome.pk %}?return_tab=outcome" class="btn btn-sm btn-primary">Изменить</a>
+            {% else %}
+                <a href="{% url 'core:event_outcome_create' event.pk %}?return_tab=outcome" class="btn btn-sm btn-primary">Добавить</a>
+            {% endif %}
+        </div>
+        {% if event_outcome %}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="metric-card">
+                        <span>Финальная прибыль</span>
+                        <strong>{{ event_outcome.final_profit }} ₽</strong>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="metric-card">
+                        <span>Оценка проекта</span>
+                        <strong>{{ event_outcome.project_rating }}/5</strong>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="premium-note h-100">
+                        <span>Отзыв клиента</span>
+                        <p>{{ event_outcome.client_feedback|default:"Не указан" }}</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="premium-note h-100">
+                        <span>Выводы</span>
+                        <p>{{ event_outcome.lessons_learned|default:"Не указаны" }}</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="premium-note h-100">
+                        <span>Фото и видео</span>
+                        <p>{{ event_outcome.media_links|default:"Ссылки не добавлены" }}</p>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <p class="text-secondary mb-0">Итоги мероприятия ещё не заполнены.</p>
+        {% endif %}
     {% elif active_tab == "tasks" %}
         <div class="premium-panel__header">
             <div>

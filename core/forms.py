@@ -8,6 +8,7 @@ from .models import (
     EventDocument,
     EventExpense,
     EventFormat,
+    EventOutcome,
     EventRisk,
     EventTask,
     EventTimelineItem,
@@ -201,6 +202,17 @@ class EventRiskForm(BootstrapModelForm):
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
             "plan_b": forms.Textarea(attrs={"rows": 3}),
+        }
+
+
+class EventOutcomeForm(BootstrapModelForm):
+    class Meta:
+        model = EventOutcome
+        fields = ["event", "client_feedback", "final_profit", "lessons_learned", "media_links", "project_rating"]
+        widgets = {
+            "client_feedback": forms.Textarea(attrs={"rows": 3}),
+            "lessons_learned": forms.Textarea(attrs={"rows": 3}),
+            "media_links": forms.Textarea(attrs={"rows": 3}),
         }
 
 

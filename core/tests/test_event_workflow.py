@@ -7,6 +7,7 @@ from core.models import (
     EventCommunication,
     EventDocument,
     EventExpense,
+    EventOutcome,
     EventRisk,
     EventTask,
     EventTimelineItem,
@@ -189,6 +190,66 @@ def test_nested_risk_update_returns_to_risks_tab(client, django_user_model, crm_
     assert risk.plan_b == "Использовать локального поставщика"
     assert response.status_code == 302
     assert response.url == f"{reverse('core:event_detail', kwargs={'pk': risk.event.pk})}?tab=risks"
+
+
+@pytest.mark.django_db
+def test_nested_outcome_create_returns_to_outcome_tab(client, django_user_model, crm_objects):
+    """Создание итогов из карточки мероприятия возвращает на вкладку итогов."""
+    login_user(client, django_user_model)
+    event = crm_objects["event"]
+
+    response = client.post(
+        f"{reverse('core:event_outcome_create', kwargs={'event_pk': event.pk})}?return_tab=outcome",
+        {
+            "event": event.pk,
+            "client_feedback": "Клиент отметил точную организацию программы",
+            "final_profit": "125000.00",
+            "lessons_learned": "Закладывать больше времени на монтаж",
+            "media_links": "https://example.com/event-media",
+            "project_rating": "5",
+            "return_tab": "outcome",
+        },
+    )
+    outcome = event.outcome
+
+    assert outcome.event == event
+    assert outcome.final_profit == Decimal("125000.00")
+    assert outcome.project_rating == 5
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=outcome"
+
+
+@pytest.mark.django_db
+def test_nested_outcome_update_returns_to_outcome_tab(client, django_user_model, crm_objects):
+    """Редактирование итогов из карточки мероприятия возвращает на вкладку итогов."""
+    login_user(client, django_user_model)
+    outcome = EventOutcome.objects.create(
+        event=crm_objects["event"],
+        client_feedback="Хорошая работа",
+        final_profit=90000,
+        lessons_learned="Согласовывать тайминг заранее",
+        project_rating=4,
+    )
+
+    response = client.post(
+        f"{reverse('core:event_outcome_update', kwargs={'pk': outcome.pk})}?return_tab=outcome",
+        {
+            "event": outcome.event.pk,
+            "client_feedback": "Клиент рекомендовал нас партнёрам",
+            "final_profit": "110000.00",
+            "lessons_learned": "Сохранить текущий процесс согласований",
+            "media_links": "https://example.com/final-materials",
+            "project_rating": "5",
+            "return_tab": "outcome",
+        },
+    )
+    outcome.refresh_from_db()
+
+    assert outcome.client_feedback == "Клиент рекомендовал нас партнёрам"
+    assert outcome.final_profit == Decimal("110000.00")
+    assert outcome.project_rating == 5
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': outcome.event.pk})}?tab=outcome"
 
 
 @pytest.mark.django_db
