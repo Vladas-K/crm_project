@@ -2,9 +2,19 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from core.models import Lead, PipelineStage
+from core.models import CRMRole, Client, Lead, PipelineStage, TeamMemberProfile
 
 User = get_user_model()
+
+
+def create_client_viewer(django_user_model, username):
+    user = django_user_model.objects.create_user(username=username, password="TestPass123!")
+    TeamMemberProfile.objects.create(
+        user=user,
+        role=CRMRole.PROJECT_MANAGER,
+        can_view_clients=True,
+    )
+    return user
 
 
 @pytest.mark.django_db
@@ -87,3 +97,34 @@ def test_lead_autocomplete_requires_two_characters(client, django_user_model):
 
     assert response.status_code == 200
     assert response.json() == {"results": []}
+
+
+@pytest.mark.django_db
+def test_clients_search_filters_by_contact_and_type(client, django_user_model):
+    """Поиск клиентов и фильтр типа работают вместе."""
+    user = create_client_viewer(django_user_model, "client_filter_user")
+    client.force_login(user)
+    Client.objects.create(name="ООО Вектор", client_type=Client.ClientType.B2B, email="office@vector.ru")
+    Client.objects.create(name="Анна Смирнова", client_type=Client.ClientType.B2C, phone="+79990005566")
+
+    response = client.get(
+        reverse("core:clients"),
+        {"q": "OFFICE", "client_type": Client.ClientType.B2B},
+    )
+
+    assert response.status_code == 200
+    assert list(response.context["clients"]) == [Client.objects.get(name="ООО Вектор")]
+
+
+@pytest.mark.django_db
+def test_client_autocomplete_returns_matching_contact_data(client, django_user_model):
+    """Autocomplete клиентов возвращает совпадения по контактам без учёта регистра."""
+    user = create_client_viewer(django_user_model, "client_autocomplete_user")
+    client.force_login(user)
+    Client.objects.create(name="ООО Вектор", email="office@vector.ru")
+    Client.objects.create(name="Анна Смирнова", phone="+79990005566")
+
+    response = client.get(reverse("core:client_autocomplete"), {"q": "ооо вектор"})
+
+    assert response.status_code == 200
+    assert response.json()["results"][0]["name"] == "ООО Вектор"

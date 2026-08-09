@@ -60,6 +60,16 @@ def lead_matches_search(lead, query):
     )
 
 
+def client_matches_search(client, query):
+    """Проверяет совпадение запроса без учёта регистра в данных клиента."""
+
+    normalized_query = query.casefold()
+    return any(
+        normalized_query in (value or "").casefold()
+        for value in (client.name, client.phone, client.email, client.contacts)
+    )
+
+
 class CRMLoginRequiredMixin(LoginRequiredMixin):
     """Требует авторизацию для CRM-страниц и действий."""
 
@@ -207,11 +217,71 @@ class PipelineView(CRMLoginRequiredMixin, TemplateView):
 
 
 class ClientListView(ClientAccessMixin, ListView):
-    """Отображает список клиентов CRM."""
+    """Отображает список клиентов с поиском и фильтрами."""
 
     model = Client
     template_name = "core/clients.html"
     context_object_name = "clients"
+
+    def get_queryset(self):
+        """Фильтрует клиентов по контактам, типу и ответственному менеджеру."""
+
+        queryset = Client.objects.select_related("lead", "lead__manager")
+        search_query = self.request.GET.get("q", "").strip()
+        client_type = self.request.GET.get("client_type", "")
+        manager_filter = self.request.GET.get("manager", "")
+
+        if client_type in {choice[0] for choice in Client.ClientType.choices}:
+            queryset = queryset.filter(client_type=client_type)
+        if manager_filter.isdigit():
+            queryset = queryset.filter(lead__manager_id=manager_filter)
+        if search_query:
+            queryset = [client for client in queryset if client_matches_search(client, search_query)]
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        """Передаёт в шаблон значения фильтров и доступные варианты выбора."""
+
+        context = super().get_context_data(**kwargs)
+        context["search_query"] = self.request.GET.get("q", "")
+        context["client_type_filter"] = self.request.GET.get("client_type", "")
+        context["client_manager_filter"] = self.request.GET.get("manager", "")
+        context["client_types"] = Client.ClientType.choices
+        context["client_managers"] = User.objects.filter(assigned_leads__client__isnull=False).distinct().order_by(
+            "username"
+        )
+        return context
+
+
+class ClientAutocompleteView(ClientAccessMixin, View):
+    """Возвращает совпадения для подсказок в поиске клиентов."""
+
+    def get(self, request):
+        """Ищет клиентов по имени и контактным данным после двух символов."""
+
+        query = request.GET.get("q", "").strip()
+        if len(query) < 2:
+            return JsonResponse({"results": []})
+
+        clients = [
+            client
+            for client in Client.objects.order_by("name", "id")
+            if client_matches_search(client, query)
+        ][:8]
+        return JsonResponse(
+            {
+                "results": [
+                    {
+                        "id": client.pk,
+                        "name": client.name,
+                        "phone": client.phone,
+                        "email": client.email,
+                    }
+                    for client in clients
+                ]
+            }
+        )
 
 
 class EventListView(CRMLoginRequiredMixin, ListView):

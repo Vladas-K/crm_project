@@ -15,9 +15,9 @@
     <div class="row g-3 align-items-end">
         <div class="col-lg-5">
             <label for="lead-search" class="form-label">Поиск</label>
-            <div class="lead-search-autocomplete" data-autocomplete-url="{% url 'core:lead_autocomplete' %}">
+            <div class="crm-search-autocomplete" data-autocomplete-url="{% url 'core:lead_autocomplete' %}">
                 <input id="lead-search" type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Имя, телефон или email" autocomplete="off">
-                <div id="lead-suggestions" class="lead-suggestions" role="listbox" hidden></div>
+                <div id="lead-suggestions" class="crm-suggestions" role="listbox" hidden></div>
             </div>
         </div>
         <div class="col-md-4 col-lg-3">
@@ -94,7 +94,7 @@
 </div>
 <script>
     (() => {
-        const wrapper = document.querySelector(".lead-search-autocomplete");
+        const wrapper = document.querySelector(".crm-search-autocomplete");
         if (!wrapper) return;
 
         const input = wrapper.querySelector("#lead-search");
@@ -117,7 +117,7 @@
             results.forEach((lead) => {
                 const option = document.createElement("button");
                 option.type = "button";
-                option.className = "lead-suggestions__item";
+                option.className = "crm-suggestions__item";
                 option.setAttribute("role", "option");
                 option.innerHTML = `<strong>${lead.name}</strong><span>${lead.phone || lead.email || "Контакт не указан"}</span>`;
                 option.addEventListener("click", () => {
