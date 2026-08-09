@@ -160,6 +160,7 @@
 
 <div class="event-tabs mb-4">
     <a href="{% url 'core:event_detail' event.pk %}?tab=tasks" class="event-tabs__link{% if active_tab == 'tasks' %} event-tabs__link--active{% endif %}">Задачи</a>
+    <a href="{% url 'core:event_detail' event.pk %}?tab=timeline" class="event-tabs__link{% if active_tab == 'timeline' %} event-tabs__link--active{% endif %}">Тайминг</a>
     {% if crm_permissions.can_view_finance %}
         <a href="{% url 'core:event_detail' event.pk %}?tab=expenses" class="event-tabs__link{% if active_tab == 'expenses' %} event-tabs__link--active{% endif %}">Расходы</a>
     {% endif %}
@@ -169,7 +170,33 @@
 </div>
 
 <div class="premium-panel">
-    {% if active_tab == "tasks" %}
+    {% if active_tab == "timeline" %}
+        <div class="premium-panel__header">
+            <div>
+                <h2 class="premium-panel__title">Тайминг</h2>
+                <p class="premium-panel__subtitle">Последовательность блоков и ключевые точки проведения мероприятия.</p>
+            </div>
+            <a href="{% url 'core:event_timeline_create' event.pk %}?return_tab=timeline" class="btn btn-sm btn-primary">Добавить</a>
+        </div>
+        <div class="premium-list">
+            {% for item in detail_timeline_items %}
+                <div class="premium-list__row">
+                    <div>
+                        <div class="fw-semibold">{{ item.time|time:"H:i" }} · {{ item.block }}</div>
+                        <div class="text-secondary small">{{ item.description|default:"Описание не указано" }}</div>
+                    </div>
+                    <div class="premium-list__meta text-end">
+                        <div class="text-secondary small">{{ item.responsible|default:"Ответственный не указан" }}</div>
+                        <div class="mt-2">
+                            <a href="{% url 'core:event_timeline_update' item.pk %}?return_tab=timeline" class="btn btn-sm btn-outline-primary">Изменить</a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-secondary mb-0">Блоков тайминга пока нет.</p>
+            {% endfor %}
+        </div>
+    {% elif active_tab == "tasks" %}
         <div class="premium-panel__header">
             <div>
                 <h2 class="premium-panel__title">Задачи</h2>

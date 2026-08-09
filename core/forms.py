@@ -9,6 +9,7 @@ from .models import (
     EventExpense,
     EventFormat,
     EventTask,
+    EventTimelineItem,
     EventVendor,
     Lead,
     PipelineStage,
@@ -180,6 +181,16 @@ class EventTaskForm(BootstrapModelForm):
         super().__init__(*args, **kwargs)
         self.fields["responsible"].queryset = User.objects.order_by("username")
         self.fields["event"].queryset = Event.objects.select_related("client").order_by("date", "title", "id")
+
+
+class EventTimelineItemForm(BootstrapModelForm):
+    class Meta:
+        model = EventTimelineItem
+        fields = ["event", "time", "block", "description", "responsible"]
+        widgets = {
+            "time": forms.TimeInput(format="%H:%M"),
+            "description": forms.Textarea(attrs={"rows": 3}),
+        }
 
 
 class EventExpenseForm(BootstrapModelForm):

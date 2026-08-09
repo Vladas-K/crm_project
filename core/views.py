@@ -17,6 +17,7 @@ from .forms import (
     EventForm,
     EventFormatForm,
     EventTaskForm,
+    EventTimelineItemForm,
     EventVendorForm,
     LeadForm,
     PipelineStageForm,
@@ -32,6 +33,7 @@ from .models import (
     EventExpense,
     EventFormat,
     EventTask,
+    EventTimelineItem,
     EventVendor,
     Lead,
     PipelineStage,
@@ -164,6 +166,7 @@ class EventDetailView(CRMLoginRequiredMixin, DetailView):
             Event.objects.select_related("client", "lead", "event_format", "manager")
             .prefetch_related(
                 "tasks__responsible",
+                "timeline_items",
                 "expenses",
                 "event_vendors__vendor",
                 "communications__manager",
@@ -182,7 +185,7 @@ class EventDetailView(CRMLoginRequiredMixin, DetailView):
             can_view_finance = False
 
         active_tab = self.request.GET.get("tab", "tasks")
-        if active_tab not in {"tasks", "expenses", "vendors", "communications", "documents"}:
+        if active_tab not in {"tasks", "timeline", "expenses", "vendors", "communications", "documents"}:
             active_tab = "tasks"
         if active_tab == "expenses" and not can_view_finance:
             active_tab = "tasks"
@@ -193,6 +196,7 @@ class EventDetailView(CRMLoginRequiredMixin, DetailView):
         document_filter = self.request.GET.get("document_filter", "all")
 
         tasks = self.object.tasks.select_related("responsible").all()
+        timeline_items = self.object.timeline_items.all()
         expenses = self.object.expenses.all()
         event_vendors = self.object.event_vendors.select_related("vendor").all()
         communications = self.object.communications.select_related("manager").all()
@@ -225,6 +229,7 @@ class EventDetailView(CRMLoginRequiredMixin, DetailView):
         context["communication_filter"] = communication_filter
         context["document_filter"] = document_filter
         context["detail_tasks"] = tasks
+        context["detail_timeline_items"] = timeline_items
         context["detail_expenses"] = expenses if can_view_finance else EventExpense.objects.none()
         context["detail_event_vendors"] = event_vendors
         context["detail_communications"] = communications
@@ -633,6 +638,32 @@ class TaskUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin
     success_message = "Задача обновлена."
     success_url = reverse_lazy("core:tasks")
     cancel_url = reverse_lazy("core:tasks")
+
+
+class EventTimelineItemCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+    """Добавляет блок тайминга к мероприятию."""
+
+    model = EventTimelineItem
+    form_class = EventTimelineItemForm
+    template_name = "core/object_form.html"
+    return_tab = "timeline"
+    page_title = "Новый блок тайминга"
+    success_message = "Блок тайминга добавлен."
+    success_url = reverse_lazy("core:events")
+    cancel_url = reverse_lazy("core:events")
+
+
+class EventTimelineItemUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+    """Редактирует блок тайминга мероприятия."""
+
+    model = EventTimelineItem
+    form_class = EventTimelineItemForm
+    template_name = "core/object_form.html"
+    return_tab = "timeline"
+    page_title = "Редактирование блока тайминга"
+    success_message = "Блок тайминга обновлён."
+    success_url = reverse_lazy("core:events")
+    cancel_url = reverse_lazy("core:events")
 
 
 class TaskDeleteView(CRMLoginRequiredMixin, DeleteView):

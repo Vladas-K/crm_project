@@ -44,6 +44,8 @@ from .views import (
     TaskListView,
     TaskStatusUpdateView,
     TaskUpdateView,
+    EventTimelineItemCreateView,
+    EventTimelineItemUpdateView,
     TeamView,
     VendorListView,
     VendorCreateView,
@@ -70,6 +72,11 @@ urlpatterns = [
     path("events/", EventListView.as_view(), name="events"),
     path("events/<int:pk>/", EventDetailView.as_view(), name="event_detail"),
     path("events/<int:event_pk>/tasks/create/", TaskCreateView.as_view(), name="event_task_create"),
+    path(
+        "events/<int:event_pk>/timeline/create/",
+        EventTimelineItemCreateView.as_view(),
+        name="event_timeline_create",
+    ),
     path("events/<int:event_pk>/expenses/create/", EventExpenseCreateView.as_view(), name="event_expense_create"),
     path("events/<int:event_pk>/vendors/create/", EventVendorCreateView.as_view(), name="event_vendor_create"),
     path(
@@ -82,6 +89,7 @@ urlpatterns = [
     path("tasks/create/", TaskCreateView.as_view(), name="task_create"),
     path("tasks/<int:pk>/", TaskDetailView.as_view(), name="task_detail"),
     path("tasks/<int:pk>/edit/", TaskUpdateView.as_view(), name="task_update"),
+    path("timeline/<int:pk>/edit/", EventTimelineItemUpdateView.as_view(), name="event_timeline_update"),
     path("tasks/<int:pk>/status/", TaskStatusUpdateView.as_view(), name="task_status_update"),
     path("tasks/<int:pk>/delete/", TaskDeleteView.as_view(), name="task_delete"),
     path("expenses/<int:pk>/edit/", EventExpenseUpdateView.as_view(), name="event_expense_update"),

@@ -2,7 +2,16 @@ import pytest
 from decimal import Decimal
 from django.urls import reverse
 
-from core.models import CRMRole, EventCommunication, EventDocument, EventExpense, EventTask, EventVendor, TeamMemberProfile
+from core.models import (
+    CRMRole,
+    EventCommunication,
+    EventDocument,
+    EventExpense,
+    EventTask,
+    EventTimelineItem,
+    EventVendor,
+    TeamMemberProfile,
+)
 
 
 def login_user(client, django_user_model, **profile_flags):
@@ -66,6 +75,64 @@ def test_nested_task_update_returns_to_tasks_tab(client, django_user_model, crm_
     assert task.status == EventTask.Status.IN_PROGRESS
     assert response.status_code == 302
     assert response.url == f"{reverse('core:event_detail', kwargs={'pk': task.event.pk})}?tab=tasks"
+
+
+@pytest.mark.django_db
+def test_nested_timeline_create_returns_to_timeline_tab(client, django_user_model, crm_objects):
+    """Создание блока тайминга из карточки мероприятия возвращает на вкладку тайминга."""
+    login_user(client, django_user_model)
+    event = crm_objects["event"]
+
+    response = client.post(
+        f"{reverse('core:event_timeline_create', kwargs={'event_pk': event.pk})}?return_tab=timeline",
+        {
+            "event": event.pk,
+            "time": "10:30",
+            "block": "Регистрация гостей",
+            "description": "Встреча гостей и выдача бейджей",
+            "responsible": "Координатор",
+            "return_tab": "timeline",
+        },
+    )
+    item = event.timeline_items.get(block="Регистрация гостей")
+
+    assert item.event == event
+    assert item.time.strftime("%H:%M") == "10:30"
+    assert item.responsible == "Координатор"
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=timeline"
+
+
+@pytest.mark.django_db
+def test_nested_timeline_update_returns_to_timeline_tab(client, django_user_model, crm_objects):
+    """Редактирование блока тайминга возвращает на вкладку тайминга."""
+    login_user(client, django_user_model)
+    item = EventTimelineItem.objects.create(
+        event=crm_objects["event"],
+        time="09:00",
+        block="Сбор команды",
+        description="Подготовка площадки",
+        responsible="Продюсер",
+    )
+
+    response = client.post(
+        f"{reverse('core:event_timeline_update', kwargs={'pk': item.pk})}?return_tab=timeline",
+        {
+            "event": item.event.pk,
+            "time": "11:15",
+            "block": "Открытие",
+            "description": "Приветственное слово",
+            "responsible": "Ведущий",
+            "return_tab": "timeline",
+        },
+    )
+    item.refresh_from_db()
+
+    assert item.time.strftime("%H:%M") == "11:15"
+    assert item.block == "Открытие"
+    assert item.description == "Приветственное слово"
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': item.event.pk})}?tab=timeline"
 
 
 @pytest.mark.django_db
