@@ -161,6 +161,7 @@
 <div class="event-tabs mb-4">
     <a href="{% url 'core:event_detail' event.pk %}?tab=tasks" class="event-tabs__link{% if active_tab == 'tasks' %} event-tabs__link--active{% endif %}">Задачи</a>
     <a href="{% url 'core:event_detail' event.pk %}?tab=timeline" class="event-tabs__link{% if active_tab == 'timeline' %} event-tabs__link--active{% endif %}">Тайминг</a>
+    <a href="{% url 'core:event_detail' event.pk %}?tab=risks" class="event-tabs__link{% if active_tab == 'risks' %} event-tabs__link--active{% endif %}">Риски</a>
     {% if crm_permissions.can_view_finance %}
         <a href="{% url 'core:event_detail' event.pk %}?tab=expenses" class="event-tabs__link{% if active_tab == 'expenses' %} event-tabs__link--active{% endif %}">Расходы</a>
     {% endif %}
@@ -194,6 +195,32 @@
                 </div>
             {% empty %}
                 <p class="text-secondary mb-0">Блоков тайминга пока нет.</p>
+            {% endfor %}
+        </div>
+    {% elif active_tab == "risks" %}
+        <div class="premium-panel__header">
+            <div>
+                <h2 class="premium-panel__title">Риски</h2>
+                <p class="premium-panel__subtitle">Потенциальные проблемы и заранее подготовленные планы действий.</p>
+            </div>
+            <a href="{% url 'core:event_risk_create' event.pk %}?return_tab=risks" class="btn btn-sm btn-primary">Добавить</a>
+        </div>
+        <div class="premium-list">
+            {% for risk in detail_risks %}
+                <div class="premium-list__row">
+                    <div>
+                        <div class="fw-semibold">{{ risk.description }}</div>
+                        <div class="text-secondary small">План B: {{ risk.plan_b|default:"Не указан" }}</div>
+                    </div>
+                    <div class="premium-list__meta text-end">
+                        <span class="badge text-bg-light">{{ risk.get_probability_display }}</span>
+                        <div class="mt-2">
+                            <a href="{% url 'core:event_risk_update' risk.pk %}?return_tab=risks" class="btn btn-sm btn-outline-primary">Изменить</a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-secondary mb-0">Рисков пока нет.</p>
             {% endfor %}
         </div>
     {% elif active_tab == "tasks" %}

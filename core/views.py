@@ -16,6 +16,7 @@ from .forms import (
     EventExpenseForm,
     EventForm,
     EventFormatForm,
+    EventRiskForm,
     EventTaskForm,
     EventTimelineItemForm,
     EventVendorForm,
@@ -32,6 +33,7 @@ from .models import (
     EventDocument,
     EventExpense,
     EventFormat,
+    EventRisk,
     EventTask,
     EventTimelineItem,
     EventVendor,
@@ -167,6 +169,7 @@ class EventDetailView(CRMLoginRequiredMixin, DetailView):
             .prefetch_related(
                 "tasks__responsible",
                 "timeline_items",
+                "risks",
                 "expenses",
                 "event_vendors__vendor",
                 "communications__manager",
@@ -185,7 +188,7 @@ class EventDetailView(CRMLoginRequiredMixin, DetailView):
             can_view_finance = False
 
         active_tab = self.request.GET.get("tab", "tasks")
-        if active_tab not in {"tasks", "timeline", "expenses", "vendors", "communications", "documents"}:
+        if active_tab not in {"tasks", "timeline", "risks", "expenses", "vendors", "communications", "documents"}:
             active_tab = "tasks"
         if active_tab == "expenses" and not can_view_finance:
             active_tab = "tasks"
@@ -197,6 +200,7 @@ class EventDetailView(CRMLoginRequiredMixin, DetailView):
 
         tasks = self.object.tasks.select_related("responsible").all()
         timeline_items = self.object.timeline_items.all()
+        risks = self.object.risks.all()
         expenses = self.object.expenses.all()
         event_vendors = self.object.event_vendors.select_related("vendor").all()
         communications = self.object.communications.select_related("manager").all()
@@ -230,6 +234,7 @@ class EventDetailView(CRMLoginRequiredMixin, DetailView):
         context["document_filter"] = document_filter
         context["detail_tasks"] = tasks
         context["detail_timeline_items"] = timeline_items
+        context["detail_risks"] = risks
         context["detail_expenses"] = expenses if can_view_finance else EventExpense.objects.none()
         context["detail_event_vendors"] = event_vendors
         context["detail_communications"] = communications
@@ -662,6 +667,32 @@ class EventTimelineItemUpdateView(EventScopedFormMixin, CRUDContextMixin, Succes
     return_tab = "timeline"
     page_title = "Редактирование блока тайминга"
     success_message = "Блок тайминга обновлён."
+    success_url = reverse_lazy("core:events")
+    cancel_url = reverse_lazy("core:events")
+
+
+class EventRiskCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+    """Добавляет риск к мероприятию."""
+
+    model = EventRisk
+    form_class = EventRiskForm
+    template_name = "core/object_form.html"
+    return_tab = "risks"
+    page_title = "Новый риск"
+    success_message = "Риск добавлен."
+    success_url = reverse_lazy("core:events")
+    cancel_url = reverse_lazy("core:events")
+
+
+class EventRiskUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+    """Редактирует риск мероприятия."""
+
+    model = EventRisk
+    form_class = EventRiskForm
+    template_name = "core/object_form.html"
+    return_tab = "risks"
+    page_title = "Редактирование риска"
+    success_message = "Риск обновлён."
     success_url = reverse_lazy("core:events")
     cancel_url = reverse_lazy("core:events")
 

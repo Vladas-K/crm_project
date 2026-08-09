@@ -7,6 +7,7 @@ from core.models import (
     EventCommunication,
     EventDocument,
     EventExpense,
+    EventRisk,
     EventTask,
     EventTimelineItem,
     EventVendor,
@@ -133,6 +134,61 @@ def test_nested_timeline_update_returns_to_timeline_tab(client, django_user_mode
     assert item.description == "Приветственное слово"
     assert response.status_code == 302
     assert response.url == f"{reverse('core:event_detail', kwargs={'pk': item.event.pk})}?tab=timeline"
+
+
+@pytest.mark.django_db
+def test_nested_risk_create_returns_to_risks_tab(client, django_user_model, crm_objects):
+    """Создание риска из карточки мероприятия возвращает на вкладку рисков."""
+    login_user(client, django_user_model)
+    event = crm_objects["event"]
+
+    response = client.post(
+        f"{reverse('core:event_risk_create', kwargs={'event_pk': event.pk})}?return_tab=risks",
+        {
+            "event": event.pk,
+            "description": "Площадка может задержать монтаж",
+            "probability": EventRisk.Probability.HIGH,
+            "plan_b": "Перенести монтаж на резервную площадку",
+            "return_tab": "risks",
+        },
+    )
+    risk = event.risks.get(description="Площадка может задержать монтаж")
+
+    assert risk.event == event
+    assert risk.probability == EventRisk.Probability.HIGH
+    assert risk.plan_b == "Перенести монтаж на резервную площадку"
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=risks"
+
+
+@pytest.mark.django_db
+def test_nested_risk_update_returns_to_risks_tab(client, django_user_model, crm_objects):
+    """Редактирование риска из карточки мероприятия возвращает на вкладку рисков."""
+    login_user(client, django_user_model)
+    risk = EventRisk.objects.create(
+        event=crm_objects["event"],
+        description="Сбой доставки оборудования",
+        probability=EventRisk.Probability.MEDIUM,
+        plan_b="Подготовить резервный транспорт",
+    )
+
+    response = client.post(
+        f"{reverse('core:event_risk_update', kwargs={'pk': risk.pk})}?return_tab=risks",
+        {
+            "event": risk.event.pk,
+            "description": "Сбой доставки обновлённого оборудования",
+            "probability": EventRisk.Probability.LOW,
+            "plan_b": "Использовать локального поставщика",
+            "return_tab": "risks",
+        },
+    )
+    risk.refresh_from_db()
+
+    assert risk.description == "Сбой доставки обновлённого оборудования"
+    assert risk.probability == EventRisk.Probability.LOW
+    assert risk.plan_b == "Использовать локального поставщика"
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': risk.event.pk})}?tab=risks"
 
 
 @pytest.mark.django_db
