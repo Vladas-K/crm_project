@@ -2,7 +2,7 @@ import pytest
 from decimal import Decimal
 from django.urls import reverse
 
-from core.models import CRMRole, EventExpense, EventTask, EventVendor, TeamMemberProfile
+from core.models import CRMRole, EventCommunication, EventExpense, EventTask, EventVendor, TeamMemberProfile
 
 
 def login_user(client, django_user_model, **profile_flags):
@@ -247,3 +247,55 @@ def test_nested_event_vendor_update_returns_to_vendors_tab(client, django_user_m
     assert assignment.status == EventVendor.Status.APPROVED
     assert response.status_code == 302
     assert response.url == f"{reverse('core:event_detail', kwargs={'pk': assignment.event.pk})}?tab=vendors"
+
+
+@pytest.mark.django_db
+def test_nested_communication_create_returns_to_communications_tab(client, django_user_model, crm_objects):
+    """Создание коммуникации из карточки мероприятия возвращает на вкладку коммуникаций."""
+    user = login_user(client, django_user_model)
+    event = crm_objects["event"]
+
+    response = client.post(
+        f"{reverse('core:event_communication_create', kwargs={'event_pk': event.pk})}?return_tab=communications",
+        {
+            "event": event.pk,
+            "communication_type": EventCommunication.Type.MEETING,
+            "date": "2026-08-09 14:30",
+            "comment": "Встреча с клиентом по финальным деталям",
+            "manager": user.pk,
+            "return_tab": "communications",
+        },
+    )
+    communication = event.communications.get(comment="Встреча с клиентом по финальным деталям")
+
+    assert communication.event == event
+    assert communication.communication_type == EventCommunication.Type.MEETING
+    assert communication.manager == user
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=communications"
+
+
+@pytest.mark.django_db
+def test_nested_communication_update_returns_to_communications_tab(client, django_user_model, crm_objects):
+    """Редактирование коммуникации из карточки мероприятия возвращает на вкладку коммуникаций."""
+    user = login_user(client, django_user_model)
+    communication = crm_objects["communication"]
+
+    response = client.post(
+        f"{reverse('core:event_communication_update', kwargs={'pk': communication.pk})}?return_tab=communications",
+        {
+            "event": communication.event.pk,
+            "communication_type": EventCommunication.Type.MESSAGE,
+            "date": "2026-08-09 16:00",
+            "comment": "Отправлены обновлённые материалы",
+            "manager": user.pk,
+            "return_tab": "communications",
+        },
+    )
+    communication.refresh_from_db()
+
+    assert communication.communication_type == EventCommunication.Type.MESSAGE
+    assert communication.comment == "Отправлены обновлённые материалы"
+    assert communication.manager == user
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': communication.event.pk})}?tab=communications"
