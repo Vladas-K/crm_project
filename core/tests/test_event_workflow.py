@@ -1,11 +1,21 @@
 import pytest
+from decimal import Decimal
 from django.urls import reverse
 
-from core.models import EventTask, EventVendor
+from core.models import CRMRole, EventExpense, EventTask, EventVendor, TeamMemberProfile
 
 
-def login_user(client, django_user_model):
+def login_user(client, django_user_model, **profile_flags):
     user = django_user_model.objects.create_user(username="workflow_user", password="TestPass123!")
+    defaults = {
+        "role": CRMRole.PROJECT_MANAGER,
+        "can_view_finance": False,
+        "can_view_clients": True,
+        "can_view_analytics": False,
+        "can_manage_system": False,
+    }
+    defaults.update(profile_flags)
+    TeamMemberProfile.objects.create(user=user, **defaults)
     client.force_login(user)
     return user
 
@@ -130,3 +140,57 @@ def test_event_vendor_status_quick_action_ignores_invalid_status(client, django_
     assert assignment.status == original_status
     assert response.status_code == 302
     assert response.url == f"{reverse('core:event_detail', kwargs={'pk': assignment.event.pk})}?tab=vendors"
+
+
+@pytest.mark.django_db
+def test_nested_expense_create_returns_to_expenses_tab(client, django_user_model, crm_objects):
+    """Создание расхода из карточки мероприятия возвращает на вкладку расходов."""
+    login_user(client, django_user_model, can_view_finance=True)
+    event = crm_objects["event"]
+
+    response = client.post(
+        f"{reverse('core:event_expense_create', kwargs={'event_pk': event.pk})}?return_tab=expenses",
+        {
+            "category": "Кейтеринг",
+            "vendor_name": "Food Team",
+            "amount": "45000.00",
+            "prepayment": "15000.00",
+            "payment_status": EventExpense.PaymentStatus.PARTIAL,
+            "return_tab": "expenses",
+        },
+    )
+    expense = event.expenses.get(category="Кейтеринг")
+
+    assert expense.event == event
+    assert expense.amount == Decimal("45000.00")
+    assert expense.prepayment == Decimal("15000.00")
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=expenses"
+
+
+@pytest.mark.django_db
+def test_nested_expense_update_returns_to_expenses_tab(client, django_user_model, crm_objects):
+    """Редактирование расхода из карточки мероприятия возвращает на вкладку расходов."""
+    login_user(client, django_user_model, can_view_finance=True)
+    expense = crm_objects["expense"]
+
+    response = client.post(
+        f"{reverse('core:event_expense_update', kwargs={'pk': expense.pk})}?return_tab=expenses",
+        {
+            "event": expense.event.pk,
+            "category": "Площадка обновлена",
+            "vendor_name": "Venue Team",
+            "amount": "65000.00",
+            "prepayment": "25000.00",
+            "payment_status": EventExpense.PaymentStatus.PAID,
+            "return_tab": "expenses",
+        },
+    )
+    expense.refresh_from_db()
+
+    assert expense.category == "Площадка обновлена"
+    assert expense.amount == Decimal("65000.00")
+    assert expense.prepayment == Decimal("25000.00")
+    assert expense.payment_status == EventExpense.PaymentStatus.PAID
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': expense.event.pk})}?tab=expenses"
