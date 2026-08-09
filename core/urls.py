@@ -31,6 +31,7 @@ from .views import (
     EventVendorStatusUpdateView,
     EventVendorUpdateView,
     LeadListView,
+    LeadAutocompleteView,
     LeadCreateView,
     LeadDeleteView,
     LeadUpdateView,
@@ -62,6 +63,7 @@ app_name = "core"
 urlpatterns = [
     path("", DashboardView.as_view(), name="dashboard"),
     path("leads/", LeadListView.as_view(), name="leads"),
+    path("leads/autocomplete/", LeadAutocompleteView.as_view(), name="lead_autocomplete"),
     path("leads/create/", LeadCreateView.as_view(), name="lead_create"),
     path("leads/<int:pk>/edit/", LeadUpdateView.as_view(), name="lead_update"),
     path("leads/<int:pk>/delete/", LeadDeleteView.as_view(), name="lead_delete"),

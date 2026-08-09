@@ -11,11 +11,14 @@
     <a href="{% url 'core:lead_create' %}" class="btn btn-primary">Добавить лид</a>
 </div>
 
-<form method="get" class="premium-panel mb-4">
+<form method="get" class="premium-panel lead-filter-panel mb-4">
     <div class="row g-3 align-items-end">
         <div class="col-lg-5">
             <label for="lead-search" class="form-label">Поиск</label>
-            <input id="lead-search" type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Имя, телефон или email">
+            <div class="lead-search-autocomplete" data-autocomplete-url="{% url 'core:lead_autocomplete' %}">
+                <input id="lead-search" type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Имя, телефон или email" autocomplete="off">
+                <div id="lead-suggestions" class="lead-suggestions" role="listbox" hidden></div>
+            </div>
         </div>
         <div class="col-md-4 col-lg-3">
             <label for="lead-stage" class="form-label">Этап</label>
@@ -89,4 +92,73 @@
         </table>
     </div>
 </div>
+<script>
+    (() => {
+        const wrapper = document.querySelector(".lead-search-autocomplete");
+        if (!wrapper) return;
+
+        const input = wrapper.querySelector("#lead-search");
+        const suggestions = wrapper.querySelector("#lead-suggestions");
+        let timer;
+        let controller;
+
+        const hideSuggestions = () => {
+            suggestions.hidden = true;
+            suggestions.replaceChildren();
+        };
+
+        const renderSuggestions = (results) => {
+            suggestions.replaceChildren();
+            if (!results.length) {
+                hideSuggestions();
+                return;
+            }
+
+            results.forEach((lead) => {
+                const option = document.createElement("button");
+                option.type = "button";
+                option.className = "lead-suggestions__item";
+                option.setAttribute("role", "option");
+                option.innerHTML = `<strong>${lead.name}</strong><span>${lead.phone || lead.email || "Контакт не указан"}</span>`;
+                option.addEventListener("click", () => {
+                    input.value = lead.phone || lead.email || lead.name;
+                    hideSuggestions();
+                    input.form.requestSubmit();
+                });
+                suggestions.append(option);
+            });
+            suggestions.hidden = false;
+        };
+
+        input.addEventListener("input", () => {
+            clearTimeout(timer);
+            if (controller) controller.abort();
+            if (input.value.trim().length < 2) {
+                hideSuggestions();
+                return;
+            }
+
+            timer = setTimeout(async () => {
+                controller = new AbortController();
+                const url = new URL(wrapper.dataset.autocompleteUrl, window.location.origin);
+                url.searchParams.set("q", input.value.trim());
+                try {
+                    const response = await fetch(url, { signal: controller.signal });
+                    if (!response.ok) return hideSuggestions();
+                    const data = await response.json();
+                    renderSuggestions(data.results);
+                } catch (error) {
+                    if (error.name !== "AbortError") hideSuggestions();
+                }
+            }, 250);
+        });
+
+        input.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") hideSuggestions();
+        });
+        document.addEventListener("click", (event) => {
+            if (!wrapper.contains(event.target)) hideSuggestions();
+        });
+    })();
+</script>
 {% endblock %}

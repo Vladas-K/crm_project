@@ -45,3 +45,36 @@ def test_leads_filters_combine_stage_and_manager(client, django_user_model):
     assert response.context["search_query"] == "Подход"
     assert response.context["stage_filter"] == str(first_stage.pk)
     assert response.context["manager_filter"] == str(manager.pk)
+
+
+@pytest.mark.django_db
+def test_lead_autocomplete_returns_matching_contact_data(client, django_user_model):
+    """Autocomplete возвращает лиды, совпадающие по email или телефону."""
+    user = django_user_model.objects.create_user(username="autocomplete_user", password="TestPass123!")
+    client.force_login(user)
+    Lead.objects.create(name="Анна Смирнова", phone="+79990001122", email="anna@example.com")
+    Lead.objects.create(name="Пётр Иванов", phone="+79990003344", email="petr@example.com")
+
+    response = client.get(reverse("core:lead_autocomplete"), {"q": "79990001122"})
+
+    assert response.status_code == 200
+    assert response.json()["results"] == [
+        {
+            "id": Lead.objects.get(name="Анна Смирнова").pk,
+            "name": "Анна Смирнова",
+            "phone": "+79990001122",
+            "email": "anna@example.com",
+        }
+    ]
+
+
+@pytest.mark.django_db
+def test_lead_autocomplete_requires_two_characters(client, django_user_model):
+    """Autocomplete не выполняет поиск по одному символу."""
+    user = django_user_model.objects.create_user(username="autocomplete_user", password="TestPass123!")
+    client.force_login(user)
+
+    response = client.get(reverse("core:lead_autocomplete"), {"q": "a"})
+
+    assert response.status_code == 200
+    assert response.json() == {"results": []}

@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Count, Q, Sum
 from django.urls import reverse, reverse_lazy
@@ -156,6 +157,34 @@ class LeadListView(CRMLoginRequiredMixin, ListView):
         context["pipeline_stages"] = PipelineStage.objects.order_by("order", "name")
         context["lead_managers"] = User.objects.filter(assigned_leads__isnull=False).distinct().order_by("username")
         return context
+
+
+class LeadAutocompleteView(CRMLoginRequiredMixin, View):
+    """Возвращает короткий список совпадений для подсказок в поиске лидов."""
+
+    def get(self, request):
+        """Ищет лиды по имени, телефону или email после двух символов."""
+
+        query = request.GET.get("q", "").strip()
+        if len(query) < 2:
+            return JsonResponse({"results": []})
+
+        leads = Lead.objects.filter(
+            Q(name__icontains=query) | Q(phone__icontains=query) | Q(email__icontains=query)
+        ).order_by("name", "id")[:8]
+        return JsonResponse(
+            {
+                "results": [
+                    {
+                        "id": lead.pk,
+                        "name": lead.name,
+                        "phone": lead.phone,
+                        "email": lead.email,
+                    }
+                    for lead in leads
+                ]
+            }
+        )
 
 
 class PipelineView(CRMLoginRequiredMixin, TemplateView):
