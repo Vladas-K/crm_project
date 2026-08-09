@@ -2,7 +2,7 @@ import pytest
 from decimal import Decimal
 from django.urls import reverse
 
-from core.models import CRMRole, EventCommunication, EventExpense, EventTask, EventVendor, TeamMemberProfile
+from core.models import CRMRole, EventCommunication, EventDocument, EventExpense, EventTask, EventVendor, TeamMemberProfile
 
 
 def login_user(client, django_user_model, **profile_flags):
@@ -299,3 +299,49 @@ def test_nested_communication_update_returns_to_communications_tab(client, djang
     assert communication.manager == user
     assert response.status_code == 302
     assert response.url == f"{reverse('core:event_detail', kwargs={'pk': communication.event.pk})}?tab=communications"
+
+
+@pytest.mark.django_db
+def test_nested_document_create_returns_to_documents_tab(client, django_user_model, crm_objects):
+    """Создание документа из карточки мероприятия возвращает на вкладку документов."""
+    login_user(client, django_user_model)
+    event = crm_objects["event"]
+
+    response = client.post(
+        f"{reverse('core:event_document_create', kwargs={'event_pk': event.pk})}?return_tab=documents",
+        {
+            "event": event.pk,
+            "document_type": EventDocument.Type.INVOICE,
+            "status": EventDocument.Status.DRAFT,
+            "return_tab": "documents",
+        },
+    )
+    document = event.documents.get(document_type=EventDocument.Type.INVOICE)
+
+    assert document.event == event
+    assert document.status == EventDocument.Status.DRAFT
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=documents"
+
+
+@pytest.mark.django_db
+def test_nested_document_update_returns_to_documents_tab(client, django_user_model, crm_objects):
+    """Редактирование документа из карточки мероприятия возвращает на вкладку документов."""
+    login_user(client, django_user_model)
+    document = crm_objects["document"]
+
+    response = client.post(
+        f"{reverse('core:event_document_update', kwargs={'pk': document.pk})}?return_tab=documents",
+        {
+            "event": document.event.pk,
+            "document_type": EventDocument.Type.CONTRACT,
+            "status": EventDocument.Status.SIGNED,
+            "return_tab": "documents",
+        },
+    )
+    document.refresh_from_db()
+
+    assert document.document_type == EventDocument.Type.CONTRACT
+    assert document.status == EventDocument.Status.SIGNED
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': document.event.pk})}?tab=documents"
