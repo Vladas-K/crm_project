@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect
-from django.db.models import Count, Sum
+from django.db.models import Count, Q, Sum
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views import View
@@ -120,12 +120,42 @@ class DashboardView(CRMLoginRequiredMixin, TemplateView):
 
 
 class LeadListView(CRMLoginRequiredMixin, ListView):
-    """Отображает список лидов с этапом, менеджером и предварительным форматом."""
+    """Отображает список лидов с поиском и фильтрами по этапу и менеджеру."""
 
     model = Lead
     template_name = "core/leads.html"
     context_object_name = "leads"
-    queryset = Lead.objects.select_related("stage", "manager", "preliminary_event_format")
+    def get_queryset(self):
+        """Фильтрует лиды по поисковому запросу, этапу и ответственному."""
+
+        queryset = Lead.objects.select_related("stage", "manager", "preliminary_event_format")
+        search_query = self.request.GET.get("q", "").strip()
+        stage_filter = self.request.GET.get("stage", "")
+        manager_filter = self.request.GET.get("manager", "")
+
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=search_query)
+                | Q(phone__icontains=search_query)
+                | Q(email__icontains=search_query)
+            )
+        if stage_filter.isdigit():
+            queryset = queryset.filter(stage_id=stage_filter)
+        if manager_filter.isdigit():
+            queryset = queryset.filter(manager_id=manager_filter)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        """Передаёт в шаблон значения фильтров и доступные варианты выбора."""
+
+        context = super().get_context_data(**kwargs)
+        context["search_query"] = self.request.GET.get("q", "")
+        context["stage_filter"] = self.request.GET.get("stage", "")
+        context["manager_filter"] = self.request.GET.get("manager", "")
+        context["pipeline_stages"] = PipelineStage.objects.order_by("order", "name")
+        context["lead_managers"] = User.objects.filter(assigned_leads__isnull=False).distinct().order_by("username")
+        return context
 
 
 class PipelineView(CRMLoginRequiredMixin, TemplateView):
