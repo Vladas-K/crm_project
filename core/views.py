@@ -4,7 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Sum
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views import View
@@ -48,6 +48,16 @@ from .models import (
 )
 
 User = get_user_model()
+
+
+def lead_matches_search(lead, query):
+    """Проверяет совпадение запроса без учёта регистра, включая кириллицу."""
+
+    normalized_query = query.casefold()
+    return any(
+        normalized_query in (value or "").casefold()
+        for value in (lead.name, lead.phone, lead.email)
+    )
 
 
 class CRMLoginRequiredMixin(LoginRequiredMixin):
@@ -134,16 +144,12 @@ class LeadListView(CRMLoginRequiredMixin, ListView):
         stage_filter = self.request.GET.get("stage", "")
         manager_filter = self.request.GET.get("manager", "")
 
-        if search_query:
-            queryset = queryset.filter(
-                Q(name__icontains=search_query)
-                | Q(phone__icontains=search_query)
-                | Q(email__icontains=search_query)
-            )
         if stage_filter.isdigit():
             queryset = queryset.filter(stage_id=stage_filter)
         if manager_filter.isdigit():
             queryset = queryset.filter(manager_id=manager_filter)
+        if search_query:
+            queryset = [lead for lead in queryset if lead_matches_search(lead, search_query)]
 
         return queryset
 
@@ -169,9 +175,11 @@ class LeadAutocompleteView(CRMLoginRequiredMixin, View):
         if len(query) < 2:
             return JsonResponse({"results": []})
 
-        leads = Lead.objects.filter(
-            Q(name__icontains=query) | Q(phone__icontains=query) | Q(email__icontains=query)
-        ).order_by("name", "id")[:8]
+        leads = [
+            lead
+            for lead in Lead.objects.order_by("name", "id")
+            if lead_matches_search(lead, query)
+        ][:8]
         return JsonResponse(
             {
                 "results": [

@@ -22,6 +22,10 @@ def test_leads_search_filters_by_name_phone_and_email(client, django_user_model)
     assert response.status_code == 200
     assert list(response.context["leads"]) == [Lead.objects.get(name="Пётр Иванов")]
 
+    cyrillic_response = client.get(reverse("core:leads"), {"q": "анна смирнова"})
+
+    assert list(cyrillic_response.context["leads"]) == [Lead.objects.get(name="Анна Смирнова")]
+
 
 @pytest.mark.django_db
 def test_leads_filters_combine_stage_and_manager(client, django_user_model):
@@ -66,6 +70,11 @@ def test_lead_autocomplete_returns_matching_contact_data(client, django_user_mod
             "email": "anna@example.com",
         }
     ]
+
+    cyrillic_response = client.get(reverse("core:lead_autocomplete"), {"q": "анна смирнова"})
+
+    assert cyrillic_response.status_code == 200
+    assert len(cyrillic_response.json()["results"]) == 1
 
 
 @pytest.mark.django_db
