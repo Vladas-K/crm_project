@@ -194,3 +194,56 @@ def test_nested_expense_update_returns_to_expenses_tab(client, django_user_model
     assert expense.payment_status == EventExpense.PaymentStatus.PAID
     assert response.status_code == 302
     assert response.url == f"{reverse('core:event_detail', kwargs={'pk': expense.event.pk})}?tab=expenses"
+
+
+@pytest.mark.django_db
+def test_nested_event_vendor_create_returns_to_vendors_tab(client, django_user_model, crm_objects):
+    """Создание назначения подрядчика возвращает на вкладку подрядчиков."""
+    login_user(client, django_user_model)
+    event = crm_objects["event"]
+    vendor = crm_objects["vendor"]
+
+    response = client.post(
+        f"{reverse('core:event_vendor_create', kwargs={'event_pk': event.pk})}?return_tab=vendors",
+        {
+            "event": event.pk,
+            "vendor": vendor.pk,
+            "role": "Координатор",
+            "cost": "35000.00",
+            "status": EventVendor.Status.PROPOSED,
+            "return_tab": "vendors",
+        },
+    )
+    assignment = event.event_vendors.get(role="Координатор")
+
+    assert assignment.event == event
+    assert assignment.vendor == vendor
+    assert assignment.cost == Decimal("35000.00")
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=vendors"
+
+
+@pytest.mark.django_db
+def test_nested_event_vendor_update_returns_to_vendors_tab(client, django_user_model, crm_objects):
+    """Редактирование назначения подрядчика возвращает на вкладку подрядчиков."""
+    login_user(client, django_user_model)
+    assignment = crm_objects["event_vendor"]
+
+    response = client.post(
+        f"{reverse('core:event_vendor_update', kwargs={'pk': assignment.pk})}?return_tab=vendors",
+        {
+            "event": assignment.event.pk,
+            "vendor": assignment.vendor.pk,
+            "role": "Технический координатор",
+            "cost": "65000.00",
+            "status": EventVendor.Status.APPROVED,
+            "return_tab": "vendors",
+        },
+    )
+    assignment.refresh_from_db()
+
+    assert assignment.role == "Технический координатор"
+    assert assignment.cost == Decimal("65000.00")
+    assert assignment.status == EventVendor.Status.APPROVED
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': assignment.event.pk})}?tab=vendors"
