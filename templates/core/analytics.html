@@ -99,8 +99,29 @@
             {% endif %}
         </div>
     </div>
+    {% if crm_permissions.can_view_finance %}
+        <div class="col-12">
+            <div class="premium-panel analytics-chart-panel">
+                <div class="premium-panel__header">
+                    <div>
+                        <h2 class="premium-panel__title">Бюджет и расходы</h2>
+                        <p class="premium-panel__subtitle">Плановый бюджет и фактические расходы по месяцам.</p>
+                    </div>
+                    <a href="{% url 'core:events' %}" class="text-decoration-none">Открыть мероприятия</a>
+                </div>
+                {% if finance_monthly_chart %}
+                    <div class="analytics-chart-wrap">
+                        <canvas id="finance-monthly-chart" aria-label="Бюджет и расходы по месяцам"></canvas>
+                    </div>
+                    {{ finance_monthly_chart|json_script:"finance-monthly-chart-data" }}
+                {% else %}
+                    <p class="text-secondary mb-0">Финансовых данных пока нет.</p>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
 </div>
-{% if pipeline_chart or source_chart or monthly_chart or team_chart %}
+{% if pipeline_chart or source_chart or monthly_chart or team_chart or finance_monthly_chart %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 {% endif %}
 {% if pipeline_chart %}
@@ -200,6 +221,46 @@
                     scales: {
                         x: { beginAtZero: true, ticks: { precision: 0 } },
                         y: { grid: { display: false } },
+                    },
+                    onClick: (_event, elements) => {
+                        if (elements.length) window.location.href = chartData[elements[0].index].url;
+                    },
+                },
+            });
+            canvas.style.cursor = "pointer";
+        })();
+    </script>
+{% endif %}
+{% if finance_monthly_chart %}
+    <script>
+        (() => {
+            const chartData = JSON.parse(document.getElementById("finance-monthly-chart-data").textContent);
+            const canvas = document.getElementById("finance-monthly-chart");
+            new Chart(canvas, {
+                type: "bar",
+                data: {
+                    labels: chartData.map((month) => month.label),
+                    datasets: [
+                        {
+                            label: "Бюджет",
+                            data: chartData.map((month) => month.budget),
+                            backgroundColor: "rgba(31, 111, 235, 0.76)",
+                            borderRadius: 8,
+                        },
+                        {
+                            label: "Расходы",
+                            data: chartData.map((month) => month.expenses),
+                            backgroundColor: "rgba(225, 29, 72, 0.76)",
+                            borderRadius: 8,
+                        },
+                    ],
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: "top" } },
+                    scales: {
+                        y: { beginAtZero: true },
+                        x: { grid: { display: false } },
                     },
                     onClick: (_event, elements) => {
                         if (elements.length) window.location.href = chartData[elements[0].index].url;

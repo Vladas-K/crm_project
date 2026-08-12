@@ -690,6 +690,7 @@ class AnalyticsView(AnalyticsAccessMixin, TemplateView):
         total_leads = Lead.objects.count() or 1
         qualified_clients = Client.objects.count()
         total_revenue = Event.objects.aggregate(total=Sum("planned_budget"))["total"] or 0
+        can_view_finance = self.request.user.crm_profile.can_view_finance
         pipeline_chart = [
             {
                 "label": stage.name,
@@ -733,6 +734,23 @@ class AnalyticsView(AnalyticsAccessMixin, TemplateView):
             .annotate(total_events=Count("managed_events"))
             .order_by("-total_events", "username")[:8]
         ]
+        finance_monthly_chart = []
+        if can_view_finance:
+            finance_totals = {}
+            for event in Event.objects.prefetch_related("expenses"):
+                month_key = event.date.strftime("%Y-%m")
+                month_data = finance_totals.setdefault(month_key, {"budget": 0, "expenses": 0})
+                month_data["budget"] += float(event.planned_budget)
+                month_data["expenses"] += float(event.total_expenses)
+            finance_monthly_chart = [
+                {
+                    "label": f"{month_names[int(month_key[5:7]) - 1]} {month_key[:4]}",
+                    "budget": values["budget"],
+                    "expenses": values["expenses"],
+                    "url": f"{reverse('core:events')}?month={month_key}",
+                }
+                for month_key, values in sorted(finance_totals.items())
+            ]
         context["metrics"] = {
             "conversion": round((qualified_clients / total_leads) * 100, 1),
             "average_check": round(total_revenue / max(Event.objects.count(), 1), 2),
@@ -744,6 +762,7 @@ class AnalyticsView(AnalyticsAccessMixin, TemplateView):
         context["source_chart"] = source_chart
         context["monthly_chart"] = monthly_chart
         context["team_chart"] = team_chart
+        context["finance_monthly_chart"] = finance_monthly_chart
         return context
 
 

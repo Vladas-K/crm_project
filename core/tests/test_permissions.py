@@ -221,6 +221,43 @@ def test_analytics_contains_team_chart_data(client, django_user_model, crm_objec
 
 
 @pytest.mark.django_db
+def test_analytics_contains_finance_chart_for_finance_user(client, django_user_model, crm_objects):
+    """Пользователь с финансовым правом видит бюджет и расходы по месяцам."""
+    user = create_user_with_profile(
+        django_user_model,
+        "finance_analyst",
+        can_view_analytics=True,
+        can_view_finance=True,
+    )
+    client.force_login(user)
+
+    response = client.get(reverse("core:analytics"))
+
+    assert response.status_code == 200
+    matching_month = next(item for item in response.context["finance_monthly_chart"] if item["label"].endswith("2026"))
+    assert matching_month["budget"] == 100000.0
+    assert matching_month["expenses"] == 50000.0
+
+
+@pytest.mark.django_db
+def test_analytics_hides_finance_chart_without_finance_access(client, django_user_model, crm_objects):
+    """Пользователь без финансового права не получает финансовые данные графика."""
+    user = create_user_with_profile(
+        django_user_model,
+        "non_finance_analyst",
+        can_view_analytics=True,
+        can_view_finance=False,
+    )
+    client.force_login(user)
+
+    response = client.get(reverse("core:analytics"))
+
+    assert response.status_code == 200
+    assert response.context["finance_monthly_chart"] == []
+    assert "Бюджет и расходы" not in response.content.decode()
+
+
+@pytest.mark.django_db
 def test_team_section_requires_system_access_flag(client, django_user_model):
     user = create_user_with_profile(
         django_user_model,
