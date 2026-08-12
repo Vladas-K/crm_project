@@ -307,11 +307,17 @@ class EventListView(CRMLoginRequiredMixin, ListView):
         search_query = self.request.GET.get("q", "").strip()
         status_filter = self.request.GET.get("status", "")
         format_filter = self.request.GET.get("event_format", "")
+        date_from = self.request.GET.get("date_from", "")
+        date_to = self.request.GET.get("date_to", "")
 
         if status_filter in {choice[0] for choice in Event.Status.choices}:
             queryset = queryset.filter(status=status_filter)
         if format_filter.isdigit():
             queryset = queryset.filter(event_format_id=format_filter)
+        if date_from:
+            queryset = queryset.filter(date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(date__lte=date_to)
         if search_query:
             queryset = [event for event in queryset if event_matches_search(event, search_query)]
 
@@ -324,6 +330,8 @@ class EventListView(CRMLoginRequiredMixin, ListView):
         context["search_query"] = self.request.GET.get("q", "")
         context["event_status_filter"] = self.request.GET.get("status", "")
         context["event_format_filter"] = self.request.GET.get("event_format", "")
+        context["event_date_from"] = self.request.GET.get("date_from", "")
+        context["event_date_to"] = self.request.GET.get("date_to", "")
         context["event_statuses"] = Event.Status.choices
         context["event_formats"] = EventFormat.objects.order_by("name")
         return context

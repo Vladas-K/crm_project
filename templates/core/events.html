@@ -41,8 +41,16 @@
         <div class="col-md-4 col-lg-1 d-flex gap-2">
             <button type="submit" class="btn btn-primary flex-grow-1">Найти</button>
         </div>
+        <div class="col-md-6 col-lg-3">
+            <label for="event-date-from" class="form-label">Дата от</label>
+            <input id="event-date-from" type="date" name="date_from" value="{{ event_date_from }}" class="form-control">
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <label for="event-date-to" class="form-label">Дата до</label>
+            <input id="event-date-to" type="date" name="date_to" value="{{ event_date_to }}" class="form-control">
+        </div>
     </div>
-    {% if search_query or event_status_filter or event_format_filter %}
+    {% if search_query or event_status_filter or event_format_filter or event_date_from or event_date_to %}
         <div class="mt-3">
             <a href="{% url 'core:events' %}" class="small text-decoration-none">Сбросить фильтры</a>
         </div>

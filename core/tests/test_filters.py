@@ -196,3 +196,39 @@ def test_event_autocomplete_returns_matching_event_data(client, django_user_mode
             "city": "Москва",
         }
     ]
+
+
+@pytest.mark.django_db
+def test_events_filter_by_date_range(client, django_user_model):
+    """Фильтр мероприятий по диапазону дат исключает события за пределами периода."""
+    user = django_user_model.objects.create_user(username="event_date_filter_user", password="TestPass123!")
+    client.force_login(user)
+    event_client = Client.objects.create(name="ООО Вектор")
+    matching_event = Event.objects.create(
+        client=event_client,
+        title="Мероприятие в периоде",
+        city="Москва",
+        date="2026-09-15",
+    )
+    Event.objects.create(
+        client=event_client,
+        title="Раннее мероприятие",
+        city="Москва",
+        date="2026-09-01",
+    )
+    Event.objects.create(
+        client=event_client,
+        title="Позднее мероприятие",
+        city="Москва",
+        date="2026-10-01",
+    )
+
+    response = client.get(
+        reverse("core:events"),
+        {"date_from": "2026-09-10", "date_to": "2026-09-20"},
+    )
+
+    assert response.status_code == 200
+    assert list(response.context["events"]) == [matching_event]
+    assert response.context["event_date_from"] == "2026-09-10"
+    assert response.context["event_date_to"] == "2026-09-20"
