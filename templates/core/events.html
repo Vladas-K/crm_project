@@ -15,7 +15,10 @@
     <div class="row g-3 align-items-end">
         <div class="col-lg-6">
             <label for="event-search" class="form-label">Поиск</label>
-            <input id="event-search" type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Название, клиент или город">
+            <div class="crm-search-autocomplete" data-autocomplete-url="{% url 'core:event_autocomplete' %}">
+                <input id="event-search" type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Название, клиент или город" autocomplete="off">
+                <div class="crm-suggestions" role="listbox" hidden></div>
+            </div>
         </div>
         <div class="col-md-4 col-lg-2">
             <label for="event-status" class="form-label">Статус</label>
@@ -85,4 +88,73 @@
         <div class="col-12"><div class="card border-0 shadow-sm"><div class="card-body py-5 text-center text-secondary">Мероприятия по заданным условиям не найдены.</div></div></div>
     {% endfor %}
 </div>
+<script>
+    (() => {
+        const wrapper = document.querySelector(".crm-search-autocomplete");
+        if (!wrapper) return;
+
+        const input = wrapper.querySelector("input");
+        const suggestions = wrapper.querySelector(".crm-suggestions");
+        let timer;
+        let controller;
+
+        const hideSuggestions = () => {
+            suggestions.hidden = true;
+            suggestions.replaceChildren();
+        };
+
+        const renderSuggestions = (results) => {
+            suggestions.replaceChildren();
+            if (!results.length) {
+                hideSuggestions();
+                return;
+            }
+
+            results.forEach((event) => {
+                const option = document.createElement("button");
+                option.type = "button";
+                option.className = "crm-suggestions__item";
+                option.setAttribute("role", "option");
+                option.innerHTML = `<strong>${event.title}</strong><span>${event.client} · ${event.city}</span>`;
+                option.addEventListener("click", () => {
+                    input.value = event.title;
+                    hideSuggestions();
+                    input.form.requestSubmit();
+                });
+                suggestions.append(option);
+            });
+            suggestions.hidden = false;
+        };
+
+        input.addEventListener("input", () => {
+            clearTimeout(timer);
+            if (controller) controller.abort();
+            if (input.value.trim().length < 2) {
+                hideSuggestions();
+                return;
+            }
+
+            timer = setTimeout(async () => {
+                controller = new AbortController();
+                const url = new URL(wrapper.dataset.autocompleteUrl, window.location.origin);
+                url.searchParams.set("q", input.value.trim());
+                try {
+                    const response = await fetch(url, { signal: controller.signal });
+                    if (!response.ok) return hideSuggestions();
+                    const data = await response.json();
+                    renderSuggestions(data.results);
+                } catch (error) {
+                    if (error.name !== "AbortError") hideSuggestions();
+                }
+            }, 250);
+        });
+
+        input.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") hideSuggestions();
+        });
+        document.addEventListener("click", (event) => {
+            if (!wrapper.contains(event.target)) hideSuggestions();
+        });
+    })();
+</script>
 {% endblock %}

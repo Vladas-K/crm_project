@@ -329,6 +329,36 @@ class EventListView(CRMLoginRequiredMixin, ListView):
         return context
 
 
+class EventAutocompleteView(CRMLoginRequiredMixin, View):
+    """Возвращает совпадения для подсказок в поиске мероприятий."""
+
+    def get(self, request):
+        """Ищет мероприятия по названию, клиенту или городу после двух символов."""
+
+        query = request.GET.get("q", "").strip()
+        if len(query) < 2:
+            return JsonResponse({"results": []})
+
+        events = [
+            event
+            for event in Event.objects.select_related("client").order_by("date", "title", "id")
+            if event_matches_search(event, query)
+        ][:8]
+        return JsonResponse(
+            {
+                "results": [
+                    {
+                        "id": event.pk,
+                        "title": event.title or str(event.client),
+                        "client": str(event.client),
+                        "city": event.city,
+                    }
+                    for event in events
+                ]
+            }
+        )
+
+
 class EventDetailView(CRMLoginRequiredMixin, DetailView):
     """Рабочая карточка мероприятия с вкладками, фильтрами и связанной операционной информацией."""
 

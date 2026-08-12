@@ -170,3 +170,29 @@ def test_events_search_filters_by_client_city_status_and_format(client, django_u
     assert response.context["search_query"] == "москва"
     assert response.context["event_status_filter"] == Event.Status.IN_PROGRESS
     assert response.context["event_format_filter"] == str(first_format.pk)
+
+
+@pytest.mark.django_db
+def test_event_autocomplete_returns_matching_event_data(client, django_user_model):
+    """Autocomplete мероприятий возвращает совпадения по городу и клиенту."""
+    user = django_user_model.objects.create_user(username="event_autocomplete_user", password="TestPass123!")
+    client.force_login(user)
+    event_client = Client.objects.create(name="ООО Вектор")
+    event = Event.objects.create(
+        client=event_client,
+        title="Большая конференция",
+        city="Москва",
+        date="2026-09-01",
+    )
+
+    response = client.get(reverse("core:event_autocomplete"), {"q": "МОСКВА"})
+
+    assert response.status_code == 200
+    assert response.json()["results"] == [
+        {
+            "id": event.pk,
+            "title": "Большая конференция",
+            "client": "ООО Вектор",
+            "city": "Москва",
+        }
+    ]
