@@ -105,6 +105,26 @@ def pipeline_stage_color(stage):
     return "rgba(31, 111, 235, 0.78)"
 
 
+def shift_months(value, offset):
+    """Сдвигает дату на указанное число месяцев, сохраняя первый день месяца."""
+
+    month_index = value.month - 1 + offset
+    year = value.year + month_index // 12
+    month = month_index % 12 + 1
+    return value.replace(year=year, month=month, day=1)
+
+
+def analytics_period_bounds(period):
+    """Возвращает границы выбранного периода или ``(None, None)`` для всего периода."""
+
+    if period not in {"6m", "12m"}:
+        return None, None
+
+    today = timezone.localdate()
+    months_count = 6 if period == "6m" else 12
+    return shift_months(today, -(months_count - 1)), today
+
+
 class CRMLoginRequiredMixin(LoginRequiredMixin):
     """Требует авторизацию для CRM-страниц и действий."""
 
@@ -687,18 +707,32 @@ class AnalyticsView(AnalyticsAccessMixin, TemplateView):
         """Собирает агрегированные показатели для аналитического дашборда."""
 
         context = super().get_context_data(**kwargs)
-        total_leads = Lead.objects.count() or 1
-        qualified_clients = Client.objects.count()
-        total_revenue = Event.objects.aggregate(total=Sum("planned_budget"))["total"] or 0
+        period = self.request.GET.get("period", "all")
+        if period not in {"all", "6m", "12m"}:
+            period = "all"
+        period_start, period_end = analytics_period_bounds(period)
+
+        leads = Lead.objects.all()
+        clients = Client.objects.all()
+        events = Event.objects.all()
+        if period_start and period_end:
+            leads = leads.filter(created_at__date__range=(period_start, period_end))
+            clients = clients.filter(created_at__date__range=(period_start, period_end))
+            events = events.filter(date__range=(period_start, period_end))
+
+        total_leads = leads.count() or 1
+        qualified_clients = clients.count()
+        total_revenue = events.aggregate(total=Sum("planned_budget"))["total"] or 0
         can_view_finance = self.request.user.crm_profile.can_view_finance
+        stage_totals = dict(leads.values("stage_id").annotate(total=Count("id")).values_list("stage_id", "total"))
         pipeline_chart = [
             {
                 "label": stage.name,
-                "total": stage.total,
+                "total": stage_totals.get(stage.pk, 0),
                 "color": pipeline_stage_color(stage),
                 "url": f"{reverse('core:pipeline')}?stage={stage.pk}",
             }
-            for stage in PipelineStage.objects.annotate(total=Count("leads")).order_by("order", "name")
+            for stage in PipelineStage.objects.order_by("order", "name")
         ]
         source_chart = [
             {
@@ -706,14 +740,14 @@ class AnalyticsView(AnalyticsAccessMixin, TemplateView):
                 "total": source["total"],
                 "url": f"{reverse('core:leads')}?{urlencode({'source': source['source']})}" if source["source"] else reverse("core:leads"),
             }
-            for source in Lead.objects.values("source").annotate(total=Count("id")).order_by("-total", "source")
+            for source in leads.values("source").annotate(total=Count("id")).order_by("-total", "source")
         ]
         month_names = (
             "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
             "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
         )
         monthly_totals = {}
-        for event_date in Event.objects.values_list("date", flat=True):
+        for event_date in events.values_list("date", flat=True):
             month_key = event_date.strftime("%Y-%m")
             monthly_totals[month_key] = monthly_totals.get(month_key, 0) + 1
         monthly_chart = [
@@ -724,20 +758,25 @@ class AnalyticsView(AnalyticsAccessMixin, TemplateView):
             }
             for month_key, total in sorted(monthly_totals.items())
         ]
+        manager_totals = list(
+            events.values("manager_id")
+            .exclude(manager_id=None)
+            .annotate(total=Count("id"))
+            .order_by("-total", "manager_id")[:8]
+        )
+        managers = User.objects.in_bulk(item["manager_id"] for item in manager_totals)
         team_chart = [
             {
-                "label": manager.get_username(),
-                "total": manager.total_events,
-                "url": f"{reverse('core:events')}?manager={manager.pk}",
+                "label": managers[item["manager_id"]].get_username(),
+                "total": item["total"],
+                "url": f"{reverse('core:events')}?manager={item['manager_id']}",
             }
-            for manager in User.objects.filter(managed_events__isnull=False)
-            .annotate(total_events=Count("managed_events"))
-            .order_by("-total_events", "username")[:8]
+            for item in manager_totals
         ]
         finance_monthly_chart = []
         if can_view_finance:
             finance_totals = {}
-            for event in Event.objects.prefetch_related("expenses"):
+            for event in events.prefetch_related("expenses"):
                 month_key = event.date.strftime("%Y-%m")
                 month_data = finance_totals.setdefault(month_key, {"budget": 0, "expenses": 0})
                 month_data["budget"] += float(event.planned_budget)
@@ -753,11 +792,13 @@ class AnalyticsView(AnalyticsAccessMixin, TemplateView):
             ]
         context["metrics"] = {
             "conversion": round((qualified_clients / total_leads) * 100, 1),
-            "average_check": round(total_revenue / max(Event.objects.count(), 1), 2),
-            "profit": sum(event.profit for event in Event.objects.prefetch_related("expenses")),
-            "sources": Lead.objects.values("source").annotate(total=Count("id")).order_by("-total"),
-            "team_load": User.objects.annotate(total_events=Count("managed_events")).order_by("-total_events")[:6],
+            "average_check": round(total_revenue / max(events.count(), 1), 2),
+            "profit": sum(event.profit for event in events.prefetch_related("expenses")),
+            "sources": leads.values("source").annotate(total=Count("id")).order_by("-total"),
+            "team_load": team_chart,
         }
+        context["analytics_period"] = period
+        context["analytics_period_choices"] = (("all", "Весь период"), ("6m", "Последние 6 месяцев"), ("12m", "Последние 12 месяцев"))
         context["pipeline_chart"] = pipeline_chart
         context["source_chart"] = source_chart
         context["monthly_chart"] = monthly_chart

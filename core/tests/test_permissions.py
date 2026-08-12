@@ -1,7 +1,10 @@
 import pytest
+from datetime import timedelta
+
+from django.utils import timezone
 from django.urls import reverse
 
-from core.models import CRMRole, Lead, TeamMemberProfile
+from core.models import CRMRole, Event, Lead, TeamMemberProfile
 
 
 def create_user_with_profile(django_user_model, username, **profile_flags):
@@ -255,6 +258,58 @@ def test_analytics_hides_finance_chart_without_finance_access(client, django_use
     assert response.status_code == 200
     assert response.context["finance_monthly_chart"] == []
     assert "Бюджет и расходы" not in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_analytics_period_filters_leads_events_and_finance(client, django_user_model, crm_objects):
+    """Выбранный период одновременно ограничивает лиды, мероприятия и финансы."""
+    user = create_user_with_profile(
+        django_user_model,
+        "period_analyst",
+        can_view_analytics=True,
+        can_view_finance=True,
+    )
+    old_date = timezone.localdate() - timedelta(days=220)
+    old_lead = Lead.objects.create(name="Старый лид", source="Старый источник")
+    Lead.objects.filter(pk=old_lead.pk).update(
+        created_at=timezone.make_aware(timezone.datetime.combine(old_date, timezone.datetime.min.time()))
+    )
+    old_event = Event.objects.create(
+        client=crm_objects["client"],
+        lead=old_lead,
+        event_format=crm_objects["event_format"],
+        title="Старое мероприятие",
+        date=old_date,
+        city="Москва",
+        planned_budget=250000,
+    )
+    client.force_login(user)
+
+    response = client.get(reverse("core:analytics"), {"period": "6m"})
+
+    assert response.status_code == 200
+    assert response.context["analytics_period"] == "6m"
+    assert {item["label"] for item in response.context["source_chart"]} == {"Не указан"}
+    assert all(item["label"] != old_date.strftime("%Y-%m") for item in response.context["monthly_chart"])
+    assert all(item["label"] != old_date.strftime("%Y-%m") for item in response.context["finance_monthly_chart"])
+    assert old_event.planned_budget not in [item["budget"] for item in response.context["finance_monthly_chart"]]
+    assert 'name="period"' in response.content.decode()
+
+
+@pytest.mark.django_db
+def test_analytics_invalid_period_falls_back_to_all(client, django_user_model):
+    """Неизвестное значение периода не ломает аналитику и означает весь период."""
+    user = create_user_with_profile(
+        django_user_model,
+        "period_fallback_analyst",
+        can_view_analytics=True,
+    )
+    client.force_login(user)
+
+    response = client.get(reverse("core:analytics"), {"period": "unknown"})
+
+    assert response.status_code == 200
+    assert response.context["analytics_period"] == "all"
 
 
 @pytest.mark.django_db
