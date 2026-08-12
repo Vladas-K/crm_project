@@ -80,6 +80,16 @@ def event_matches_search(event, query):
     )
 
 
+def vendor_matches_search(vendor, query):
+    """Проверяет совпадение запроса в имени, ролях или контактах подрядчика."""
+
+    normalized_query = query.casefold()
+    return any(
+        normalized_query in (value or "").casefold()
+        for value in (vendor.name, vendor.roles, vendor.contacts)
+    )
+
+
 class CRMLoginRequiredMixin(LoginRequiredMixin):
     """Требует авторизацию для CRM-страниц и действий."""
 
@@ -548,11 +558,68 @@ class EventFormatListView(CRMLoginRequiredMixin, ListView):
 
 
 class VendorListView(CRMLoginRequiredMixin, ListView):
-    """Отображает справочник подрядчиков."""
+    """Отображает справочник подрядчиков с поиском и фильтрами."""
 
     model = Vendor
     template_name = "core/vendors.html"
     context_object_name = "vendors"
+
+    def get_queryset(self):
+        """Фильтрует подрядчиков по поиску, чёрному списку и формату мероприятия."""
+
+        queryset = Vendor.objects.prefetch_related("event_formats")
+        search_query = self.request.GET.get("q", "").strip()
+        blacklist_filter = self.request.GET.get("blacklisted", "")
+        format_filter = self.request.GET.get("event_format", "")
+
+        if blacklist_filter in {"yes", "no"}:
+            queryset = queryset.filter(blacklisted=blacklist_filter == "yes")
+        if format_filter.isdigit():
+            queryset = queryset.filter(event_formats__id=format_filter).distinct()
+        if search_query:
+            queryset = [vendor for vendor in queryset if vendor_matches_search(vendor, search_query)]
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        """Передаёт в шаблон значения фильтров и доступные форматы."""
+
+        context = super().get_context_data(**kwargs)
+        context["vendor_search_query"] = self.request.GET.get("q", "")
+        context["vendor_blacklist_filter"] = self.request.GET.get("blacklisted", "")
+        context["vendor_format_filter"] = self.request.GET.get("event_format", "")
+        context["vendor_formats"] = EventFormat.objects.order_by("name")
+        return context
+
+
+class VendorAutocompleteView(CRMLoginRequiredMixin, View):
+    """Возвращает совпадения для подсказок в поиске подрядчиков."""
+
+    def get(self, request):
+        """Ищет подрядчиков по имени, ролям или контактам после двух символов."""
+
+        query = request.GET.get("q", "").strip()
+        if len(query) < 2:
+            return JsonResponse({"results": []})
+
+        vendors = [
+            vendor
+            for vendor in Vendor.objects.order_by("name", "id")
+            if vendor_matches_search(vendor, query)
+        ][:8]
+        return JsonResponse(
+            {
+                "results": [
+                    {
+                        "id": vendor.pk,
+                        "name": vendor.name,
+                        "roles": vendor.roles,
+                        "contacts": vendor.contacts,
+                    }
+                    for vendor in vendors
+                ]
+            }
+        )
 
 
 class PackageListView(CRMLoginRequiredMixin, ListView):

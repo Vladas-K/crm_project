@@ -2,7 +2,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from core.models import CRMRole, Client, Event, EventFormat, Lead, PipelineStage, TeamMemberProfile
+from core.models import CRMRole, Client, Event, EventFormat, Lead, PipelineStage, TeamMemberProfile, Vendor
 
 User = get_user_model()
 
@@ -232,3 +232,45 @@ def test_events_filter_by_date_range(client, django_user_model):
     assert list(response.context["events"]) == [matching_event]
     assert response.context["event_date_from"] == "2026-09-10"
     assert response.context["event_date_to"] == "2026-09-20"
+
+
+@pytest.mark.django_db
+def test_vendors_search_filters_by_status_and_format(client, django_user_model):
+    """Поиск подрядчиков и фильтры статуса и формата работают вместе."""
+    user = django_user_model.objects.create_user(username="vendor_filter_user", password="TestPass123!")
+    client.force_login(user)
+    event_format = EventFormat.objects.create(name="Конференция подрядчиков")
+    matching_vendor = Vendor.objects.create(
+        name="Stage Team",
+        roles="Технический продакшн",
+        contacts="stage@example.com",
+    )
+    matching_vendor.event_formats.add(event_format)
+    Vendor.objects.create(name="Другой подрядчик", roles="Декор", blacklisted=True)
+
+    response = client.get(
+        reverse("core:vendors"),
+        {
+            "q": "stage",
+            "blacklisted": "no",
+            "event_format": event_format.pk,
+        },
+    )
+
+    assert response.status_code == 200
+    assert list(response.context["vendors"]) == [matching_vendor]
+    assert response.context["vendor_blacklist_filter"] == "no"
+    assert response.context["vendor_format_filter"] == str(event_format.pk)
+
+
+@pytest.mark.django_db
+def test_vendor_autocomplete_returns_matching_vendor_data(client, django_user_model):
+    """Autocomplete подрядчиков возвращает совпадения по ролям и контактам."""
+    user = django_user_model.objects.create_user(username="vendor_autocomplete_user", password="TestPass123!")
+    client.force_login(user)
+    Vendor.objects.create(name="Stage Team", roles="Технический продакшн", contacts="stage@example.com")
+
+    response = client.get(reverse("core:vendor_autocomplete"), {"q": "ТЕХНИЧЕСКИЙ"})
+
+    assert response.status_code == 200
+    assert response.json()["results"][0]["name"] == "Stage Team"

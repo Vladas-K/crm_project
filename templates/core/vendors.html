@@ -11,6 +11,43 @@
     <a href="{% url 'core:vendor_create' %}" class="btn btn-primary">Добавить подрядчика</a>
 </div>
 
+<form method="get" class="premium-panel lead-filter-panel mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-lg-5">
+            <label for="vendor-search" class="form-label">Поиск</label>
+            <div class="crm-search-autocomplete" data-autocomplete-url="{% url 'core:vendor_autocomplete' %}">
+                <input id="vendor-search" type="search" name="q" value="{{ vendor_search_query }}" class="form-control" placeholder="Имя, роли или контакты" autocomplete="off">
+                <div class="crm-suggestions" role="listbox" hidden></div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-3">
+            <label for="vendor-blacklist" class="form-label">Статус</label>
+            <select id="vendor-blacklist" name="blacklisted" class="form-select">
+                <option value="">Все подрядчики</option>
+                <option value="no"{% if vendor_blacklist_filter == "no" %} selected{% endif %}>Активные</option>
+                <option value="yes"{% if vendor_blacklist_filter == "yes" %} selected{% endif %}>Чёрный список</option>
+            </select>
+        </div>
+        <div class="col-md-4 col-lg-3">
+            <label for="vendor-format" class="form-label">Формат мероприятия</label>
+            <select id="vendor-format" name="event_format" class="form-select">
+                <option value="">Все форматы</option>
+                {% for format in vendor_formats %}
+                    <option value="{{ format.pk }}"{% if vendor_format_filter == format.pk|stringformat:"s" %} selected{% endif %}>{{ format.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4 col-lg-1 d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-grow-1">Найти</button>
+        </div>
+    </div>
+    {% if vendor_search_query or vendor_blacklist_filter or vendor_format_filter %}
+        <div class="mt-3">
+            <a href="{% url 'core:vendors' %}" class="small text-decoration-none">Сбросить фильтры</a>
+        </div>
+    {% endif %}
+</form>
+
 <div class="card border-0 shadow-sm">
     <div class="table-responsive">
         <table class="table align-middle mb-0">
@@ -46,10 +83,79 @@
                         </td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="{% if crm_permissions.can_view_finance %}7{% else %}6{% endif %}" class="text-center text-secondary py-4">Подрядчики пока не добавлены.</td></tr>
+                    <tr><td colspan="{% if crm_permissions.can_view_finance %}7{% else %}6{% endif %}" class="text-center text-secondary py-4">Подрядчики по заданным условиям не найдены.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+<script>
+    (() => {
+        const wrapper = document.querySelector(".crm-search-autocomplete");
+        if (!wrapper) return;
+
+        const input = wrapper.querySelector("input");
+        const suggestions = wrapper.querySelector(".crm-suggestions");
+        let timer;
+        let controller;
+
+        const hideSuggestions = () => {
+            suggestions.hidden = true;
+            suggestions.replaceChildren();
+        };
+
+        const renderSuggestions = (results) => {
+            suggestions.replaceChildren();
+            if (!results.length) {
+                hideSuggestions();
+                return;
+            }
+
+            results.forEach((vendor) => {
+                const option = document.createElement("button");
+                option.type = "button";
+                option.className = "crm-suggestions__item";
+                option.setAttribute("role", "option");
+                option.innerHTML = `<strong>${vendor.name}</strong><span>${vendor.roles || vendor.contacts || "Контакты не указаны"}</span>`;
+                option.addEventListener("click", () => {
+                    input.value = vendor.name;
+                    hideSuggestions();
+                    input.form.requestSubmit();
+                });
+                suggestions.append(option);
+            });
+            suggestions.hidden = false;
+        };
+
+        input.addEventListener("input", () => {
+            clearTimeout(timer);
+            if (controller) controller.abort();
+            if (input.value.trim().length < 2) {
+                hideSuggestions();
+                return;
+            }
+
+            timer = setTimeout(async () => {
+                controller = new AbortController();
+                const url = new URL(wrapper.dataset.autocompleteUrl, window.location.origin);
+                url.searchParams.set("q", input.value.trim());
+                try {
+                    const response = await fetch(url, { signal: controller.signal });
+                    if (!response.ok) return hideSuggestions();
+                    const data = await response.json();
+                    renderSuggestions(data.results);
+                } catch (error) {
+                    if (error.name !== "AbortError") hideSuggestions();
+                }
+            }, 250);
+        });
+
+        input.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") hideSuggestions();
+        });
+        document.addEventListener("click", (event) => {
+            if (!wrapper.contains(event.target)) hideSuggestions();
+        });
+    })();
+</script>
 {% endblock %}
