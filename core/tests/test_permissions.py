@@ -114,6 +114,47 @@ def test_analytics_allows_user_with_analytics_access_flag(client, django_user_mo
 
 
 @pytest.mark.django_db
+def test_analytics_contains_pipeline_chart_data(client, django_user_model, crm_objects):
+    """Аналитика передаёт в график этапы воронки и количество лидов."""
+    user = create_user_with_profile(
+        django_user_model,
+        "pipeline_analyst",
+        can_view_analytics=True,
+    )
+    client.force_login(user)
+
+    response = client.get(reverse("core:analytics"))
+    html = response.content.decode()
+
+    assert response.status_code == 200
+    assert 'id="pipeline-chart"' in html
+    matching_stage = next(
+        item for item in response.context["pipeline_chart"] if item["label"] == "Новый"
+    )
+    assert matching_stage == {
+        "label": "Новый",
+        "total": 1,
+        "color": "rgba(100, 116, 139, 0.78)",
+        "url": f"{reverse('core:pipeline')}?stage={crm_objects['stage'].pk}",
+    }
+
+
+@pytest.mark.django_db
+def test_pipeline_accepts_stage_filter_from_analytics(client, django_user_model, crm_objects):
+    """Воронка открывает выбранный этап по ссылке из аналитики."""
+    user = create_user_with_profile(
+        django_user_model,
+        "pipeline_viewer",
+    )
+    client.force_login(user)
+
+    response = client.get(reverse("core:pipeline"), {"stage": crm_objects["stage"].pk})
+
+    assert response.status_code == 200
+    assert list(response.context["stages"]) == [crm_objects["stage"]]
+
+
+@pytest.mark.django_db
 def test_team_section_requires_system_access_flag(client, django_user_model):
     user = create_user_with_profile(
         django_user_model,

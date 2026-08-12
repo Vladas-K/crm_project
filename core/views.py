@@ -90,6 +90,20 @@ def vendor_matches_search(vendor, query):
     )
 
 
+def pipeline_stage_color(stage):
+    """Возвращает спокойный цвет для этапа воронки по его смыслу."""
+
+    if stage.is_lost:
+        return "rgba(225, 29, 72, 0.78)"
+    if stage.probability >= 80:
+        return "rgba(15, 159, 110, 0.78)"
+    if stage.probability >= 50:
+        return "rgba(217, 119, 6, 0.78)"
+    if stage.order <= 1:
+        return "rgba(100, 116, 139, 0.78)"
+    return "rgba(31, 111, 235, 0.78)"
+
+
 class CRMLoginRequiredMixin(LoginRequiredMixin):
     """Требует авторизацию для CRM-страниц и действий."""
 
@@ -232,7 +246,12 @@ class PipelineView(CRMLoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["stages"] = PipelineStage.objects.prefetch_related("leads__manager").all()
+        stages = PipelineStage.objects.prefetch_related("leads__manager").all()
+        stage_filter = self.request.GET.get("stage", "")
+        if stage_filter.isdigit():
+            stages = stages.filter(pk=stage_filter)
+        context["stages"] = stages
+        context["stage_filter"] = stage_filter
         return context
 
 
@@ -652,6 +671,15 @@ class AnalyticsView(AnalyticsAccessMixin, TemplateView):
         total_leads = Lead.objects.count() or 1
         qualified_clients = Client.objects.count()
         total_revenue = Event.objects.aggregate(total=Sum("planned_budget"))["total"] or 0
+        pipeline_chart = [
+            {
+                "label": stage.name,
+                "total": stage.total,
+                "color": pipeline_stage_color(stage),
+                "url": f"{reverse('core:pipeline')}?stage={stage.pk}",
+            }
+            for stage in PipelineStage.objects.annotate(total=Count("leads")).order_by("order", "name")
+        ]
         context["metrics"] = {
             "conversion": round((qualified_clients / total_leads) * 100, 1),
             "average_check": round(total_revenue / max(Event.objects.count(), 1), 2),
@@ -659,6 +687,7 @@ class AnalyticsView(AnalyticsAccessMixin, TemplateView):
             "sources": Lead.objects.values("source").annotate(total=Count("id")).order_by("-total"),
             "team_load": User.objects.annotate(total_events=Count("managed_events")).order_by("-total_events")[:6],
         }
+        context["pipeline_chart"] = pipeline_chart
         return context
 
 

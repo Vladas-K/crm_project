@@ -647,6 +647,11 @@ body {
     --panel-accent-rgb: 217, 119, 6;
 }
 
+.analytics-chart-wrap {
+    position: relative;
+    min-height: 18rem;
+}
+
 .premium-panel--pipeline {
     --panel-accent-rgb: 124, 58, 237;
 }

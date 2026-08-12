@@ -25,6 +25,25 @@
 </div>
 
 <div class="row g-4">
+    <div class="col-12">
+        <div class="premium-panel analytics-chart-panel">
+            <div class="premium-panel__header">
+                <div>
+                    <h2 class="premium-panel__title">Воронка продаж</h2>
+                    <p class="premium-panel__subtitle">Количество лидов на каждом этапе.</p>
+                </div>
+                <a href="{% url 'core:pipeline' %}" class="text-decoration-none">Открыть воронку</a>
+            </div>
+            {% if pipeline_chart %}
+                <div class="analytics-chart-wrap">
+                    <canvas id="pipeline-chart" aria-label="График воронки продаж"></canvas>
+                </div>
+                {{ pipeline_chart|json_script:"pipeline-chart-data" }}
+            {% else %}
+                <p class="text-secondary mb-0">Данных для графика пока нет.</p>
+            {% endif %}
+        </div>
+    </div>
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white border-0 pt-4">
@@ -60,4 +79,42 @@
         </div>
     </div>
 </div>
+{% if pipeline_chart %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
+        (() => {
+            const chartData = JSON.parse(document.getElementById("pipeline-chart-data").textContent);
+            const canvas = document.getElementById("pipeline-chart");
+            const chart = new Chart(canvas, {
+                type: "bar",
+                data: {
+                    labels: chartData.map((stage) => stage.label),
+                    datasets: [{
+                        data: chartData.map((stage) => stage.total),
+                        backgroundColor: chartData.map((stage) => stage.color),
+                        borderRadius: 8,
+                        borderSkipped: false,
+                        barThickness: 28,
+                    }],
+                },
+                options: {
+                    indexAxis: "y",
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                    },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { precision: 0 } },
+                        y: { grid: { display: false } },
+                    },
+                    onClick: (_event, elements) => {
+                        if (elements.length) window.location.href = chartData[elements[0].index].url;
+                    },
+                },
+            });
+            canvas.style.cursor = "pointer";
+            window.pipelineChart = chart;
+        })();
+    </script>
+{% endif %}
 {% endblock %}
