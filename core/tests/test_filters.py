@@ -2,7 +2,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from core.models import CRMRole, Client, Lead, PipelineStage, TeamMemberProfile
+from core.models import CRMRole, Client, Event, EventFormat, Lead, PipelineStage, TeamMemberProfile
 
 User = get_user_model()
 
@@ -128,3 +128,45 @@ def test_client_autocomplete_returns_matching_contact_data(client, django_user_m
 
     assert response.status_code == 200
     assert response.json()["results"][0]["name"] == "ООО Вектор"
+
+
+@pytest.mark.django_db
+def test_events_search_filters_by_client_city_status_and_format(client, django_user_model):
+    """Поиск мероприятий и фильтры статуса и формата работают вместе."""
+    user = django_user_model.objects.create_user(username="event_filter_user", password="TestPass123!")
+    client.force_login(user)
+    first_format = EventFormat.objects.create(name="Конференция для фильтра")
+    second_format = EventFormat.objects.create(name="Свадьба для фильтра")
+    first_client = Client.objects.create(name="ООО Вектор")
+    second_client = Client.objects.create(name="Анна Смирнова")
+    matching_event = Event.objects.create(
+        client=first_client,
+        event_format=first_format,
+        title="Большая конференция",
+        city="Москва",
+        date="2026-09-01",
+        status=Event.Status.IN_PROGRESS,
+    )
+    Event.objects.create(
+        client=second_client,
+        event_format=second_format,
+        title="Частное мероприятие",
+        city="Казань",
+        date="2026-09-02",
+        status=Event.Status.IN_PROGRESS,
+    )
+
+    response = client.get(
+        reverse("core:events"),
+        {
+            "q": "москва",
+            "status": Event.Status.IN_PROGRESS,
+            "event_format": first_format.pk,
+        },
+    )
+
+    assert response.status_code == 200
+    assert list(response.context["events"]) == [matching_event]
+    assert response.context["search_query"] == "москва"
+    assert response.context["event_status_filter"] == Event.Status.IN_PROGRESS
+    assert response.context["event_format_filter"] == str(first_format.pk)

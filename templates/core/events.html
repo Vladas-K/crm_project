@@ -11,6 +11,41 @@
     <a href="{% url 'core:event_create' %}" class="btn btn-primary">Добавить мероприятие</a>
 </div>
 
+<form method="get" class="premium-panel lead-filter-panel mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-lg-6">
+            <label for="event-search" class="form-label">Поиск</label>
+            <input id="event-search" type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Название, клиент или город">
+        </div>
+        <div class="col-md-4 col-lg-2">
+            <label for="event-status" class="form-label">Статус</label>
+            <select id="event-status" name="status" class="form-select">
+                <option value="">Все статусы</option>
+                {% for value, label in event_statuses %}
+                    <option value="{{ value }}"{% if event_status_filter == value %} selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4 col-lg-3">
+            <label for="event-format" class="form-label">Формат</label>
+            <select id="event-format" name="event_format" class="form-select">
+                <option value="">Все форматы</option>
+                {% for format in event_formats %}
+                    <option value="{{ format.pk }}"{% if event_format_filter == format.pk|stringformat:"s" %} selected{% endif %}>{{ format.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4 col-lg-1 d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-grow-1">Найти</button>
+        </div>
+    </div>
+    {% if search_query or event_status_filter or event_format_filter %}
+        <div class="mt-3">
+            <a href="{% url 'core:events' %}" class="small text-decoration-none">Сбросить фильтры</a>
+        </div>
+    {% endif %}
+</form>
+
 <div class="row g-4">
     {% for event in events %}
         <div class="col-lg-6">
@@ -47,7 +82,7 @@
             </div>
         </div>
     {% empty %}
-        <div class="col-12"><div class="card border-0 shadow-sm"><div class="card-body py-5 text-center text-secondary">Мероприятия пока не добавлены.</div></div></div>
+        <div class="col-12"><div class="card border-0 shadow-sm"><div class="card-body py-5 text-center text-secondary">Мероприятия по заданным условиям не найдены.</div></div></div>
     {% endfor %}
 </div>
 {% endblock %}

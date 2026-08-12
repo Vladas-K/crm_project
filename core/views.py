@@ -70,6 +70,16 @@ def client_matches_search(client, query):
     )
 
 
+def event_matches_search(event, query):
+    """Проверяет совпадение запроса в названии, городе или имени клиента."""
+
+    normalized_query = query.casefold()
+    return any(
+        normalized_query in (value or "").casefold()
+        for value in (event.title, event.city, event.client.name)
+    )
+
+
 class CRMLoginRequiredMixin(LoginRequiredMixin):
     """Требует авторизацию для CRM-страниц и действий."""
 
@@ -285,12 +295,38 @@ class ClientAutocompleteView(ClientAccessMixin, View):
 
 
 class EventListView(CRMLoginRequiredMixin, ListView):
-    """Показывает список мероприятий с ключевыми финансовыми и операционными метриками."""
+    """Показывает список мероприятий с поиском и фильтрами."""
 
     model = Event
     template_name = "core/events.html"
     context_object_name = "events"
-    queryset = Event.objects.select_related("client", "lead", "event_format", "manager")
+    def get_queryset(self):
+        """Фильтрует мероприятия по названию, клиенту, городу, статусу и формату."""
+
+        queryset = Event.objects.select_related("client", "lead", "event_format", "manager")
+        search_query = self.request.GET.get("q", "").strip()
+        status_filter = self.request.GET.get("status", "")
+        format_filter = self.request.GET.get("event_format", "")
+
+        if status_filter in {choice[0] for choice in Event.Status.choices}:
+            queryset = queryset.filter(status=status_filter)
+        if format_filter.isdigit():
+            queryset = queryset.filter(event_format_id=format_filter)
+        if search_query:
+            queryset = [event for event in queryset if event_matches_search(event, search_query)]
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        """Передаёт в шаблон значения фильтров и доступные варианты выбора."""
+
+        context = super().get_context_data(**kwargs)
+        context["search_query"] = self.request.GET.get("q", "")
+        context["event_status_filter"] = self.request.GET.get("status", "")
+        context["event_format_filter"] = self.request.GET.get("event_format", "")
+        context["event_statuses"] = Event.Status.choices
+        context["event_formats"] = EventFormat.objects.order_by("name")
+        return context
 
 
 class EventDetailView(CRMLoginRequiredMixin, DetailView):
