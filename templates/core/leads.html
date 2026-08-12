@@ -38,11 +38,20 @@
                 {% endfor %}
             </select>
         </div>
+        <div class="col-md-4 col-lg-3">
+            <label for="lead-source" class="form-label">Источник</label>
+            <select id="lead-source" name="source" class="form-select">
+                <option value="">Все источники</option>
+                {% for source in lead_sources %}
+                    <option value="{{ source }}"{% if source_filter == source %} selected{% endif %}>{{ source }}</option>
+                {% endfor %}
+            </select>
+        </div>
         <div class="col-md-4 col-lg-1 d-flex gap-2">
             <button type="submit" class="btn btn-primary flex-grow-1">Найти</button>
         </div>
     </div>
-    {% if search_query or stage_filter or manager_filter %}
+    {% if search_query or stage_filter or manager_filter or source_filter %}
         <div class="mt-3">
             <a href="{% url 'core:leads' %}" class="small text-decoration-none">Сбросить фильтры</a>
         </div>

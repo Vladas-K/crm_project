@@ -45,22 +45,21 @@
         </div>
     </div>
     <div class="col-lg-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-0 pt-4">
-                <h2 class="h5 mb-0">
-                    {% if crm_permissions.can_view_finance %}Источник → деньги{% else %}Источники лидов{% endif %}
-                </h2>
+        <div class="premium-panel analytics-chart-panel">
+            <div class="premium-panel__header">
+                <div>
+                    <h2 class="premium-panel__title">Источники лидов</h2>
+                    <p class="premium-panel__subtitle">Распределение входящих обращений по каналам.</p>
+                </div>
             </div>
-            <div class="card-body">
-                {% for item in metrics.sources %}
-                    <div class="list-row">
-                        <div class="fw-semibold">{{ item.source|default:"Не указан" }}</div>
-                        <div>{{ item.total }}</div>
-                    </div>
-                {% empty %}
-                    <p class="text-secondary mb-0">Данных пока нет.</p>
-                {% endfor %}
-            </div>
+            {% if source_chart %}
+                <div class="analytics-chart-wrap analytics-chart-wrap--sources">
+                    <canvas id="source-chart" aria-label="График источников лидов"></canvas>
+                </div>
+                {{ source_chart|json_script:"source-chart-data" }}
+            {% else %}
+                <p class="text-secondary mb-0">Данных пока нет.</p>
+            {% endif %}
         </div>
     </div>
     <div class="col-lg-6">
@@ -79,7 +78,7 @@
         </div>
     </div>
 </div>
-{% if pipeline_chart %}
+{% if pipeline_chart or source_chart %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script>
         (() => {
@@ -114,6 +113,36 @@
             });
             canvas.style.cursor = "pointer";
             window.pipelineChart = chart;
+        })();
+    </script>
+{% endif %}
+{% if source_chart %}
+    <script>
+        (() => {
+            const chartData = JSON.parse(document.getElementById("source-chart-data").textContent);
+            const canvas = document.getElementById("source-chart");
+            new Chart(canvas, {
+                type: "doughnut",
+                data: {
+                    labels: chartData.map((source) => source.label),
+                    datasets: [{
+                        data: chartData.map((source) => source.total),
+                        backgroundColor: ["#1f6feb", "#0f9f6e", "#d97706", "#7c3aed", "#e11d48", "#64748b"],
+                        borderColor: "#ffffff",
+                        borderWidth: 3,
+                    }],
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: "right" },
+                    },
+                    onClick: (_event, elements) => {
+                        if (elements.length) window.location.href = chartData[elements[0].index].url;
+                    },
+                },
+            });
+            canvas.style.cursor = "pointer";
         })();
     </script>
 {% endif %}

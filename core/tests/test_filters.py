@@ -62,6 +62,21 @@ def test_leads_filters_combine_stage_and_manager(client, django_user_model):
 
 
 @pytest.mark.django_db
+def test_leads_filter_by_source(client, django_user_model):
+    """Фильтр источника оставляет только лиды выбранного канала."""
+    user = django_user_model.objects.create_user(username="source_filter_user", password="TestPass123!")
+    client.force_login(user)
+    matching_lead = Lead.objects.create(name="Лид из формы", source="Сайт")
+    Lead.objects.create(name="Лид из соцсетей", source="Соцсети")
+
+    response = client.get(reverse("core:leads"), {"source": "Сайт"})
+
+    assert response.status_code == 200
+    assert list(response.context["leads"]) == [matching_lead]
+    assert response.context["source_filter"] == "Сайт"
+
+
+@pytest.mark.django_db
 def test_lead_autocomplete_returns_matching_contact_data(client, django_user_model):
     """Autocomplete возвращает лиды, совпадающие по email или телефону."""
     user = django_user_model.objects.create_user(username="autocomplete_user", password="TestPass123!")

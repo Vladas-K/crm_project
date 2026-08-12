@@ -1,7 +1,7 @@
 import pytest
 from django.urls import reverse
 
-from core.models import CRMRole, TeamMemberProfile
+from core.models import CRMRole, Lead, TeamMemberProfile
 
 
 def create_user_with_profile(django_user_model, username, **profile_flags):
@@ -152,6 +152,29 @@ def test_pipeline_accepts_stage_filter_from_analytics(client, django_user_model,
 
     assert response.status_code == 200
     assert list(response.context["stages"]) == [crm_objects["stage"]]
+
+
+@pytest.mark.django_db
+def test_analytics_contains_source_chart_data(client, django_user_model):
+    """Аналитика передаёт в график источников количество лидов и ссылки на фильтр."""
+    user = create_user_with_profile(
+        django_user_model,
+        "source_analyst",
+        can_view_analytics=True,
+    )
+    client.force_login(user)
+    Lead.objects.create(name="Лид с сайта", source="Сайт")
+    Lead.objects.create(name="Лид из рекламы", source="Реклама")
+
+    response = client.get(reverse("core:analytics"))
+
+    assert response.status_code == 200
+    source_chart = response.context["source_chart"]
+    assert {item["label"] for item in source_chart} == {"Сайт", "Реклама"}
+    assert {item["url"] for item in source_chart} == {
+        f"{reverse('core:leads')}?source=%D0%A1%D0%B0%D0%B9%D1%82",
+        f"{reverse('core:leads')}?source=%D0%A0%D0%B5%D0%BA%D0%BB%D0%B0%D0%BC%D0%B0",
+    }
 
 
 @pytest.mark.django_db

@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Count, Sum
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.utils.http import urlencode
 from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
 
@@ -187,11 +188,14 @@ class LeadListView(CRMLoginRequiredMixin, ListView):
         search_query = self.request.GET.get("q", "").strip()
         stage_filter = self.request.GET.get("stage", "")
         manager_filter = self.request.GET.get("manager", "")
+        source_filter = self.request.GET.get("source", "")
 
         if stage_filter.isdigit():
             queryset = queryset.filter(stage_id=stage_filter)
         if manager_filter.isdigit():
             queryset = queryset.filter(manager_id=manager_filter)
+        if source_filter:
+            queryset = queryset.filter(source=source_filter)
         if search_query:
             queryset = [lead for lead in queryset if lead_matches_search(lead, search_query)]
 
@@ -204,8 +208,12 @@ class LeadListView(CRMLoginRequiredMixin, ListView):
         context["search_query"] = self.request.GET.get("q", "")
         context["stage_filter"] = self.request.GET.get("stage", "")
         context["manager_filter"] = self.request.GET.get("manager", "")
+        context["source_filter"] = self.request.GET.get("source", "")
         context["pipeline_stages"] = PipelineStage.objects.order_by("order", "name")
         context["lead_managers"] = User.objects.filter(assigned_leads__isnull=False).distinct().order_by("username")
+        context["lead_sources"] = (
+            Lead.objects.exclude(source="").values_list("source", flat=True).distinct().order_by("source")
+        )
         return context
 
 
@@ -680,6 +688,14 @@ class AnalyticsView(AnalyticsAccessMixin, TemplateView):
             }
             for stage in PipelineStage.objects.annotate(total=Count("leads")).order_by("order", "name")
         ]
+        source_chart = [
+            {
+                "label": source["source"] or "Не указан",
+                "total": source["total"],
+                "url": f"{reverse('core:leads')}?{urlencode({'source': source['source']})}" if source["source"] else reverse("core:leads"),
+            }
+            for source in Lead.objects.values("source").annotate(total=Count("id")).order_by("-total", "source")
+        ]
         context["metrics"] = {
             "conversion": round((qualified_clients / total_leads) * 100, 1),
             "average_check": round(total_revenue / max(Event.objects.count(), 1), 2),
@@ -688,6 +704,7 @@ class AnalyticsView(AnalyticsAccessMixin, TemplateView):
             "team_load": User.objects.annotate(total_events=Count("managed_events")).order_by("-total_events")[:6],
         }
         context["pipeline_chart"] = pipeline_chart
+        context["source_chart"] = source_chart
         return context
 
 
