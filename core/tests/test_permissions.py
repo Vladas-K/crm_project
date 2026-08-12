@@ -196,6 +196,31 @@ def test_analytics_contains_monthly_event_chart_data(client, django_user_model, 
 
 
 @pytest.mark.django_db
+def test_analytics_contains_team_chart_data(client, django_user_model, crm_objects):
+    """Аналитика передаёт загрузку менеджеров со ссылками на фильтр мероприятий."""
+    user = create_user_with_profile(
+        django_user_model,
+        "team_analyst",
+        can_view_analytics=True,
+    )
+    manager = django_user_model.objects.create_user(username="project_manager")
+    crm_objects["event"].manager = manager
+    crm_objects["event"].save(update_fields=["manager"])
+    client.force_login(user)
+
+    response = client.get(reverse("core:analytics"))
+
+    assert response.status_code == 200
+    assert response.context["team_chart"] == [
+        {
+            "label": "project_manager",
+            "total": 1,
+            "url": f"{reverse('core:events')}?manager={manager.pk}",
+        }
+    ]
+
+
+@pytest.mark.django_db
 def test_team_section_requires_system_access_flag(client, django_user_model):
     user = create_user_with_profile(
         django_user_model,

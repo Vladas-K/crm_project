@@ -266,6 +266,28 @@ def test_events_filter_by_month(client, django_user_model):
 
 
 @pytest.mark.django_db
+def test_events_filter_by_manager(client, django_user_model):
+    """Фильтр мероприятий по ответственному оставляет его проекты."""
+    user = django_user_model.objects.create_user(username="event_manager_filter_user", password="TestPass123!")
+    manager = User.objects.create_user(username="event_manager")
+    other_manager = User.objects.create_user(username="other_event_manager")
+    client.force_login(user)
+    event_client = Client.objects.create(name="ООО Вектор")
+    matching_event = Event.objects.create(
+        client=event_client, title="Проект менеджера", city="Москва", date="2026-09-15", manager=manager
+    )
+    Event.objects.create(
+        client=event_client, title="Другой проект", city="Москва", date="2026-09-16", manager=other_manager
+    )
+
+    response = client.get(reverse("core:events"), {"manager": manager.pk})
+
+    assert response.status_code == 200
+    assert list(response.context["events"]) == [matching_event]
+    assert response.context["event_manager_filter"] == str(manager.pk)
+
+
+@pytest.mark.django_db
 def test_vendors_search_filters_by_status_and_format(client, django_user_model):
     """Поиск подрядчиков и фильтры статуса и формата работают вместе."""
     user = django_user_model.objects.create_user(username="vendor_filter_user", password="TestPass123!")

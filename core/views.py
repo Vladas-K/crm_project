@@ -347,6 +347,7 @@ class EventListView(CRMLoginRequiredMixin, ListView):
         date_from = self.request.GET.get("date_from", "")
         date_to = self.request.GET.get("date_to", "")
         month_filter = self.request.GET.get("month", "")
+        manager_filter = self.request.GET.get("manager", "")
 
         if status_filter in {choice[0] for choice in Event.Status.choices}:
             queryset = queryset.filter(status=status_filter)
@@ -360,6 +361,8 @@ class EventListView(CRMLoginRequiredMixin, ListView):
             year, month = month_filter.split("-")
             if year.isdigit() and month.isdigit() and 1 <= int(month) <= 12:
                 queryset = queryset.filter(date__year=int(year), date__month=int(month))
+        if manager_filter.isdigit():
+            queryset = queryset.filter(manager_id=manager_filter)
         if search_query:
             queryset = [event for event in queryset if event_matches_search(event, search_query)]
 
@@ -375,6 +378,8 @@ class EventListView(CRMLoginRequiredMixin, ListView):
         context["event_date_from"] = self.request.GET.get("date_from", "")
         context["event_date_to"] = self.request.GET.get("date_to", "")
         context["event_month_filter"] = self.request.GET.get("month", "")
+        context["event_manager_filter"] = self.request.GET.get("manager", "")
+        context["event_managers"] = User.objects.filter(managed_events__isnull=False).distinct().order_by("username")
         context["event_statuses"] = Event.Status.choices
         context["event_formats"] = EventFormat.objects.order_by("name")
         return context
@@ -718,6 +723,16 @@ class AnalyticsView(AnalyticsAccessMixin, TemplateView):
             }
             for month_key, total in sorted(monthly_totals.items())
         ]
+        team_chart = [
+            {
+                "label": manager.get_username(),
+                "total": manager.total_events,
+                "url": f"{reverse('core:events')}?manager={manager.pk}",
+            }
+            for manager in User.objects.filter(managed_events__isnull=False)
+            .annotate(total_events=Count("managed_events"))
+            .order_by("-total_events", "username")[:8]
+        ]
         context["metrics"] = {
             "conversion": round((qualified_clients / total_leads) * 100, 1),
             "average_check": round(total_revenue / max(Event.objects.count(), 1), 2),
@@ -728,6 +743,7 @@ class AnalyticsView(AnalyticsAccessMixin, TemplateView):
         context["pipeline_chart"] = pipeline_chart
         context["source_chart"] = source_chart
         context["monthly_chart"] = monthly_chart
+        context["team_chart"] = team_chart
         return context
 
 

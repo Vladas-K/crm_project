@@ -656,6 +656,10 @@ body {
     min-height: 16rem;
 }
 
+.analytics-chart-wrap--team {
+    min-height: 16rem;
+}
+
 .premium-panel--pipeline {
     --panel-accent-rgb: 124, 58, 237;
 }

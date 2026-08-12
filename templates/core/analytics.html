@@ -63,18 +63,21 @@
         </div>
     </div>
     <div class="col-lg-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-0 pt-4"><h2 class="h5 mb-0">Загрузка команды</h2></div>
-            <div class="card-body">
-                {% for user in metrics.team_load %}
-                    <div class="list-row">
-                        <div class="fw-semibold">{{ user.get_username }}</div>
-                        <div>{{ user.total_events }} мероприятий</div>
-                    </div>
-                {% empty %}
-                    <p class="text-secondary mb-0">Пользователей пока нет.</p>
-                {% endfor %}
+        <div class="premium-panel analytics-chart-panel">
+            <div class="premium-panel__header">
+                <div>
+                    <h2 class="premium-panel__title">Загрузка команды</h2>
+                    <p class="premium-panel__subtitle">Количество мероприятий в работе у каждого менеджера.</p>
+                </div>
             </div>
+            {% if team_chart %}
+                <div class="analytics-chart-wrap analytics-chart-wrap--team">
+                    <canvas id="team-chart" aria-label="Загрузка команды"></canvas>
+                </div>
+                {{ team_chart|json_script:"team-chart-data" }}
+            {% else %}
+                <p class="text-secondary mb-0">Данных пока нет.</p>
+            {% endif %}
         </div>
     </div>
     <div class="col-12">
@@ -97,7 +100,7 @@
         </div>
     </div>
 </div>
-{% if pipeline_chart or source_chart %}
+{% if pipeline_chart or source_chart or monthly_chart or team_chart %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 {% endif %}
 {% if pipeline_chart %}
@@ -163,6 +166,40 @@
                     scales: {
                         y: { beginAtZero: true, ticks: { precision: 0 } },
                         x: { grid: { display: false } },
+                    },
+                    onClick: (_event, elements) => {
+                        if (elements.length) window.location.href = chartData[elements[0].index].url;
+                    },
+                },
+            });
+            canvas.style.cursor = "pointer";
+        })();
+    </script>
+{% endif %}
+{% if team_chart %}
+    <script>
+        (() => {
+            const chartData = JSON.parse(document.getElementById("team-chart-data").textContent);
+            const canvas = document.getElementById("team-chart");
+            new Chart(canvas, {
+                type: "bar",
+                data: {
+                    labels: chartData.map((manager) => manager.label),
+                    datasets: [{
+                        data: chartData.map((manager) => manager.total),
+                        backgroundColor: "rgba(15, 159, 110, 0.76)",
+                        borderRadius: 8,
+                        borderSkipped: false,
+                        barThickness: 28,
+                    }],
+                },
+                options: {
+                    indexAxis: "y",
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { precision: 0 } },
+                        y: { grid: { display: false } },
                     },
                     onClick: (_event, elements) => {
                         if (elements.length) window.location.href = chartData[elements[0].index].url;

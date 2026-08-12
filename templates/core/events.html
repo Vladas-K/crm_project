@@ -53,8 +53,17 @@
             <label for="event-month" class="form-label">Месяц</label>
             <input id="event-month" type="month" name="month" value="{{ event_month_filter }}" class="form-control">
         </div>
+        <div class="col-md-6 col-lg-3">
+            <label for="event-manager" class="form-label">Ответственный</label>
+            <select id="event-manager" name="manager" class="form-select">
+                <option value="">Все ответственные</option>
+                {% for manager in event_managers %}
+                    <option value="{{ manager.pk }}"{% if event_manager_filter == manager.pk|stringformat:"s" %} selected{% endif %}>{{ manager.get_username }}</option>
+                {% endfor %}
+            </select>
+        </div>
     </div>
-    {% if search_query or event_status_filter or event_format_filter or event_date_from or event_date_to or event_month_filter %}
+    {% if search_query or event_status_filter or event_format_filter or event_date_from or event_date_to or event_month_filter or event_manager_filter %}
         <div class="mt-3">
             <a href="{% url 'core:events' %}" class="small text-decoration-none">Сбросить фильтры</a>
         </div>
