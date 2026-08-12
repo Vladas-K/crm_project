@@ -250,6 +250,22 @@ def test_events_filter_by_date_range(client, django_user_model):
 
 
 @pytest.mark.django_db
+def test_events_filter_by_month(client, django_user_model):
+    """Фильтр месяца оставляет мероприятия только выбранного периода."""
+    user = django_user_model.objects.create_user(username="event_month_filter_user", password="TestPass123!")
+    client.force_login(user)
+    event_client = Client.objects.create(name="ООО Вектор")
+    matching_event = Event.objects.create(client=event_client, title="Сентябрь", city="Москва", date="2026-09-15")
+    Event.objects.create(client=event_client, title="Октябрь", city="Москва", date="2026-10-15")
+
+    response = client.get(reverse("core:events"), {"month": "2026-09"})
+
+    assert response.status_code == 200
+    assert list(response.context["events"]) == [matching_event]
+    assert response.context["event_month_filter"] == "2026-09"
+
+
+@pytest.mark.django_db
 def test_vendors_search_filters_by_status_and_format(client, django_user_model):
     """Поиск подрядчиков и фильтры статуса и формата работают вместе."""
     user = django_user_model.objects.create_user(username="vendor_filter_user", password="TestPass123!")

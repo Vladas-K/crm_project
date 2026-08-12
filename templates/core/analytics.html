@@ -77,9 +77,30 @@
             </div>
         </div>
     </div>
+    <div class="col-12">
+        <div class="premium-panel analytics-chart-panel">
+            <div class="premium-panel__header">
+                <div>
+                    <h2 class="premium-panel__title">Динамика мероприятий</h2>
+                    <p class="premium-panel__subtitle">Количество мероприятий по месяцам.</p>
+                </div>
+                <a href="{% url 'core:events' %}" class="text-decoration-none">Открыть мероприятия</a>
+            </div>
+            {% if monthly_chart %}
+                <div class="analytics-chart-wrap">
+                    <canvas id="monthly-chart" aria-label="Динамика мероприятий по месяцам"></canvas>
+                </div>
+                {{ monthly_chart|json_script:"monthly-chart-data" }}
+            {% else %}
+                <p class="text-secondary mb-0">Данных для графика пока нет.</p>
+            {% endif %}
+        </div>
+    </div>
 </div>
 {% if pipeline_chart or source_chart %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+{% endif %}
+{% if pipeline_chart %}
     <script>
         (() => {
             const chartData = JSON.parse(document.getElementById("pipeline-chart-data").textContent);
@@ -113,6 +134,42 @@
             });
             canvas.style.cursor = "pointer";
             window.pipelineChart = chart;
+        })();
+    </script>
+{% endif %}
+{% if monthly_chart and not pipeline_chart and not source_chart %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+{% endif %}
+{% if monthly_chart %}
+    <script>
+        (() => {
+            const chartData = JSON.parse(document.getElementById("monthly-chart-data").textContent);
+            const canvas = document.getElementById("monthly-chart");
+            new Chart(canvas, {
+                type: "bar",
+                data: {
+                    labels: chartData.map((month) => month.label),
+                    datasets: [{
+                        data: chartData.map((month) => month.total),
+                        backgroundColor: "rgba(124, 58, 237, 0.76)",
+                        borderRadius: 8,
+                        borderSkipped: false,
+                        barThickness: 30,
+                    }],
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { precision: 0 } },
+                        x: { grid: { display: false } },
+                    },
+                    onClick: (_event, elements) => {
+                        if (elements.length) window.location.href = chartData[elements[0].index].url;
+                    },
+                },
+            });
+            canvas.style.cursor = "pointer";
         })();
     </script>
 {% endif %}

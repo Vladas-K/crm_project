@@ -178,6 +178,24 @@ def test_analytics_contains_source_chart_data(client, django_user_model):
 
 
 @pytest.mark.django_db
+def test_analytics_contains_monthly_event_chart_data(client, django_user_model, crm_objects):
+    """Аналитика передаёт месячную динамику мероприятий со ссылками на фильтр."""
+    user = create_user_with_profile(
+        django_user_model,
+        "monthly_analyst",
+        can_view_analytics=True,
+    )
+    client.force_login(user)
+
+    response = client.get(reverse("core:analytics"))
+
+    assert response.status_code == 200
+    matching_month = next(item for item in response.context["monthly_chart"] if item["label"].endswith("2026"))
+    assert matching_month["total"] == 1
+    assert matching_month["url"].endswith("?month=2026-08")
+
+
+@pytest.mark.django_db
 def test_team_section_requires_system_access_flag(client, django_user_model):
     user = create_user_with_profile(
         django_user_model,
