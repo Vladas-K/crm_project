@@ -341,6 +341,72 @@ def test_team_section_allows_user_with_system_access_flag(client, django_user_mo
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "url_name, object_key",
+    [
+        ("pipeline_create", None),
+        ("pipeline_update", "stage"),
+        ("pipeline_delete", "stage"),
+        ("format_create", None),
+        ("format_update", "event_format"),
+        ("format_delete", "event_format"),
+        ("vendor_create", None),
+        ("vendor_update", "vendor"),
+        ("vendor_delete", "vendor"),
+        ("package_create", None),
+        ("package_update", "service_package"),
+        ("package_delete", "service_package"),
+    ],
+)
+def test_reference_data_mutations_require_system_access(client, django_user_model, crm_objects, url_name, object_key):
+    """Изменение справочников доступно только пользователю с системным правом."""
+    user = create_user_with_profile(
+        django_user_model,
+        "reference_viewer",
+        can_manage_system=False,
+    )
+    client.force_login(user)
+    kwargs = {"pk": crm_objects[object_key].pk} if object_key else {}
+
+    response = client.get(reverse(f"core:{url_name}", kwargs=kwargs))
+
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "url_name, object_key",
+    [
+        ("pipeline_create", None),
+        ("pipeline_update", "stage"),
+        ("pipeline_delete", "stage"),
+        ("format_create", None),
+        ("format_update", "event_format"),
+        ("format_delete", "event_format"),
+        ("vendor_create", None),
+        ("vendor_update", "vendor"),
+        ("vendor_delete", "vendor"),
+        ("package_create", None),
+        ("package_update", "service_package"),
+        ("package_delete", "service_package"),
+    ],
+)
+def test_reference_data_mutations_allow_system_access(client, django_user_model, crm_objects, url_name, object_key):
+    """Пользователь с системным правом может управлять справочниками."""
+    user = create_user_with_profile(
+        django_user_model,
+        "reference_manager",
+        can_manage_system=True,
+    )
+    client.force_login(user)
+    kwargs = {"pk": crm_objects[object_key].pk} if object_key else {}
+
+    response = client.get(reverse(f"core:{url_name}", kwargs=kwargs))
+
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
 def test_expense_actions_require_finance_access_flag(client, django_user_model, crm_objects):
     user = create_user_with_profile(
         django_user_model,

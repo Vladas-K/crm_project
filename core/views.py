@@ -960,7 +960,7 @@ class LeadDeleteView(CRMLoginRequiredMixin, DeleteView):
     success_url = reverse_lazy("core:leads")
 
 
-class PipelineStageCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
+class PipelineStageCreateView(SystemAccessMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Создает новый этап воронки продаж."""
 
     model = PipelineStage
@@ -972,7 +972,7 @@ class PipelineStageCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView)
     cancel_url = reverse_lazy("core:pipeline")
 
 
-class PipelineStageUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class PipelineStageUpdateView(SystemAccessMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует этап воронки продаж."""
 
     model = PipelineStage
@@ -984,7 +984,7 @@ class PipelineStageUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView)
     cancel_url = reverse_lazy("core:pipeline")
 
 
-class PipelineStageDeleteView(CRMLoginRequiredMixin, DeleteView):
+class PipelineStageDeleteView(SystemAccessMixin, DeleteView):
     """Удаляет этап воронки после подтверждения."""
 
     model = PipelineStage
@@ -1312,7 +1312,7 @@ class EventDocumentUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMes
     cancel_url = reverse_lazy("core:events")
 
 
-class EventFormatCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
+class EventFormatCreateView(SystemAccessMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Создает формат мероприятия."""
 
     model = EventFormat
@@ -1324,7 +1324,7 @@ class EventFormatCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
     cancel_url = reverse_lazy("core:formats")
 
 
-class EventFormatUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class EventFormatUpdateView(SystemAccessMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует формат мероприятия."""
 
     model = EventFormat
@@ -1336,7 +1336,7 @@ class EventFormatUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
     cancel_url = reverse_lazy("core:formats")
 
 
-class EventFormatDeleteView(CRMLoginRequiredMixin, DeleteView):
+class EventFormatDeleteView(SystemAccessMixin, DeleteView):
     """Удаляет формат мероприятия после подтверждения."""
 
     model = EventFormat
@@ -1344,7 +1344,7 @@ class EventFormatDeleteView(CRMLoginRequiredMixin, DeleteView):
     success_url = reverse_lazy("core:formats")
 
 
-class VendorCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
+class VendorCreateView(SystemAccessMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Создает подрядчика в справочнике."""
 
     model = Vendor
@@ -1356,7 +1356,7 @@ class VendorCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
     cancel_url = reverse_lazy("core:vendors")
 
 
-class VendorUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class VendorUpdateView(SystemAccessMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует подрядчика в справочнике."""
 
     model = Vendor
@@ -1368,7 +1368,7 @@ class VendorUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
     cancel_url = reverse_lazy("core:vendors")
 
 
-class VendorDeleteView(CRMLoginRequiredMixin, DeleteView):
+class VendorDeleteView(SystemAccessMixin, DeleteView):
     """Удаляет подрядчика после подтверждения."""
 
     model = Vendor
@@ -1376,7 +1376,7 @@ class VendorDeleteView(CRMLoginRequiredMixin, DeleteView):
     success_url = reverse_lazy("core:vendors")
 
 
-class ServicePackageCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
+class ServicePackageCreateView(SystemAccessMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Создает пакет услуг."""
 
     model = ServicePackage
@@ -1388,7 +1388,7 @@ class ServicePackageCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView
     cancel_url = reverse_lazy("core:packages")
 
 
-class ServicePackageUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class ServicePackageUpdateView(SystemAccessMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует пакет услуг."""
 
     model = ServicePackage
@@ -1400,7 +1400,7 @@ class ServicePackageUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView
     cancel_url = reverse_lazy("core:packages")
 
 
-class ServicePackageDeleteView(CRMLoginRequiredMixin, DeleteView):
+class ServicePackageDeleteView(SystemAccessMixin, DeleteView):
     """Удаляет пакет услуг после подтверждения."""
 
     model = ServicePackage
