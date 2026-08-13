@@ -14,6 +14,9 @@ def create_user_with_profile(django_user_model, username, **profile_flags):
         "can_view_finance": False,
         "can_view_clients": True,
         "can_view_analytics": False,
+        "can_manage_leads": True,
+        "can_manage_clients": True,
+        "can_manage_events": True,
         "can_manage_system": False,
     }
     defaults.update(profile_flags)
@@ -60,7 +63,6 @@ def test_clients_section_requires_client_access_flag(client, django_user_model, 
         reverse("core:clients"),
         reverse("core:client_create"),
         reverse("core:client_update", kwargs={"pk": crm_objects["client"].pk}),
-        reverse("core:client_delete", kwargs={"pk": crm_objects["client"].pk}),
     ]
 
     for url in urls:
@@ -78,17 +80,58 @@ def test_clients_section_allows_user_with_client_access_flag(client, django_user
         can_view_clients=True,
     )
     client.force_login(user)
-    urls = [
+    editable_urls = [
         reverse("core:clients"),
         reverse("core:client_create"),
         reverse("core:client_update", kwargs={"pk": crm_objects["client"].pk}),
-        reverse("core:client_delete", kwargs={"pk": crm_objects["client"].pk}),
     ]
 
-    for url in urls:
+    for url in editable_urls:
         response = client.get(url)
 
         assert response.status_code == 200
+
+    delete_response = client.get(reverse("core:client_delete", kwargs={"pk": crm_objects["client"].pk}))
+
+    assert delete_response.status_code == 403
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "url_name, object_key, flag_name",
+    [
+        ("lead_create", None, "can_manage_leads"),
+        ("lead_update", "lead", "can_manage_leads"),
+        ("event_create", None, "can_manage_events"),
+        ("event_update", "event", "can_manage_events"),
+        ("event_task_create", "event_task_create", "can_manage_events"),
+        ("task_update", "task", "can_manage_events"),
+    ],
+)
+def test_operational_mutations_require_matching_management_flag(
+    client,
+    django_user_model,
+    crm_objects,
+    url_name,
+    object_key,
+    flag_name,
+):
+    """Операционные действия требуют соответствующего флага управления."""
+    user = create_user_with_profile(
+        django_user_model,
+        "restricted_operator",
+        **{flag_name: False},
+    )
+    client.force_login(user)
+    kwargs = {}
+    if object_key == "event_task_create":
+        kwargs = {"event_pk": crm_objects["event"].pk}
+    elif object_key:
+        kwargs = {"pk": crm_objects[object_key].pk}
+
+    response = client.get(reverse(f"core:{url_name}", kwargs=kwargs))
+
+    assert response.status_code == 403
 
 
 @pytest.mark.django_db

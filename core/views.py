@@ -133,6 +133,7 @@ class CRMAccessMixin(CRMLoginRequiredMixin):
     """Проверяет CRM-профиль пользователя и требуемый флаг доступа."""
 
     required_profile_flag = None
+    required_profile_flags = ()
 
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
@@ -143,7 +144,8 @@ class CRMAccessMixin(CRMLoginRequiredMixin):
         except TeamMemberProfile.DoesNotExist as exc:
             raise PermissionDenied("Для пользователя не настроен CRM-профиль.") from exc
 
-        if self.required_profile_flag and not getattr(profile, self.required_profile_flag):
+        required_flags = self.required_profile_flags or ((self.required_profile_flag,) if self.required_profile_flag else ())
+        if any(not getattr(profile, flag) for flag in required_flags):
             raise PermissionDenied("Недостаточно прав для доступа к разделу.")
 
         return super().dispatch(request, *args, **kwargs)
@@ -171,6 +173,24 @@ class FinanceAccessMixin(CRMAccessMixin):
     """Требует право на управление финансовыми данными."""
 
     required_profile_flag = "can_view_finance"
+
+
+class LeadManagementMixin(CRMAccessMixin):
+    """Требует право на создание и редактирование лидов."""
+
+    required_profile_flag = "can_manage_leads"
+
+
+class ClientManagementMixin(CRMAccessMixin):
+    """Требует право на создание и редактирование клиентов."""
+
+    required_profile_flags = ("can_view_clients", "can_manage_clients")
+
+
+class EventManagementMixin(CRMAccessMixin):
+    """Требует право на изменение мероприятия и его рабочих данных."""
+
+    required_profile_flag = "can_manage_events"
 
 
 class DashboardView(CRMLoginRequiredMixin, TemplateView):
@@ -928,7 +948,7 @@ class EventScopedFormMixin(CRMLoginRequiredMixin):
         return super().get_success_url()
 
 
-class LeadCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
+class LeadCreateView(LeadManagementMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Создает новый лид через основной CRM-интерфейс."""
 
     model = Lead
@@ -940,7 +960,7 @@ class LeadCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
     cancel_url = reverse_lazy("core:leads")
 
 
-class LeadUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class LeadUpdateView(LeadManagementMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует существующий лид."""
 
     model = Lead
@@ -952,7 +972,7 @@ class LeadUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
     cancel_url = reverse_lazy("core:leads")
 
 
-class LeadDeleteView(CRMLoginRequiredMixin, DeleteView):
+class LeadDeleteView(SystemAccessMixin, DeleteView):
     """Удаляет лид после подтверждения."""
 
     model = Lead
@@ -992,7 +1012,7 @@ class PipelineStageDeleteView(SystemAccessMixin, DeleteView):
     success_url = reverse_lazy("core:pipeline")
 
 
-class ClientCreateView(ClientAccessMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+class ClientCreateView(ClientManagementMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Создает нового клиента."""
 
     model = Client
@@ -1004,7 +1024,7 @@ class ClientCreateView(ClientAccessMixin, CRUDContextMixin, SuccessMessageMixin,
     cancel_url = reverse_lazy("core:clients")
 
 
-class ClientUpdateView(ClientAccessMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class ClientUpdateView(ClientManagementMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует карточку клиента."""
 
     model = Client
@@ -1016,7 +1036,7 @@ class ClientUpdateView(ClientAccessMixin, CRUDContextMixin, SuccessMessageMixin,
     cancel_url = reverse_lazy("core:clients")
 
 
-class ClientDeleteView(ClientAccessMixin, DeleteView):
+class ClientDeleteView(SystemAccessMixin, DeleteView):
     """Удаляет клиента после подтверждения."""
 
     model = Client
@@ -1024,7 +1044,7 @@ class ClientDeleteView(ClientAccessMixin, DeleteView):
     success_url = reverse_lazy("core:clients")
 
 
-class EventCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
+class EventCreateView(EventManagementMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Создает новое мероприятие."""
 
     model = Event
@@ -1036,7 +1056,7 @@ class EventCreateView(CRUDContextMixin, SuccessMessageMixin, CreateView):
     cancel_url = reverse_lazy("core:events")
 
 
-class EventUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class EventUpdateView(EventManagementMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует основные данные мероприятия."""
 
     model = Event
@@ -1048,7 +1068,7 @@ class EventUpdateView(CRUDContextMixin, SuccessMessageMixin, UpdateView):
     cancel_url = reverse_lazy("core:events")
 
 
-class EventDeleteView(CRMLoginRequiredMixin, DeleteView):
+class EventDeleteView(SystemAccessMixin, DeleteView):
     """Удаляет мероприятие после подтверждения."""
 
     model = Event
@@ -1056,7 +1076,7 @@ class EventDeleteView(CRMLoginRequiredMixin, DeleteView):
     success_url = reverse_lazy("core:events")
 
 
-class TaskCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+class TaskCreateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Создает задачу, отдельно или из карточки мероприятия."""
 
     model = EventTask
@@ -1069,7 +1089,7 @@ class TaskCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin
     cancel_url = reverse_lazy("core:tasks")
 
 
-class TaskUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class TaskUpdateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует задачу и возвращает пользователя в контекст мероприятия при необходимости."""
 
     model = EventTask
@@ -1082,7 +1102,7 @@ class TaskUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin
     cancel_url = reverse_lazy("core:tasks")
 
 
-class EventTimelineItemCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+class EventTimelineItemCreateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Добавляет блок тайминга к мероприятию."""
 
     model = EventTimelineItem
@@ -1095,7 +1115,7 @@ class EventTimelineItemCreateView(EventScopedFormMixin, CRUDContextMixin, Succes
     cancel_url = reverse_lazy("core:events")
 
 
-class EventTimelineItemUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class EventTimelineItemUpdateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует блок тайминга мероприятия."""
 
     model = EventTimelineItem
@@ -1108,7 +1128,7 @@ class EventTimelineItemUpdateView(EventScopedFormMixin, CRUDContextMixin, Succes
     cancel_url = reverse_lazy("core:events")
 
 
-class EventRiskCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+class EventRiskCreateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Добавляет риск к мероприятию."""
 
     model = EventRisk
@@ -1121,7 +1141,7 @@ class EventRiskCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessage
     cancel_url = reverse_lazy("core:events")
 
 
-class EventRiskUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class EventRiskUpdateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует риск мероприятия."""
 
     model = EventRisk
@@ -1134,7 +1154,7 @@ class EventRiskUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessage
     cancel_url = reverse_lazy("core:events")
 
 
-class EventOutcomeCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+class EventOutcomeCreateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Добавляет итоги к мероприятию."""
 
     model = EventOutcome
@@ -1147,7 +1167,7 @@ class EventOutcomeCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMess
     cancel_url = reverse_lazy("core:events")
 
 
-class EventOutcomeUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class EventOutcomeUpdateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует итоги мероприятия."""
 
     model = EventOutcome
@@ -1160,7 +1180,7 @@ class EventOutcomeUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMess
     cancel_url = reverse_lazy("core:events")
 
 
-class TaskDeleteView(CRMLoginRequiredMixin, DeleteView):
+class TaskDeleteView(SystemAccessMixin, DeleteView):
     """Удаляет задачу и возвращает пользователя в список задач или вкладку мероприятия."""
 
     model = EventTask
@@ -1174,7 +1194,7 @@ class TaskDeleteView(CRMLoginRequiredMixin, DeleteView):
         return reverse("core:tasks")
 
 
-class TaskStatusUpdateView(CRMLoginRequiredMixin, View):
+class TaskStatusUpdateView(EventManagementMixin, View):
     """Быстро меняет статус задачи из карточки мероприятия."""
 
     allowed_statuses = {choice[0] for choice in EventTask.Status.choices}
@@ -1217,7 +1237,7 @@ class EventExpenseUpdateView(FinanceAccessMixin, EventScopedFormMixin, CRUDConte
     cancel_url = reverse_lazy("core:events")
 
 
-class EventVendorCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+class EventVendorCreateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Добавляет подрядчика в конкретное мероприятие."""
 
     model = EventVendor
@@ -1230,7 +1250,7 @@ class EventVendorCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessa
     cancel_url = reverse_lazy("core:events")
 
 
-class EventVendorUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class EventVendorUpdateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует назначение подрядчика на мероприятие."""
 
     model = EventVendor
@@ -1243,7 +1263,7 @@ class EventVendorUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessa
     cancel_url = reverse_lazy("core:events")
 
 
-class EventVendorStatusUpdateView(CRMLoginRequiredMixin, View):
+class EventVendorStatusUpdateView(EventManagementMixin, View):
     """Быстро меняет статус подрядчика внутри карточки мероприятия."""
 
     allowed_statuses = {choice[0] for choice in EventVendor.Status.choices}
@@ -1260,7 +1280,7 @@ class EventVendorStatusUpdateView(CRMLoginRequiredMixin, View):
         return redirect(f"{reverse('core:event_detail', kwargs={'pk': assignment.event.pk})}?tab=vendors")
 
 
-class EventCommunicationCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+class EventCommunicationCreateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Добавляет коммуникацию к мероприятию."""
 
     model = EventCommunication
@@ -1273,7 +1293,7 @@ class EventCommunicationCreateView(EventScopedFormMixin, CRUDContextMixin, Succe
     cancel_url = reverse_lazy("core:events")
 
 
-class EventCommunicationUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class EventCommunicationUpdateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует коммуникацию мероприятия."""
 
     model = EventCommunication
@@ -1286,7 +1306,7 @@ class EventCommunicationUpdateView(EventScopedFormMixin, CRUDContextMixin, Succe
     cancel_url = reverse_lazy("core:events")
 
 
-class EventDocumentCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+class EventDocumentCreateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Добавляет документ к мероприятию."""
 
     model = EventDocument
@@ -1299,7 +1319,7 @@ class EventDocumentCreateView(EventScopedFormMixin, CRUDContextMixin, SuccessMes
     cancel_url = reverse_lazy("core:events")
 
 
-class EventDocumentUpdateView(EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class EventDocumentUpdateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует документ мероприятия."""
 
     model = EventDocument

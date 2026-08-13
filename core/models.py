@@ -41,6 +41,9 @@ class TeamMemberProfile(models.Model):
     can_view_finance = models.BooleanField("Доступ к финансам", default=False)
     can_view_clients = models.BooleanField("Доступ к клиентам", default=True)
     can_view_analytics = models.BooleanField("Доступ к аналитике", default=False)
+    can_manage_leads = models.BooleanField("Управление лидами", default=True)
+    can_manage_clients = models.BooleanField("Управление клиентами", default=True)
+    can_manage_events = models.BooleanField("Управление мероприятиями", default=True)
     can_manage_system = models.BooleanField("Управление системой", default=False)
 
     class Meta:

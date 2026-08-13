@@ -60,7 +60,15 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(TeamMemberProfile)
 class TeamMemberProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "role", "can_view_finance", "can_view_analytics", "can_manage_system")
+    list_display = (
+        "user",
+        "role",
+        "can_manage_leads",
+        "can_manage_clients",
+        "can_manage_events",
+        "can_view_finance",
+        "can_manage_system",
+    )
     list_filter = ("role",)
 
 
