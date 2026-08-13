@@ -38,6 +38,7 @@ def get_sidebar_html(response):
     ],
 )
 def test_permission_protected_sections_require_crm_profile(client, django_user_model, url_name):
+    """Защищённые разделы требуют CRM-профиль пользователя."""
     user = django_user_model.objects.create_user(username="without_profile", password="TestPass123!")
     client.force_login(user)
 
@@ -48,6 +49,7 @@ def test_permission_protected_sections_require_crm_profile(client, django_user_m
 
 @pytest.mark.django_db
 def test_clients_section_requires_client_access_flag(client, django_user_model, crm_objects):
+    """Раздел клиентов и его действия требуют права просмотра клиентов."""
     user = create_user_with_profile(
         django_user_model,
         "no_clients",
@@ -69,6 +71,7 @@ def test_clients_section_requires_client_access_flag(client, django_user_model, 
 
 @pytest.mark.django_db
 def test_clients_section_allows_user_with_client_access_flag(client, django_user_model, crm_objects):
+    """Пользователь с правом просмотра клиентов получает доступ к разделу и действиям."""
     user = create_user_with_profile(
         django_user_model,
         "client_manager",
@@ -90,6 +93,7 @@ def test_clients_section_allows_user_with_client_access_flag(client, django_user
 
 @pytest.mark.django_db
 def test_analytics_requires_analytics_access_flag(client, django_user_model):
+    """Аналитика недоступна без права её просмотра."""
     user = create_user_with_profile(
         django_user_model,
         "no_analytics",
@@ -104,6 +108,7 @@ def test_analytics_requires_analytics_access_flag(client, django_user_model):
 
 @pytest.mark.django_db
 def test_analytics_allows_user_with_analytics_access_flag(client, django_user_model):
+    """Пользователь с правом просмотра аналитики получает доступ к разделу."""
     user = create_user_with_profile(
         django_user_model,
         "analyst",
@@ -314,6 +319,7 @@ def test_analytics_invalid_period_falls_back_to_all(client, django_user_model):
 
 @pytest.mark.django_db
 def test_team_section_requires_system_access_flag(client, django_user_model):
+    """Раздел пользователей недоступен без системного права."""
     user = create_user_with_profile(
         django_user_model,
         "no_system_access",
@@ -328,6 +334,7 @@ def test_team_section_requires_system_access_flag(client, django_user_model):
 
 @pytest.mark.django_db
 def test_team_section_allows_user_with_system_access_flag(client, django_user_model):
+    """Пользователь с системным правом получает доступ к разделу пользователей."""
     user = create_user_with_profile(
         django_user_model,
         "system_admin",
@@ -408,6 +415,7 @@ def test_reference_data_mutations_allow_system_access(client, django_user_model,
 
 @pytest.mark.django_db
 def test_expense_actions_require_finance_access_flag(client, django_user_model, crm_objects):
+    """Создание и редактирование расходов требуют финансового права."""
     user = create_user_with_profile(
         django_user_model,
         "no_finance",
@@ -427,6 +435,7 @@ def test_expense_actions_require_finance_access_flag(client, django_user_model, 
 
 @pytest.mark.django_db
 def test_expense_actions_allow_user_with_finance_access_flag(client, django_user_model, crm_objects):
+    """Пользователь с финансовым правом может создавать и редактировать расходы."""
     user = create_user_with_profile(
         django_user_model,
         "finance_manager",
@@ -446,7 +455,7 @@ def test_expense_actions_allow_user_with_finance_access_flag(client, django_user
 
 @pytest.mark.django_db
 def test_sidebar_hides_permission_restricted_links(client, django_user_model):
-    """Sidebar hides navigation items unavailable to the current CRM user."""
+    """Sidebar скрывает пункты, недоступные текущему пользователю CRM."""
     user = create_user_with_profile(
         django_user_model,
         "restricted_sidebar",
@@ -467,7 +476,7 @@ def test_sidebar_hides_permission_restricted_links(client, django_user_model):
 
 @pytest.mark.django_db
 def test_sidebar_shows_links_allowed_by_permissions(client, django_user_model):
-    """Sidebar shows protected navigation items when profile flags allow them."""
+    """Sidebar показывает пункты, разрешённые флагами профиля пользователя."""
     user = create_user_with_profile(
         django_user_model,
         "full_sidebar",
@@ -490,7 +499,7 @@ def test_sidebar_shows_links_allowed_by_permissions(client, django_user_model):
 
 @pytest.mark.django_db
 def test_event_detail_hides_financial_ui_without_finance_access(client, django_user_model, crm_objects):
-    """Event card hides expense tabs, actions and financial indicators without finance access."""
+    """Карточка мероприятия скрывает финансовый интерфейс без финансового права."""
     user = create_user_with_profile(
         django_user_model,
         "event_no_finance",
@@ -513,7 +522,7 @@ def test_event_detail_hides_financial_ui_without_finance_access(client, django_u
 
 @pytest.mark.django_db
 def test_event_detail_shows_financial_ui_with_finance_access(client, django_user_model, crm_objects):
-    """Event card shows expense tab, actions and financial indicators with finance access."""
+    """Карточка мероприятия показывает финансовый интерфейс при наличии права."""
     user = create_user_with_profile(
         django_user_model,
         "event_finance",
@@ -536,6 +545,7 @@ def test_event_detail_shows_financial_ui_with_finance_access(client, django_user
 
 @pytest.mark.django_db
 def test_events_list_hides_financial_indicators_without_finance_access(client, django_user_model, crm_objects):
+    """Список мероприятий скрывает финансовые показатели без финансового права."""
     user = create_user_with_profile(
         django_user_model,
         "events_no_finance",
@@ -553,6 +563,7 @@ def test_events_list_hides_financial_indicators_without_finance_access(client, d
 
 @pytest.mark.django_db
 def test_analytics_hides_financial_indicators_without_finance_access(client, django_user_model, crm_objects):
+    """Аналитика скрывает финансовые показатели без финансового права."""
     user = create_user_with_profile(
         django_user_model,
         "analytics_no_finance",
