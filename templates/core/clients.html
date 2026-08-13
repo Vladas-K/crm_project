@@ -8,7 +8,7 @@
         <h1 class="h2 mb-1">Клиенты</h1>
         <p class="text-secondary mb-0">B2B/B2C база после квалификации лидов.</p>
     </div>
-    <a href="{% url 'core:client_create' %}" class="btn btn-primary">Добавить клиента</a>
+    {% if crm_permissions.can_manage_clients %}<a href="{% url 'core:client_create' %}" class="btn btn-primary">Добавить клиента</a>{% endif %}
 </div>
 
 <form method="get" class="premium-panel lead-filter-panel mb-4">
@@ -72,8 +72,8 @@
                         <td>{{ client.contacts|default:client.phone|default:"-" }}</td>
                         <td class="text-end">
                             <div class="d-flex justify-content-end gap-2">
-                                <a href="{% url 'core:client_update' client.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
-                                <a href="{% url 'core:client_delete' client.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>
+                                {% if crm_permissions.can_manage_clients %}<a href="{% url 'core:client_update' client.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>{% endif %}
+                                {% if crm_permissions.can_manage_system %}<a href="{% url 'core:client_delete' client.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>{% endif %}
                             </div>
                         </td>
                     </tr>

@@ -17,6 +17,9 @@ def crm_permissions(request):
             "can_view_clients": bool(profile and profile.can_view_clients),
             "can_view_analytics": bool(profile and profile.can_view_analytics),
             "can_manage_system": bool(profile and profile.can_manage_system),
+            "can_manage_leads": bool(profile and profile.can_manage_leads),
+            "can_manage_clients": bool(profile and profile.can_manage_clients),
+            "can_manage_events": bool(profile and profile.can_manage_events),
             "can_view_finance": bool(profile and profile.can_view_finance),
             "is_staff": user.is_authenticated and user.is_staff,
         }

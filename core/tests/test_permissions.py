@@ -623,3 +623,42 @@ def test_analytics_hides_financial_indicators_without_finance_access(client, dja
     assert "Прибыль" not in html
     assert "Источник → деньги" not in html
     assert "Источники лидов" in html
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "url_name, object_key, flag_name, forbidden_labels",
+    [
+        ("leads", "lead", "can_manage_leads", ("Добавить лид", "Изменить")),
+        ("clients", "client", "can_manage_clients", ("Добавить клиента", "Изменить")),
+        ("events", "event", "can_manage_events", ("Добавить мероприятие", "Изменить")),
+        ("tasks", "task", "can_manage_events", ("Добавить задачу", "Изменить")),
+    ],
+)
+def test_lists_hide_actions_without_management_permission(
+    client,
+    django_user_model,
+    crm_objects,
+    url_name,
+    object_key,
+    flag_name,
+    forbidden_labels,
+):
+    """Списки скрывают кнопки создания и редактирования без права управления."""
+    user = create_user_with_profile(
+        django_user_model,
+        "ui_restricted_operator",
+        **{flag_name: False},
+    )
+    if url_name == "clients":
+        user.crm_profile.can_view_clients = True
+        user.crm_profile.save(update_fields=["can_view_clients"])
+    client.force_login(user)
+
+    response = client.get(reverse(f"core:{url_name}"))
+    html = response.content.decode()
+
+    assert response.status_code == 200
+    for label in forbidden_labels:
+        assert label not in html
+    assert reverse(f"core:{object_key}_delete", kwargs={"pk": crm_objects[object_key].pk}) not in html

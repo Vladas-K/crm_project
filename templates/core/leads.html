@@ -8,7 +8,7 @@
         <h1 class="h2 mb-1">Лиды</h1>
         <p class="text-secondary mb-0">Входящие заявки, автоназначение менеджера и контроль SLA 24 часа.</p>
     </div>
-    <a href="{% url 'core:lead_create' %}" class="btn btn-primary">Добавить лид</a>
+    {% if crm_permissions.can_manage_leads %}<a href="{% url 'core:lead_create' %}" class="btn btn-primary">Добавить лид</a>{% endif %}
 </div>
 
 <form method="get" class="premium-panel lead-filter-panel mb-4">
@@ -89,8 +89,8 @@
                         </td>
                         <td class="text-end">
                             <div class="d-flex justify-content-end gap-2">
-                                <a href="{% url 'core:lead_update' lead.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
-                                <a href="{% url 'core:lead_delete' lead.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>
+                                {% if crm_permissions.can_manage_leads %}<a href="{% url 'core:lead_update' lead.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>{% endif %}
+                                {% if crm_permissions.can_manage_system %}<a href="{% url 'core:lead_delete' lead.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>{% endif %}
                             </div>
                         </td>
                     </tr>

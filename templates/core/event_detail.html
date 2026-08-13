@@ -22,7 +22,7 @@
             </div>
             <div class="event-actions align-self-start">
                 <a href="{% url 'core:events' %}" class="btn btn-outline-secondary">К списку</a>
-                <a href="{% url 'core:event_update' event.pk %}" class="btn btn-primary">Редактировать</a>
+                {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_update' event.pk %}" class="btn btn-primary">Редактировать</a>{% endif %}
             </div>
         </div>
     </div>
@@ -178,7 +178,7 @@
                 <h2 class="premium-panel__title">Тайминг</h2>
                 <p class="premium-panel__subtitle">Последовательность блоков и ключевые точки проведения мероприятия.</p>
             </div>
-            <a href="{% url 'core:event_timeline_create' event.pk %}?return_tab=timeline" class="btn btn-sm btn-primary">Добавить</a>
+            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_timeline_create' event.pk %}?return_tab=timeline" class="btn btn-sm btn-primary">Добавить</a>{% endif %}
         </div>
         <div class="premium-list">
             {% for item in detail_timeline_items %}
@@ -190,7 +190,7 @@
                     <div class="premium-list__meta text-end">
                         <div class="text-secondary small">{{ item.responsible|default:"Ответственный не указан" }}</div>
                         <div class="mt-2">
-                            <a href="{% url 'core:event_timeline_update' item.pk %}?return_tab=timeline" class="btn btn-sm btn-outline-primary">Изменить</a>
+                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_timeline_update' item.pk %}?return_tab=timeline" class="btn btn-sm btn-outline-primary">Изменить</a>{% endif %}
                         </div>
                     </div>
                 </div>
@@ -204,7 +204,7 @@
                 <h2 class="premium-panel__title">Риски</h2>
                 <p class="premium-panel__subtitle">Потенциальные проблемы и заранее подготовленные планы действий.</p>
             </div>
-            <a href="{% url 'core:event_risk_create' event.pk %}?return_tab=risks" class="btn btn-sm btn-primary">Добавить</a>
+            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_risk_create' event.pk %}?return_tab=risks" class="btn btn-sm btn-primary">Добавить</a>{% endif %}
         </div>
         <div class="premium-list">
             {% for risk in detail_risks %}
@@ -216,7 +216,7 @@
                     <div class="premium-list__meta text-end">
                         <span class="badge text-bg-light">{{ risk.get_probability_display }}</span>
                         <div class="mt-2">
-                            <a href="{% url 'core:event_risk_update' risk.pk %}?return_tab=risks" class="btn btn-sm btn-outline-primary">Изменить</a>
+                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_risk_update' risk.pk %}?return_tab=risks" class="btn btn-sm btn-outline-primary">Изменить</a>{% endif %}
                         </div>
                     </div>
                 </div>
@@ -230,10 +230,12 @@
                 <h2 class="premium-panel__title">Итоги мероприятия</h2>
                 <p class="premium-panel__subtitle">Финальная оценка проекта, обратная связь и выводы команды.</p>
             </div>
-            {% if event_outcome %}
-                <a href="{% url 'core:event_outcome_update' event_outcome.pk %}?return_tab=outcome" class="btn btn-sm btn-primary">Изменить</a>
-            {% else %}
-                <a href="{% url 'core:event_outcome_create' event.pk %}?return_tab=outcome" class="btn btn-sm btn-primary">Добавить</a>
+            {% if crm_permissions.can_manage_events %}
+                {% if event_outcome %}
+                    <a href="{% url 'core:event_outcome_update' event_outcome.pk %}?return_tab=outcome" class="btn btn-sm btn-primary">Изменить</a>
+                {% else %}
+                    <a href="{% url 'core:event_outcome_create' event.pk %}?return_tab=outcome" class="btn btn-sm btn-primary">Добавить</a>
+                {% endif %}
             {% endif %}
         </div>
         {% if event_outcome %}
@@ -278,7 +280,7 @@
                 <h2 class="premium-panel__title">Задачи</h2>
                 <p class="premium-panel__subtitle">Текущая работа по подготовке и проведению мероприятия.</p>
             </div>
-            <a href="{% url 'core:event_task_create' event.pk %}?return_tab=tasks" class="btn btn-sm btn-primary">Добавить</a>
+            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_task_create' event.pk %}?return_tab=tasks" class="btn btn-sm btn-primary">Добавить</a>{% endif %}
         </div>
         <div class="event-filter mb-3">
             <a href="{% url 'core:event_detail' event.pk %}?tab=tasks" class="event-filter__link{% if task_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
@@ -303,22 +305,22 @@
                             <span class="badge text-bg-danger">Просрочено</span>
                         {% endif %}
                         <span class="badge text-bg-light">{{ task.get_status_display }}</span>
-                        {% if task.status != "in_progress" %}
+                        {% if crm_permissions.can_manage_events and task.status != "in_progress" %}
                             <form method="post" action="{% url 'core:task_status_update' task.pk %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="status" value="in_progress">
                                 <button type="submit" class="btn btn-sm btn-outline-secondary">В работу</button>
                             </form>
                         {% endif %}
-                        {% if task.status != "done" %}
+                        {% if crm_permissions.can_manage_events and task.status != "done" %}
                             <form method="post" action="{% url 'core:task_status_update' task.pk %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="status" value="done">
                                 <button type="submit" class="btn btn-sm btn-outline-success">Готово</button>
                             </form>
                         {% endif %}
-                        <a href="{% url 'core:task_update' task.pk %}?return_tab=tasks" class="btn btn-sm btn-outline-primary">Изменить</a>
-                        <a href="{% url 'core:task_delete' task.pk %}?return_tab=tasks" class="btn btn-sm btn-outline-danger">Удалить</a>
+                        {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_update' task.pk %}?return_tab=tasks" class="btn btn-sm btn-outline-primary">Изменить</a>{% endif %}
+                        {% if crm_permissions.can_manage_system %}<a href="{% url 'core:task_delete' task.pk %}?return_tab=tasks" class="btn btn-sm btn-outline-danger">Удалить</a>{% endif %}
                     </div>
                 </div>
             {% empty %}
@@ -331,7 +333,7 @@
                 <h2 class="premium-panel__title">Расходы</h2>
                 <p class="premium-panel__subtitle">Бюджетные строки и статусы оплат.</p>
             </div>
-            <a href="{% url 'core:event_expense_create' event.pk %}?return_tab=expenses" class="btn btn-sm btn-primary">Добавить</a>
+            {% if crm_permissions.can_view_finance %}<a href="{% url 'core:event_expense_create' event.pk %}?return_tab=expenses" class="btn btn-sm btn-primary">Добавить</a>{% endif %}
         </div>
         <div class="event-filter mb-3">
             <a href="{% url 'core:event_detail' event.pk %}?tab=expenses" class="event-filter__link{% if expense_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
@@ -349,7 +351,7 @@
                     <div class="text-end">
                         <div class="fw-semibold">{{ expense.amount }} ₽</div>
                         <div class="text-secondary small">{{ expense.get_payment_status_display }}</div>
-                        <a href="{% url 'core:event_expense_update' expense.pk %}?return_tab=expenses" class="btn btn-sm btn-outline-primary mt-2">Изменить</a>
+                        {% if crm_permissions.can_view_finance %}<a href="{% url 'core:event_expense_update' expense.pk %}?return_tab=expenses" class="btn btn-sm btn-outline-primary mt-2">Изменить</a>{% endif %}
                     </div>
                 </div>
             {% empty %}
@@ -362,7 +364,7 @@
                 <h2 class="premium-panel__title">Подрядчики</h2>
                 <p class="premium-panel__subtitle">Текущий состав команды подрядчиков по мероприятию.</p>
             </div>
-            <a href="{% url 'core:event_vendor_create' event.pk %}?return_tab=vendors" class="btn btn-sm btn-primary">Добавить</a>
+            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_vendor_create' event.pk %}?return_tab=vendors" class="btn btn-sm btn-primary">Добавить</a>{% endif %}
         </div>
         <div class="event-filter mb-3">
             <a href="{% url 'core:event_detail' event.pk %}?tab=vendors" class="event-filter__link{% if vendor_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
@@ -383,21 +385,21 @@
                         {% endif %}
                         <div class="text-secondary small">{{ assignment.get_status_display }}</div>
                         <div class="event-row-actions justify-content-end mt-2">
-                            {% if assignment.status != "approved" %}
+                            {% if crm_permissions.can_manage_events and assignment.status != "approved" %}
                                 <form method="post" action="{% url 'core:event_vendor_status_update' assignment.pk %}">
                                     {% csrf_token %}
                                     <input type="hidden" name="status" value="approved">
                                     <button type="submit" class="btn btn-sm btn-outline-success">Утвердить</button>
                                 </form>
                             {% endif %}
-                            {% if assignment.status != "replaced" %}
+                            {% if crm_permissions.can_manage_events and assignment.status != "replaced" %}
                                 <form method="post" action="{% url 'core:event_vendor_status_update' assignment.pk %}">
                                     {% csrf_token %}
                                     <input type="hidden" name="status" value="replaced">
                                     <button type="submit" class="btn btn-sm btn-outline-secondary">Заменён</button>
                                 </form>
                             {% endif %}
-                            <a href="{% url 'core:event_vendor_update' assignment.pk %}?return_tab=vendors" class="btn btn-sm btn-outline-primary">Изменить</a>
+                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_vendor_update' assignment.pk %}?return_tab=vendors" class="btn btn-sm btn-outline-primary">Изменить</a>{% endif %}
                         </div>
                     </div>
                 </div>
@@ -411,7 +413,7 @@
                 <h2 class="premium-panel__title">Коммуникации</h2>
                 <p class="premium-panel__subtitle">История касаний и обсуждений по проекту.</p>
             </div>
-            <a href="{% url 'core:event_communication_create' event.pk %}?return_tab=communications" class="btn btn-sm btn-primary">Добавить</a>
+            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_communication_create' event.pk %}?return_tab=communications" class="btn btn-sm btn-primary">Добавить</a>{% endif %}
         </div>
         <div class="event-filter mb-3">
             <a href="{% url 'core:event_detail' event.pk %}?tab=communications" class="event-filter__link{% if communication_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
@@ -432,7 +434,7 @@
                     <div class="premium-list__meta">
                         {{ communication.comment|default:"Без комментария" }}
                         <div class="mt-2">
-                            <a href="{% url 'core:event_communication_update' communication.pk %}?return_tab=communications" class="btn btn-sm btn-outline-primary">Изменить</a>
+                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_communication_update' communication.pk %}?return_tab=communications" class="btn btn-sm btn-outline-primary">Изменить</a>{% endif %}
                         </div>
                     </div>
                 </div>
@@ -446,7 +448,7 @@
                 <h2 class="premium-panel__title">Документы</h2>
                 <p class="premium-panel__subtitle">Договоры, счета, КП и акты по мероприятию.</p>
             </div>
-            <a href="{% url 'core:event_document_create' event.pk %}?return_tab=documents" class="btn btn-sm btn-primary">Добавить</a>
+            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_document_create' event.pk %}?return_tab=documents" class="btn btn-sm btn-primary">Добавить</a>{% endif %}
         </div>
         <div class="event-filter mb-3">
             <a href="{% url 'core:event_detail' event.pk %}?tab=documents" class="event-filter__link{% if document_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
@@ -468,7 +470,7 @@
                             Файл не загружен
                         {% endif %}
                         <div class="mt-2">
-                            <a href="{% url 'core:event_document_update' document.pk %}?return_tab=documents" class="btn btn-sm btn-outline-primary">Изменить</a>
+                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_document_update' document.pk %}?return_tab=documents" class="btn btn-sm btn-outline-primary">Изменить</a>{% endif %}
                         </div>
                     </div>
                 </div>
