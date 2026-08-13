@@ -662,3 +662,37 @@ def test_lists_hide_actions_without_management_permission(
     for label in forbidden_labels:
         assert label not in html
     assert reverse(f"core:{object_key}_delete", kwargs={"pk": crm_objects[object_key].pk}) not in html
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "url_name, object_key, action_labels",
+    [
+        ("pipeline", "stage", ("Добавить этап", "Изменить", "Удалить")),
+        ("formats", "event_format", ("Добавить формат", "Изменить", "Удалить")),
+        ("vendors", "vendor", ("Добавить подрядчика", "Изменить", "Удалить")),
+        ("packages", "service_package", ("Добавить пакет", "Изменить", "Удалить")),
+    ],
+)
+def test_reference_lists_hide_mutation_actions_without_system_access(
+    client,
+    django_user_model,
+    crm_objects,
+    url_name,
+    object_key,
+    action_labels,
+):
+    """Базовые списки скрывают кнопки изменения без системного права."""
+    user = create_user_with_profile(
+        django_user_model,
+        "reference_ui_viewer",
+        can_manage_system=False,
+    )
+    client.force_login(user)
+
+    response = client.get(reverse(f"core:{url_name}"))
+    html = response.content.decode()
+
+    assert response.status_code == 200
+    for label in action_labels:
+        assert label not in html

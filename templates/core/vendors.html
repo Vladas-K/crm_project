@@ -8,7 +8,7 @@
         <h1 class="h2 mb-1">Подрядчики</h1>
         <p class="text-secondary mb-0">Пул исполнителей с ролями, стоимостью, рейтингом и чёрным списком.</p>
     </div>
-    <a href="{% url 'core:vendor_create' %}" class="btn btn-primary">Добавить подрядчика</a>
+    {% if crm_permissions.can_manage_system %}<a href="{% url 'core:vendor_create' %}" class="btn btn-primary">Добавить подрядчика</a>{% endif %}
 </div>
 
 <form method="get" class="premium-panel lead-filter-panel mb-4">
@@ -76,10 +76,12 @@
                         <td>{{ vendor.reliability }}%</td>
                         <td>{% if vendor.blacklisted %}<span class="text-danger">Чёрный список</span>{% else %}Активен{% endif %}</td>
                         <td class="text-end">
-                            <div class="d-flex justify-content-end gap-2">
-                                <a href="{% url 'core:vendor_update' vendor.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
-                                <a href="{% url 'core:vendor_delete' vendor.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>
-                            </div>
+                            {% if crm_permissions.can_manage_system %}
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a href="{% url 'core:vendor_update' vendor.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
+                                    <a href="{% url 'core:vendor_delete' vendor.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>
+                                </div>
+                            {% endif %}
                         </td>
                     </tr>
                 {% empty %}
