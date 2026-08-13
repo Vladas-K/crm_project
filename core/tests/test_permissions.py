@@ -696,3 +696,24 @@ def test_reference_lists_hide_mutation_actions_without_system_access(
     assert response.status_code == 200
     for label in action_labels:
         assert label not in html
+
+
+@pytest.mark.django_db
+def test_dashboard_hides_or_downgrades_links_without_matching_permissions(client, django_user_model, crm_objects):
+    """Дашборд не ведёт к запрещённым действиям и закрытым разделам."""
+    user = create_user_with_profile(
+        django_user_model,
+        "dashboard_viewer",
+        can_view_clients=False,
+        can_manage_leads=False,
+    )
+    client.force_login(user)
+
+    response = client.get(reverse("core:dashboard"))
+    html = response.content.decode()
+
+    assert response.status_code == 200
+    assert reverse("core:lead_update", kwargs={"pk": crm_objects["lead"].pk}) not in html
+    assert f'href="{reverse("core:leads")}"' in html
+    assert f'href="{reverse("core:clients")}"' not in html
+    assert "Клиенты" in html

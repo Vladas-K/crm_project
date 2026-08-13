@@ -29,12 +29,12 @@
         </a>
     </div>
     <div class="col-md-6 col-xl-3">
-        <a href="{% url 'core:clients' %}" class="card border-0 shadow-sm h-100 dashboard-stat dashboard-stat--clients">
+        {% if crm_permissions.can_view_clients %}<a href="{% url 'core:clients' %}" class="card border-0 shadow-sm h-100 dashboard-stat dashboard-stat--clients">{% else %}<div class="card border-0 shadow-sm h-100 dashboard-stat dashboard-stat--clients">{% endif %}
             <div class="card-body">
                 <p class="text-secondary mb-2">Клиенты</p>
                 <h2 class="display-6 mb-0">{{ stats.clients_count }}</h2>
             </div>
-        </a>
+        {% if crm_permissions.can_view_clients %}</a>{% else %}</div>{% endif %}
     </div>
     <div class="col-md-6 col-xl-3">
         <a href="{% url 'core:events' %}" class="card border-0 shadow-sm h-100 dashboard-stat dashboard-stat--events">
@@ -63,7 +63,7 @@
             </div>
             <div class="premium-list">
                 {% for lead in latest_leads %}
-                    <a href="{% url 'core:lead_update' lead.pk %}" class="premium-list__row premium-list__row--link">
+                    <a href="{% if crm_permissions.can_manage_leads %}{% url 'core:lead_update' lead.pk %}{% else %}{% url 'core:leads' %}{% endif %}" class="premium-list__row premium-list__row--link">
                         <div>
                             <div class="fw-semibold">{{ lead.name }}</div>
                             <div class="text-secondary small">{{ lead.source|default:"Источник не указан" }}</div>
