@@ -38,13 +38,41 @@ class TeamMemberProfile(models.Model):
         verbose_name="Пользователь",
     )
     role = models.CharField("Роль", max_length=30, choices=CRMRole.choices)
-    can_view_finance = models.BooleanField("Доступ к финансам", default=False)
-    can_view_clients = models.BooleanField("Доступ к клиентам", default=True)
-    can_view_analytics = models.BooleanField("Доступ к аналитике", default=False)
-    can_manage_leads = models.BooleanField("Управление лидами", default=True)
-    can_manage_clients = models.BooleanField("Управление клиентами", default=True)
-    can_manage_events = models.BooleanField("Управление мероприятиями", default=True)
-    can_manage_system = models.BooleanField("Управление системой", default=False)
+    can_view_finance = models.BooleanField(
+        "Доступ к финансам",
+        default=False,
+        help_text="Показывает бюджеты, расходы, прибыль, маржу и финансовую аналитику.",
+    )
+    can_view_clients = models.BooleanField(
+        "Доступ к клиентам",
+        default=True,
+        help_text="Разрешает просмотр раздела клиентов, поиск и фильтрацию.",
+    )
+    can_view_analytics = models.BooleanField(
+        "Доступ к аналитике",
+        default=False,
+        help_text="Разрешает открывать страницу аналитики и просматривать графики.",
+    )
+    can_manage_leads = models.BooleanField(
+        "Управление лидами",
+        default=True,
+        help_text="Разрешает создавать и редактировать лидов.",
+    )
+    can_manage_clients = models.BooleanField(
+        "Управление клиентами",
+        default=True,
+        help_text="Разрешает создавать и редактировать клиентов. Также нужен доступ к клиентам.",
+    )
+    can_manage_events = models.BooleanField(
+        "Управление мероприятиями",
+        default=True,
+        help_text="Разрешает создавать и редактировать мероприятия и связанные рабочие данные.",
+    )
+    can_manage_system = models.BooleanField(
+        "Управление системой",
+        default=False,
+        help_text="Разрешает управлять пользователями и справочниками, а также удалять основные записи.",
+    )
 
     class Meta:
         verbose_name = "Профиль сотрудника"
