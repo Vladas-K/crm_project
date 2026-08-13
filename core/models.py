@@ -71,7 +71,7 @@ class TeamMemberProfile(models.Model):
     can_manage_system = models.BooleanField(
         "Управление системой",
         default=False,
-        help_text="Разрешает управлять пользователями и справочниками, а также удалять основные записи.",
+        help_text="Разрешает управлять пользователями, базовыми списками и шаблонами CRM, а также удалять основные записи.",
     )
 
     class Meta:
