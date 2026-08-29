@@ -890,7 +890,7 @@ class EventScopedFormMixin(CRMLoginRequiredMixin):
     def get_event_detail_url(self, event):
         """Строит URL карточки мероприятия с вкладкой по умолчанию для view."""
 
-        return f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab={self.return_tab}"
+        return f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab={self.return_tab}#event-tabs"
 
     def get_return_tab(self):
         """Определяет вкладку возврата из запроса или настройки view."""
@@ -933,10 +933,10 @@ class EventScopedFormMixin(CRMLoginRequiredMixin):
         """Возвращает пользователя в карточку мероприятия и нужную вкладку."""
 
         if self.parent_event:
-            return f"{reverse('core:event_detail', kwargs={'pk': self.parent_event.pk})}?tab={self.get_return_tab()}"
+            return f"{reverse('core:event_detail', kwargs={'pk': self.parent_event.pk})}?tab={self.get_return_tab()}#event-tabs"
         event = getattr(getattr(self, "object", None), "event", None)
         if event:
-            return f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab={self.get_return_tab()}"
+            return f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab={self.get_return_tab()}#event-tabs"
         return super().get_cancel_url()
 
     def get_success_url(self):
@@ -944,7 +944,7 @@ class EventScopedFormMixin(CRMLoginRequiredMixin):
 
         event = self.parent_event or getattr(getattr(self, "object", None), "event", None)
         if event:
-            return f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab={self.get_return_tab()}"
+            return f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab={self.get_return_tab()}#event-tabs"
         return super().get_success_url()
 
 
@@ -1137,7 +1137,7 @@ class EventTimelineItemDeleteView(SystemAccessMixin, DeleteView):
     def get_success_url(self):
         """Возвращает пользователя на вкладку тайминга после удаления блока."""
 
-        return f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=timeline"
+        return f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=timeline#event-tabs"
 
 
 class EventRiskCreateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
@@ -1202,7 +1202,7 @@ class TaskDeleteView(SystemAccessMixin, DeleteView):
         """Выбирает URL возврата по месту, откуда пользователь пришел удалять задачу."""
 
         if self.request.GET.get("return_tab") == "tasks" or self.request.POST.get("return_tab") == "tasks":
-            return f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=tasks"
+            return f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=tasks#event-tabs"
         return reverse("core:tasks")
 
 
@@ -1220,7 +1220,7 @@ class TaskStatusUpdateView(EventManagementMixin, View):
             task.status = status
             task.save(update_fields=["status"])
             messages.success(request, "Статус задачи обновлён.")
-        return redirect(f"{reverse('core:event_detail', kwargs={'pk': task.event.pk})}?tab=tasks")
+        return redirect(f"{reverse('core:event_detail', kwargs={'pk': task.event.pk})}?tab=tasks#event-tabs")
 
 
 class EventExpenseCreateView(FinanceAccessMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
@@ -1289,7 +1289,7 @@ class EventVendorStatusUpdateView(EventManagementMixin, View):
             assignment.status = status
             assignment.save(update_fields=["status"])
             messages.success(request, "Статус подрядчика обновлён.")
-        return redirect(f"{reverse('core:event_detail', kwargs={'pk': assignment.event.pk})}?tab=vendors")
+        return redirect(f"{reverse('core:event_detail', kwargs={'pk': assignment.event.pk})}?tab=vendors#event-tabs")
 
 
 class EventCommunicationCreateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):

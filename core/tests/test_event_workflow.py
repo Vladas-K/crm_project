@@ -51,7 +51,7 @@ def test_nested_task_create_returns_to_tasks_tab(client, django_user_model, crm_
 
     assert task.event == event
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=tasks"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=tasks#event-tabs"
 
 
 @pytest.mark.django_db
@@ -76,7 +76,7 @@ def test_nested_task_update_returns_to_tasks_tab(client, django_user_model, crm_
     assert task.title == "Подготовить обновлённый бриф"
     assert task.status == EventTask.Status.IN_PROGRESS
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': task.event.pk})}?tab=tasks"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': task.event.pk})}?tab=tasks#event-tabs"
 
 
 @pytest.mark.django_db
@@ -102,7 +102,7 @@ def test_nested_timeline_create_returns_to_timeline_tab(client, django_user_mode
     assert item.time.strftime("%H:%M") == "10:30"
     assert item.responsible == "Координатор"
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=timeline"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=timeline#event-tabs"
 
 
 @pytest.mark.django_db
@@ -134,7 +134,7 @@ def test_nested_timeline_update_returns_to_timeline_tab(client, django_user_mode
     assert item.block == "Открытие"
     assert item.description == "Приветственное слово"
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': item.event.pk})}?tab=timeline"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': item.event.pk})}?tab=timeline#event-tabs"
 
 
 @pytest.mark.django_db
@@ -153,7 +153,7 @@ def test_timeline_delete_returns_to_timeline_tab(client, django_user_model, crm_
 
     assert not EventTimelineItem.objects.filter(pk=item.pk).exists()
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': crm_objects['event'].pk})}?tab=timeline"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': crm_objects['event'].pk})}?tab=timeline#event-tabs"
 
 
 @pytest.mark.django_db
@@ -178,7 +178,7 @@ def test_nested_risk_create_returns_to_risks_tab(client, django_user_model, crm_
     assert risk.probability == EventRisk.Probability.HIGH
     assert risk.plan_b == "Перенести монтаж на резервную площадку"
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=risks"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=risks#event-tabs"
 
 
 @pytest.mark.django_db
@@ -208,7 +208,7 @@ def test_nested_risk_update_returns_to_risks_tab(client, django_user_model, crm_
     assert risk.probability == EventRisk.Probability.LOW
     assert risk.plan_b == "Использовать локального поставщика"
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': risk.event.pk})}?tab=risks"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': risk.event.pk})}?tab=risks#event-tabs"
 
 
 @pytest.mark.django_db
@@ -235,7 +235,7 @@ def test_nested_outcome_create_returns_to_outcome_tab(client, django_user_model,
     assert outcome.final_profit == Decimal("125000.00")
     assert outcome.project_rating == 5
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=outcome"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=outcome#event-tabs"
 
 
 @pytest.mark.django_db
@@ -268,7 +268,7 @@ def test_nested_outcome_update_returns_to_outcome_tab(client, django_user_model,
     assert outcome.final_profit == Decimal("110000.00")
     assert outcome.project_rating == 5
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': outcome.event.pk})}?tab=outcome"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': outcome.event.pk})}?tab=outcome#event-tabs"
 
 
 @pytest.mark.django_db
@@ -285,7 +285,7 @@ def test_task_status_quick_action_updates_status_and_returns_to_tasks_tab(client
 
     assert task.status == EventTask.Status.IN_PROGRESS
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': task.event.pk})}?tab=tasks"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': task.event.pk})}?tab=tasks#event-tabs"
 
 
 @pytest.mark.django_db
@@ -303,7 +303,7 @@ def test_task_status_quick_action_ignores_invalid_status(client, django_user_mod
 
     assert task.status == original_status
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': task.event.pk})}?tab=tasks"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': task.event.pk})}?tab=tasks#event-tabs"
 
 
 @pytest.mark.django_db
@@ -324,7 +324,7 @@ def test_event_vendor_status_quick_action_updates_status_and_returns_to_vendors_
 
     assert assignment.status == EventVendor.Status.APPROVED
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': assignment.event.pk})}?tab=vendors"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': assignment.event.pk})}?tab=vendors#event-tabs"
 
 
 @pytest.mark.django_db
@@ -342,7 +342,7 @@ def test_event_vendor_status_quick_action_ignores_invalid_status(client, django_
 
     assert assignment.status == original_status
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': assignment.event.pk})}?tab=vendors"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': assignment.event.pk})}?tab=vendors#event-tabs"
 
 
 @pytest.mark.django_db
@@ -368,7 +368,7 @@ def test_nested_expense_create_returns_to_expenses_tab(client, django_user_model
     assert expense.amount == Decimal("45000.00")
     assert expense.prepayment == Decimal("15000.00")
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=expenses"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=expenses#event-tabs"
 
 
 @pytest.mark.django_db
@@ -396,7 +396,7 @@ def test_nested_expense_update_returns_to_expenses_tab(client, django_user_model
     assert expense.prepayment == Decimal("25000.00")
     assert expense.payment_status == EventExpense.PaymentStatus.PAID
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': expense.event.pk})}?tab=expenses"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': expense.event.pk})}?tab=expenses#event-tabs"
 
 
 @pytest.mark.django_db
@@ -423,7 +423,7 @@ def test_nested_event_vendor_create_returns_to_vendors_tab(client, django_user_m
     assert assignment.vendor == vendor
     assert assignment.cost == Decimal("35000.00")
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=vendors"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=vendors#event-tabs"
 
 
 @pytest.mark.django_db
@@ -449,7 +449,7 @@ def test_nested_event_vendor_update_returns_to_vendors_tab(client, django_user_m
     assert assignment.cost == Decimal("65000.00")
     assert assignment.status == EventVendor.Status.APPROVED
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': assignment.event.pk})}?tab=vendors"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': assignment.event.pk})}?tab=vendors#event-tabs"
 
 
 @pytest.mark.django_db
@@ -475,7 +475,7 @@ def test_nested_communication_create_returns_to_communications_tab(client, djang
     assert communication.communication_type == EventCommunication.Type.MEETING
     assert communication.manager == user
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=communications"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=communications#event-tabs"
 
 
 @pytest.mark.django_db
@@ -501,7 +501,7 @@ def test_nested_communication_update_returns_to_communications_tab(client, djang
     assert communication.comment == "Отправлены обновлённые материалы"
     assert communication.manager == user
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': communication.event.pk})}?tab=communications"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': communication.event.pk})}?tab=communications#event-tabs"
 
 
 @pytest.mark.django_db
@@ -524,7 +524,7 @@ def test_nested_document_create_returns_to_documents_tab(client, django_user_mod
     assert document.event == event
     assert document.status == EventDocument.Status.DRAFT
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=documents"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=documents#event-tabs"
 
 
 @pytest.mark.django_db
@@ -547,4 +547,4 @@ def test_nested_document_update_returns_to_documents_tab(client, django_user_mod
     assert document.document_type == EventDocument.Type.CONTRACT
     assert document.status == EventDocument.Status.SIGNED
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': document.event.pk})}?tab=documents"
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': document.event.pk})}?tab=documents#event-tabs"
