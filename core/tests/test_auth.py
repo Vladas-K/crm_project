@@ -1,6 +1,8 @@
 import pytest
 from django.urls import reverse
 
+from core.models import EventTimelineItem
+
 
 def assert_login_required(client, url, method="get"):
     response = getattr(client, method)(url)
@@ -37,6 +39,11 @@ def test_list_and_dashboard_views_require_login(client, url_name):
 
 
 def test_detail_and_form_views_require_login(client, crm_objects):
+    timeline_item = EventTimelineItem.objects.create(
+        event=crm_objects["event"],
+        time="09:00",
+        block="Проверка доступа",
+    )
     urls = [
         reverse("core:lead_create"),
         reverse("core:lead_update", kwargs={"pk": crm_objects["lead"].pk}),
@@ -60,6 +67,7 @@ def test_detail_and_form_views_require_login(client, crm_objects):
         reverse("core:task_detail", kwargs={"pk": crm_objects["task"].pk}),
         reverse("core:task_update", kwargs={"pk": crm_objects["task"].pk}),
         reverse("core:task_delete", kwargs={"pk": crm_objects["task"].pk}),
+        reverse("core:event_timeline_delete", kwargs={"pk": timeline_item.pk}),
         reverse("core:event_expense_update", kwargs={"pk": crm_objects["expense"].pk}),
         reverse("core:event_vendor_update", kwargs={"pk": crm_objects["event_vendor"].pk}),
         reverse("core:event_communication_update", kwargs={"pk": crm_objects["communication"].pk}),

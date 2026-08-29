@@ -138,6 +138,25 @@ def test_nested_timeline_update_returns_to_timeline_tab(client, django_user_mode
 
 
 @pytest.mark.django_db
+def test_timeline_delete_returns_to_timeline_tab(client, django_user_model, crm_objects):
+    """Удаление блока тайминга возвращает на вкладку тайминга."""
+    login_user(client, django_user_model, can_manage_system=True)
+    item = EventTimelineItem.objects.create(
+        event=crm_objects["event"],
+        time="09:00",
+        block="Сбор команды",
+    )
+
+    response = client.post(
+        reverse("core:event_timeline_delete", kwargs={"pk": item.pk}),
+    )
+
+    assert not EventTimelineItem.objects.filter(pk=item.pk).exists()
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': crm_objects['event'].pk})}?tab=timeline"
+
+
+@pytest.mark.django_db
 def test_nested_risk_create_returns_to_risks_tab(client, django_user_model, crm_objects):
     """Создание риска из карточки мероприятия возвращает на вкладку рисков."""
     login_user(client, django_user_model)

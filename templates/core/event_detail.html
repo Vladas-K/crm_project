@@ -191,6 +191,7 @@
                         <div class="text-secondary small">{{ item.responsible|default:"Ответственный не указан" }}</div>
                         <div class="mt-2">
                             {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_timeline_update' item.pk %}?return_tab=timeline" class="btn btn-sm btn-outline-primary">Изменить</a>{% endif %}
+                            {% if crm_permissions.can_manage_system %}<a href="{% url 'core:event_timeline_delete' item.pk %}?return_tab=timeline" class="btn btn-sm btn-outline-danger">Удалить</a>{% endif %}
                         </div>
                     </div>
                 </div>

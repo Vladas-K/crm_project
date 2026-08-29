@@ -1128,6 +1128,18 @@ class EventTimelineItemUpdateView(EventManagementMixin, EventScopedFormMixin, CR
     cancel_url = reverse_lazy("core:events")
 
 
+class EventTimelineItemDeleteView(SystemAccessMixin, DeleteView):
+    """Удаляет блок тайминга после подтверждения."""
+
+    model = EventTimelineItem
+    template_name = "core/object_confirm_delete.html"
+
+    def get_success_url(self):
+        """Возвращает пользователя на вкладку тайминга после удаления блока."""
+
+        return f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=timeline"
+
+
 class EventRiskCreateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Добавляет риск к мероприятию."""
 

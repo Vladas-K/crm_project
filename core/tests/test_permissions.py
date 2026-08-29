@@ -4,7 +4,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.urls import reverse
 
-from core.models import CRMRole, Event, Lead, TeamMemberProfile
+from core.models import CRMRole, Event, EventTimelineItem, Lead, TeamMemberProfile
 
 
 def create_user_with_profile(django_user_model, username, **profile_flags):
@@ -696,6 +696,27 @@ def test_reference_lists_hide_mutation_actions_without_system_access(
     assert response.status_code == 200
     for label in action_labels:
         assert label not in html
+
+
+@pytest.mark.django_db
+def test_timeline_delete_requires_system_access(client, django_user_model, crm_objects):
+    """Удаление блока тайминга недоступно без системного права."""
+    user = create_user_with_profile(
+        django_user_model,
+        "timeline_viewer",
+        can_manage_events=True,
+        can_manage_system=False,
+    )
+    item = EventTimelineItem.objects.create(
+        event=crm_objects["event"],
+        time="09:00",
+        block="Проверка доступа",
+    )
+    client.force_login(user)
+
+    response = client.get(reverse("core:event_timeline_delete", kwargs={"pk": item.pk}))
+
+    assert response.status_code == 403
 
 
 @pytest.mark.django_db
