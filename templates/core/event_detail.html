@@ -158,17 +158,17 @@
     </div>
 </div>
 
-<div class="event-tabs mb-4">
-    <a href="{% url 'core:event_detail' event.pk %}?tab=tasks" class="event-tabs__link{% if active_tab == 'tasks' %} event-tabs__link--active{% endif %}">Задачи</a>
-    <a href="{% url 'core:event_detail' event.pk %}?tab=timeline" class="event-tabs__link{% if active_tab == 'timeline' %} event-tabs__link--active{% endif %}">Тайминг</a>
-    <a href="{% url 'core:event_detail' event.pk %}?tab=risks" class="event-tabs__link{% if active_tab == 'risks' %} event-tabs__link--active{% endif %}">Риски</a>
-    <a href="{% url 'core:event_detail' event.pk %}?tab=outcome" class="event-tabs__link{% if active_tab == 'outcome' %} event-tabs__link--active{% endif %}">Итоги</a>
+<div id="event-tabs" class="event-tabs mb-4">
+    <a href="{% url 'core:event_detail' event.pk %}?tab=tasks#event-tabs" class="event-tabs__link{% if active_tab == 'tasks' %} event-tabs__link--active{% endif %}">Задачи</a>
+    <a href="{% url 'core:event_detail' event.pk %}?tab=timeline#event-tabs" class="event-tabs__link{% if active_tab == 'timeline' %} event-tabs__link--active{% endif %}">Тайминг</a>
+    <a href="{% url 'core:event_detail' event.pk %}?tab=risks#event-tabs" class="event-tabs__link{% if active_tab == 'risks' %} event-tabs__link--active{% endif %}">Риски</a>
+    <a href="{% url 'core:event_detail' event.pk %}?tab=outcome#event-tabs" class="event-tabs__link{% if active_tab == 'outcome' %} event-tabs__link--active{% endif %}">Итоги</a>
     {% if crm_permissions.can_view_finance %}
-        <a href="{% url 'core:event_detail' event.pk %}?tab=expenses" class="event-tabs__link{% if active_tab == 'expenses' %} event-tabs__link--active{% endif %}">Расходы</a>
+        <a href="{% url 'core:event_detail' event.pk %}?tab=expenses#event-tabs" class="event-tabs__link{% if active_tab == 'expenses' %} event-tabs__link--active{% endif %}">Расходы</a>
     {% endif %}
-    <a href="{% url 'core:event_detail' event.pk %}?tab=vendors" class="event-tabs__link{% if active_tab == 'vendors' %} event-tabs__link--active{% endif %}">Подрядчики</a>
-    <a href="{% url 'core:event_detail' event.pk %}?tab=communications" class="event-tabs__link{% if active_tab == 'communications' %} event-tabs__link--active{% endif %}">Коммуникации</a>
-    <a href="{% url 'core:event_detail' event.pk %}?tab=documents" class="event-tabs__link{% if active_tab == 'documents' %} event-tabs__link--active{% endif %}">Документы</a>
+    <a href="{% url 'core:event_detail' event.pk %}?tab=vendors#event-tabs" class="event-tabs__link{% if active_tab == 'vendors' %} event-tabs__link--active{% endif %}">Подрядчики</a>
+    <a href="{% url 'core:event_detail' event.pk %}?tab=communications#event-tabs" class="event-tabs__link{% if active_tab == 'communications' %} event-tabs__link--active{% endif %}">Коммуникации</a>
+    <a href="{% url 'core:event_detail' event.pk %}?tab=documents#event-tabs" class="event-tabs__link{% if active_tab == 'documents' %} event-tabs__link--active{% endif %}">Документы</a>
 </div>
 
 <div class="premium-panel">
@@ -284,10 +284,10 @@
             {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_task_create' event.pk %}?return_tab=tasks" class="btn btn-sm btn-primary">Добавить</a>{% endif %}
         </div>
         <div class="event-filter mb-3">
-            <a href="{% url 'core:event_detail' event.pk %}?tab=tasks" class="event-filter__link{% if task_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
-            <a href="{% url 'core:event_detail' event.pk %}?tab=tasks&task_filter=open" class="event-filter__link{% if task_filter == 'open' %} event-filter__link--active{% endif %}">Открытые</a>
-            <a href="{% url 'core:event_detail' event.pk %}?tab=tasks&task_filter=overdue" class="event-filter__link{% if task_filter == 'overdue' %} event-filter__link--active{% endif %}">Просроченные</a>
-            <a href="{% url 'core:event_detail' event.pk %}?tab=tasks&task_filter=done" class="event-filter__link{% if task_filter == 'done' %} event-filter__link--active{% endif %}">Готовые</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=tasks#event-tabs" class="event-filter__link{% if task_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=tasks&task_filter=open#event-tabs" class="event-filter__link{% if task_filter == 'open' %} event-filter__link--active{% endif %}">Открытые</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=tasks&task_filter=overdue#event-tabs" class="event-filter__link{% if task_filter == 'overdue' %} event-filter__link--active{% endif %}">Просроченные</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=tasks&task_filter=done#event-tabs" class="event-filter__link{% if task_filter == 'done' %} event-filter__link--active{% endif %}">Готовые</a>
         </div>
         <div class="premium-list">
             {% for task in detail_tasks %}
@@ -337,10 +337,10 @@
             {% if crm_permissions.can_view_finance %}<a href="{% url 'core:event_expense_create' event.pk %}?return_tab=expenses" class="btn btn-sm btn-primary">Добавить</a>{% endif %}
         </div>
         <div class="event-filter mb-3">
-            <a href="{% url 'core:event_detail' event.pk %}?tab=expenses" class="event-filter__link{% if expense_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
-            <a href="{% url 'core:event_detail' event.pk %}?tab=expenses&expense_filter=planned" class="event-filter__link{% if expense_filter == 'planned' %} event-filter__link--active{% endif %}">Запланировано</a>
-            <a href="{% url 'core:event_detail' event.pk %}?tab=expenses&expense_filter=partial" class="event-filter__link{% if expense_filter == 'partial' %} event-filter__link--active{% endif %}">Частично</a>
-            <a href="{% url 'core:event_detail' event.pk %}?tab=expenses&expense_filter=paid" class="event-filter__link{% if expense_filter == 'paid' %} event-filter__link--active{% endif %}">Оплачено</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=expenses#event-tabs" class="event-filter__link{% if expense_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=expenses&expense_filter=planned#event-tabs" class="event-filter__link{% if expense_filter == 'planned' %} event-filter__link--active{% endif %}">Запланировано</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=expenses&expense_filter=partial#event-tabs" class="event-filter__link{% if expense_filter == 'partial' %} event-filter__link--active{% endif %}">Частично</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=expenses&expense_filter=paid#event-tabs" class="event-filter__link{% if expense_filter == 'paid' %} event-filter__link--active{% endif %}">Оплачено</a>
         </div>
         <div class="premium-list">
             {% for expense in detail_expenses %}
@@ -368,10 +368,10 @@
             {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_vendor_create' event.pk %}?return_tab=vendors" class="btn btn-sm btn-primary">Добавить</a>{% endif %}
         </div>
         <div class="event-filter mb-3">
-            <a href="{% url 'core:event_detail' event.pk %}?tab=vendors" class="event-filter__link{% if vendor_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
-            <a href="{% url 'core:event_detail' event.pk %}?tab=vendors&vendor_filter=proposed" class="event-filter__link{% if vendor_filter == 'proposed' %} event-filter__link--active{% endif %}">Предложены</a>
-            <a href="{% url 'core:event_detail' event.pk %}?tab=vendors&vendor_filter=approved" class="event-filter__link{% if vendor_filter == 'approved' %} event-filter__link--active{% endif %}">Утверждены</a>
-            <a href="{% url 'core:event_detail' event.pk %}?tab=vendors&vendor_filter=replaced" class="event-filter__link{% if vendor_filter == 'replaced' %} event-filter__link--active{% endif %}">Заменены</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=vendors#event-tabs" class="event-filter__link{% if vendor_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=vendors&vendor_filter=proposed#event-tabs" class="event-filter__link{% if vendor_filter == 'proposed' %} event-filter__link--active{% endif %}">Предложены</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=vendors&vendor_filter=approved#event-tabs" class="event-filter__link{% if vendor_filter == 'approved' %} event-filter__link--active{% endif %}">Утверждены</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=vendors&vendor_filter=replaced#event-tabs" class="event-filter__link{% if vendor_filter == 'replaced' %} event-filter__link--active{% endif %}">Заменены</a>
         </div>
         <div class="premium-list">
             {% for assignment in detail_event_vendors %}
@@ -417,10 +417,10 @@
             {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_communication_create' event.pk %}?return_tab=communications" class="btn btn-sm btn-primary">Добавить</a>{% endif %}
         </div>
         <div class="event-filter mb-3">
-            <a href="{% url 'core:event_detail' event.pk %}?tab=communications" class="event-filter__link{% if communication_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
-            <a href="{% url 'core:event_detail' event.pk %}?tab=communications&communication_filter=call" class="event-filter__link{% if communication_filter == 'call' %} event-filter__link--active{% endif %}">Звонки</a>
-            <a href="{% url 'core:event_detail' event.pk %}?tab=communications&communication_filter=message" class="event-filter__link{% if communication_filter == 'message' %} event-filter__link--active{% endif %}">Сообщения</a>
-            <a href="{% url 'core:event_detail' event.pk %}?tab=communications&communication_filter=meeting" class="event-filter__link{% if communication_filter == 'meeting' %} event-filter__link--active{% endif %}">Встречи</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=communications#event-tabs" class="event-filter__link{% if communication_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=communications&communication_filter=call#event-tabs" class="event-filter__link{% if communication_filter == 'call' %} event-filter__link--active{% endif %}">Звонки</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=communications&communication_filter=message#event-tabs" class="event-filter__link{% if communication_filter == 'message' %} event-filter__link--active{% endif %}">Сообщения</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=communications&communication_filter=meeting#event-tabs" class="event-filter__link{% if communication_filter == 'meeting' %} event-filter__link--active{% endif %}">Встречи</a>
         </div>
         <div class="premium-list">
             {% for communication in detail_communications %}
@@ -452,10 +452,10 @@
             {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_document_create' event.pk %}?return_tab=documents" class="btn btn-sm btn-primary">Добавить</a>{% endif %}
         </div>
         <div class="event-filter mb-3">
-            <a href="{% url 'core:event_detail' event.pk %}?tab=documents" class="event-filter__link{% if document_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
-            <a href="{% url 'core:event_detail' event.pk %}?tab=documents&document_filter=draft" class="event-filter__link{% if document_filter == 'draft' %} event-filter__link--active{% endif %}">Черновики</a>
-            <a href="{% url 'core:event_detail' event.pk %}?tab=documents&document_filter=sent" class="event-filter__link{% if document_filter == 'sent' %} event-filter__link--active{% endif %}">Отправлены</a>
-            <a href="{% url 'core:event_detail' event.pk %}?tab=documents&document_filter=signed" class="event-filter__link{% if document_filter == 'signed' %} event-filter__link--active{% endif %}">Подписаны</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=documents#event-tabs" class="event-filter__link{% if document_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=documents&document_filter=draft#event-tabs" class="event-filter__link{% if document_filter == 'draft' %} event-filter__link--active{% endif %}">Черновики</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=documents&document_filter=sent#event-tabs" class="event-filter__link{% if document_filter == 'sent' %} event-filter__link--active{% endif %}">Отправлены</a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=documents&document_filter=signed#event-tabs" class="event-filter__link{% if document_filter == 'signed' %} event-filter__link--active{% endif %}">Подписаны</a>
         </div>
         <div class="premium-list">
             {% for document in detail_documents %}
