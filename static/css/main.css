@@ -447,6 +447,31 @@ body {
     --stat-accent-rgb: 225, 29, 72;
 }
 
+.dashboard-attention-panel {
+    border-color: rgba(217, 119, 6, 0.2);
+}
+
+.dashboard-attention-section {
+    height: 100%;
+    padding: 1rem;
+    background: rgba(255, 251, 235, 0.72);
+    border: 1px solid rgba(217, 119, 6, 0.14);
+    border-radius: 0.8rem;
+}
+
+.dashboard-attention-section__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.dashboard-attention-section__count {
+    color: var(--crm-amber);
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
 .dashboard-stat:hover .card-body::after,
 .dashboard-stat:focus .card-body::after {
     opacity: 1;
@@ -618,6 +643,16 @@ body {
 .event-chip--soft {
     background: rgba(15, 23, 42, 0.05);
     color: #475569;
+}
+
+.event-chip--danger {
+    background: rgba(225, 29, 72, 0.1);
+    color: var(--crm-rose);
+}
+
+.event-chip--warning {
+    background: rgba(217, 119, 6, 0.1);
+    color: var(--crm-amber);
 }
 
 .premium-panel {

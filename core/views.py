@@ -200,6 +200,34 @@ class DashboardView(CRMLoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        today = timezone.localdate()
+        overdue_tasks = EventTask.objects.select_related("event", "responsible").exclude(
+            status=EventTask.Status.DONE
+        ).filter(deadline__lt=today)
+        unanswered_leads = Lead.objects.select_related("stage", "manager").filter(
+            last_contact_at__isnull=True,
+            created_at__lt=timezone.now() - timezone.timedelta(hours=24),
+        )
+        attention_sections = []
+        if overdue_tasks.exists():
+            attention_sections.append(
+                {
+                    "title": "Просроченные задачи",
+                    "description": "Задачи, по которым уже прошёл срок выполнения.",
+                    "items": overdue_tasks[:5],
+                    "count": overdue_tasks.count(),
+                }
+            )
+        if unanswered_leads.exists():
+            attention_sections.append(
+                {
+                    "title": "Лиды без ответа",
+                    "description": "Новые обращения, с которыми не было контакта более 24 часов.",
+                    "items": unanswered_leads[:5],
+                    "count": unanswered_leads.count(),
+                }
+            )
+        context["attention_sections"] = attention_sections
         context["stats"] = {
             "leads_count": Lead.objects.count(),
             "clients_count": Client.objects.count(),

@@ -243,7 +243,7 @@ def test_analytics_contains_monthly_event_chart_data(client, django_user_model, 
     assert response.status_code == 200
     matching_month = next(item for item in response.context["monthly_chart"] if item["label"].endswith("2026"))
     assert matching_month["total"] == 1
-    assert matching_month["url"].endswith("?month=2026-08")
+    assert matching_month["url"].endswith(f"?month={timezone.localdate():%Y-%m}")
 
 
 @pytest.mark.django_db
@@ -738,3 +738,32 @@ def test_dashboard_hides_or_downgrades_links_without_matching_permissions(client
     assert f'href="{reverse("core:leads")}"' in html
     assert f'href="{reverse("core:clients")}"' not in html
     assert "Клиенты" in html
+
+
+@pytest.mark.django_db
+def test_dashboard_attention_contains_overdue_tasks_and_unanswered_leads(client, django_user_model, crm_objects):
+    """Дашборд показывает просроченные задачи и лиды без ответа более 24 часов."""
+    user = create_user_with_profile(
+        django_user_model,
+        "attention_viewer",
+        can_manage_leads=True,
+    )
+    overdue_task = crm_objects["task"]
+    overdue_task.deadline = timezone.localdate() - timedelta(days=1)
+    overdue_task.save(update_fields=["deadline"])
+    unanswered_lead = Lead.objects.create(name="Лид без ответа", source="Сайт")
+    Lead.objects.filter(pk=unanswered_lead.pk).update(
+        created_at=timezone.now() - timedelta(hours=25),
+    )
+    client.force_login(user)
+
+    response = client.get(reverse("core:dashboard"))
+    html = response.content.decode()
+
+    assert response.status_code == 200
+    assert {section["title"] for section in response.context["attention_sections"]} == {
+        "Просроченные задачи",
+        "Лиды без ответа",
+    }
+    assert overdue_task.title in html
+    assert unanswered_lead.name in html
