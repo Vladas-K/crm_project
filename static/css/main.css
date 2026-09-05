@@ -454,9 +454,18 @@ body {
 .dashboard-attention-section {
     height: 100%;
     padding: 1rem;
-    background: rgba(255, 251, 235, 0.72);
-    border: 1px solid rgba(217, 119, 6, 0.14);
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-top: 3px solid rgba(100, 116, 139, 0.42);
     border-radius: 0.8rem;
+}
+
+.dashboard-attention-section--overdue {
+    border-top-color: rgba(100, 116, 139, 0.42);
+}
+
+.dashboard-attention-section--unanswered {
+    border-top-color: rgba(100, 116, 139, 0.42);
 }
 
 .dashboard-attention-section__header {

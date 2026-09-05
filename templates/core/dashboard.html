@@ -65,7 +65,7 @@
                 <div class="row g-3">
                     {% for section in attention_sections %}
                         <div class="col-lg-6">
-                            <div class="dashboard-attention-section">
+                            <div class="dashboard-attention-section{% if section.title == 'Просроченные задачи' %} dashboard-attention-section--overdue{% else %} dashboard-attention-section--unanswered{% endif %}">
                                 <div class="dashboard-attention-section__header">
                                     <div>
                                         <h3 class="h5 mb-1">{{ section.title }}</h3>
