@@ -31,10 +31,12 @@ class BootstrapModelForm(forms.ModelForm):
                 widget.attrs["class"] = "form-check-input"
                 continue
             css_class = "form-select" if isinstance(widget, (forms.Select, forms.SelectMultiple)) else "form-control"
-            if isinstance(widget, forms.DateInput):
-                widget.input_type = "date"
             if isinstance(widget, forms.DateTimeInput):
                 widget.input_type = "datetime-local"
+                widget.format = "%Y-%m-%dT%H:%M"
+            elif isinstance(widget, forms.DateInput):
+                widget.input_type = "date"
+                widget.format = "%Y-%m-%d"
             widget.attrs["class"] = css_class
             if field.required:
                 widget.attrs["required"] = "required"
