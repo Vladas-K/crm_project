@@ -765,6 +765,7 @@ def test_dashboard_attention_contains_operational_issues(client, django_user_mod
         "Просроченные задачи",
         "Лиды без ответа",
         "Мероприятия без итогов",
+        "Мероприятия без ответственного",
     }
     assert overdue_task.title in html
     assert unanswered_lead.name in html

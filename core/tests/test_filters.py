@@ -358,8 +358,11 @@ def test_events_attention_filters_return_risks_or_missing_outcomes(client, djang
 
     risks_response = client.get(reverse("core:events"), {"attention": "risks"})
     outcomes_response = client.get(reverse("core:events"), {"attention": "outcomes"})
+    unassigned_response = client.get(reverse("core:events"), {"attention": "unassigned_manager"})
 
     assert list(risks_response.context["events"]) == [risky_event]
     assert {event.title for event in outcomes_response.context["events"]} == {"С риском", "Без итогов"}
     assert "Показаны мероприятия с рисками." in risks_response.content.decode()
     assert "Показаны мероприятия без заполненных итогов." in outcomes_response.content.decode()
+    assert {event.title for event in unassigned_response.context["events"]} == {"С риском", "Без итогов"}
+    assert "Показаны мероприятия без ответственного менеджера." in unassigned_response.content.decode()

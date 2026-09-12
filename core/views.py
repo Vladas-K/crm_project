@@ -238,6 +238,10 @@ class DashboardView(CRMLoginRequiredMixin, TemplateView):
             outcome__isnull=True,
             status__in=active_event_statuses,
         ).order_by("date", "id")
+        events_without_manager = Event.objects.select_related("client").filter(
+            manager__isnull=True,
+            status__in=active_event_statuses,
+        ).order_by("date", "id")
         if risky_events.exists():
             attention_sections.append(
                 {
@@ -256,6 +260,16 @@ class DashboardView(CRMLoginRequiredMixin, TemplateView):
                     "description": "Проекты, по которым ещё не заполнена финальная оценка.",
                     "items": events_without_outcome[:5],
                     "count": events_without_outcome.count(),
+                }
+            )
+        if events_without_manager.exists():
+            attention_sections.append(
+                {
+                    "kind": "unassigned",
+                    "title": "Мероприятия без ответственного",
+                    "description": "Активные проекты, которым ещё не назначен менеджер.",
+                    "items": events_without_manager[:5],
+                    "count": events_without_manager.count(),
                 }
             )
         context["attention_sections"] = attention_sections
@@ -478,6 +492,11 @@ class EventListView(CRMLoginRequiredMixin, ListView):
         elif attention_filter == "outcomes":
             queryset = queryset.filter(
                 outcome__isnull=True,
+                status__in=[Event.Status.PLANNING, Event.Status.IN_PROGRESS],
+            ).order_by("date", "id")
+        elif attention_filter == "unassigned_manager":
+            queryset = queryset.filter(
+                manager__isnull=True,
                 status__in=[Event.Status.PLANNING, Event.Status.IN_PROGRESS],
             ).order_by("date", "id")
         if search_query:
