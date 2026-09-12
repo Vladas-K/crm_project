@@ -101,7 +101,7 @@ class PipelineStage(models.Model):
 
 
 class EventFormat(models.Model):
-    """Формат мероприятия, из которого можно автоматически создать структуру проекта."""
+    """Формат мероприятия, из которого можно создать структуру проекта."""
 
     name = models.CharField("Формат мероприятия", max_length=120, unique=True)
     description = models.TextField("Описание", blank=True)
@@ -372,15 +372,15 @@ class Event(models.Model):
         return (self.profit / Decimal(self.planned_budget)) * Decimal("100")
 
     def save(self, *args, **kwargs):
-        """При первом сохранении создаёт структуру мероприятия из выбранного формата."""
+        """Сохраняет основные данные мероприятия без создания связанных записей."""
 
-        creating = self._state.adding
         super().save(*args, **kwargs)
-        if creating and self.event_format:
-            self.create_structure_from_format()
 
     def create_structure_from_format(self) -> None:
-        """Создаёт задачи, тайминг, бюджет и подрядчиков из шаблонов формата."""
+        """Явно создаёт задачи, тайминг, бюджет и подрядчиков из шаблонов формата."""
+
+        if not self.event_format:
+            return
 
         for template in self.event_format.task_templates.all():
             EventTask.objects.get_or_create(

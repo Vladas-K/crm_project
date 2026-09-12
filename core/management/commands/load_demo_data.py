@@ -380,7 +380,7 @@ class Command(BaseCommand):
         ]
 
         for spec in event_specs:
-            event, created = Event.objects.update_or_create(
+            event, _ = Event.objects.update_or_create(
                 title=spec["title"],
                 defaults={
                     "client": spec["client"],
@@ -397,8 +397,7 @@ class Command(BaseCommand):
                     "manager": spec["manager"],
                 },
             )
-            if not created:
-                event.create_structure_from_format()
+            event.create_structure_from_format()
             for category, vendor_name, amount, prepayment in spec["extra_expenses"]:
                 EventExpense.objects.update_or_create(
                     event=event,

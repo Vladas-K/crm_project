@@ -94,8 +94,8 @@ def test_lead_does_not_need_response_after_contact():
 
 
 @pytest.mark.django_db
-def test_event_creates_related_records_from_format():
-    """Мероприятие из формата получает задачи, тайминг, бюджет и подрядчиков."""
+def test_event_structure_is_created_only_when_requested():
+    """Новое мероприятие остаётся пустым до явного применения шаблона."""
 
     event_format = EventFormat.objects.create(name="Свадьба", default_budget=Decimal("500000.00"))
     vendor = Vendor.objects.create(name="Visual Stories", roles="Фото")
@@ -135,6 +135,13 @@ def test_event_creates_related_records_from_format():
         city="Москва",
         planned_budget=Decimal("500000.00"),
     )
+
+    assert event.tasks.count() == 0
+    assert event.timeline_items.count() == 0
+    assert event.expenses.count() == 0
+    assert event.event_vendors.count() == 0
+
+    event.create_structure_from_format()
 
     task = event.tasks.get(title="Согласовать концепцию")
     timeline_item = event.timeline_items.get(block="Сбор гостей")
@@ -198,6 +205,8 @@ def test_event_structure_creates_all_templates_from_format():
         planned_budget=Decimal("800000.00"),
     )
 
+    event.create_structure_from_format()
+
     assert set(event.tasks.values_list("title", flat=True)) == {"Собрать программу", "Подтвердить спикеров"}
     assert set(event.timeline_items.values_list("block", flat=True)) == {"Регистрация", "Открытие"}
     assert set(event.expenses.values_list("category", flat=True)) == {"Свет", "Звук"}
@@ -206,7 +215,7 @@ def test_event_structure_creates_all_templates_from_format():
 
 @pytest.mark.django_db
 def test_event_structure_does_not_duplicate_records_on_resave():
-    """Повторное сохранение мероприятия не дублирует структуру из формата."""
+    """Повторное применение шаблона не дублирует структуру мероприятия."""
 
     event_format = EventFormat.objects.create(name="Презентация", default_budget=Decimal("300000.00"))
     vendor = Vendor.objects.create(name="Presentation Team", roles="Техника")
@@ -233,8 +242,10 @@ def test_event_structure_does_not_duplicate_records_on_resave():
         city="Москва",
     )
 
+    event.create_structure_from_format()
     event.title = "Запуск продукта обновлён"
     event.save()
+    event.create_structure_from_format()
 
     assert event.tasks.count() == 1
     assert event.timeline_items.count() == 1
