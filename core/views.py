@@ -1225,7 +1225,7 @@ class EventTimelineItemUpdateView(EventManagementMixin, EventScopedFormMixin, CR
     cancel_url = reverse_lazy("core:events")
 
 
-class EventTimelineItemDeleteView(SystemAccessMixin, DeleteView):
+class EventTimelineItemDeleteView(EventManagementMixin, DeleteView):
     """Удаляет блок тайминга после подтверждения."""
 
     model = EventTimelineItem

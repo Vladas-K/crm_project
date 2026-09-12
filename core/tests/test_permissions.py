@@ -699,12 +699,12 @@ def test_reference_lists_hide_mutation_actions_without_system_access(
 
 
 @pytest.mark.django_db
-def test_timeline_delete_requires_system_access(client, django_user_model, crm_objects):
-    """Удаление блока тайминга недоступно без системного права."""
+def test_timeline_delete_requires_event_management_access(client, django_user_model, crm_objects):
+    """Удаление блока тайминга недоступно без права управления мероприятиями."""
     user = create_user_with_profile(
         django_user_model,
         "timeline_viewer",
-        can_manage_events=True,
+        can_manage_events=False,
         can_manage_system=False,
     )
     item = EventTimelineItem.objects.create(
