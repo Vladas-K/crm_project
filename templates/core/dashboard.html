@@ -73,9 +73,20 @@
                                     </div>
                                     <span class="dashboard-attention-section__count">{{ section.count }}</span>
                                 </div>
+                                <div class="text-end mt-2">
+                                    {% if section.kind == "tasks" %}
+                                        <a href="{% url 'core:tasks' %}?filter=overdue" class="small text-decoration-none">Показать все</a>
+                                    {% elif section.kind == "leads" %}
+                                        <a href="{% url 'core:leads' %}?attention=needs_response" class="small text-decoration-none">Показать все</a>
+                                    {% elif section.kind == "risks" %}
+                                        <a href="{% url 'core:events' %}?attention=risks" class="small text-decoration-none">Показать все</a>
+                                    {% else %}
+                                        <a href="{% url 'core:events' %}?attention=outcomes" class="small text-decoration-none">Показать все</a>
+                                    {% endif %}
+                                </div>
                                 <div class="premium-list mt-3">
                                     {% for item in section.items %}
-                                        {% if section.title == "Просроченные задачи" %}
+                                        {% if section.kind == "tasks" %}
                                             <a href="{% url 'core:task_detail' item.pk %}" class="premium-list__row premium-list__row--link">
                                                 <div>
                                                     <div class="fw-semibold">{{ item.title }}</div>
@@ -83,13 +94,29 @@
                                                 </div>
                                                 <span class="event-chip event-chip--danger">Просрочено</span>
                                             </a>
-                                        {% else %}
+                                        {% elif section.kind == "leads" %}
                                             <a href="{% if crm_permissions.can_manage_leads %}{% url 'core:lead_update' item.pk %}{% else %}{% url 'core:leads' %}{% endif %}" class="premium-list__row premium-list__row--link">
                                                 <div>
                                                     <div class="fw-semibold">{{ item.name }}</div>
                                                     <div class="text-secondary small">{{ item.source|default:"Источник не указан" }}</div>
                                                 </div>
                                                 <span class="event-chip event-chip--warning">Нет ответа</span>
+                                            </a>
+                                        {% elif section.kind == "risks" %}
+                                            <a href="{% url 'core:event_detail' item.pk %}?tab=risks#event-tabs" class="premium-list__row premium-list__row--link">
+                                                <div>
+                                                    <div class="fw-semibold">{{ item.title|default:item.client }}</div>
+                                                    <div class="text-secondary small">{{ item.city }} · {{ item.date|date:"d.m.Y" }}</div>
+                                                </div>
+                                                <span class="event-chip event-chip--warning">Есть риски</span>
+                                            </a>
+                                        {% else %}
+                                            <a href="{% url 'core:event_detail' item.pk %}?tab=outcome#event-tabs" class="premium-list__row premium-list__row--link">
+                                                <div>
+                                                    <div class="fw-semibold">{{ item.title|default:item.client }}</div>
+                                                    <div class="text-secondary small">{{ item.city }} · {{ item.date|date:"d.m.Y" }}</div>
+                                                </div>
+                                                <span class="event-chip event-chip--soft">Нет итогов</span>
                                             </a>
                                         {% endif %}
                                     {% endfor %}

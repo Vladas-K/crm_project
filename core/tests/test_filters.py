@@ -1,8 +1,9 @@
 import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.utils import timezone
 
-from core.models import CRMRole, Client, Event, EventFormat, Lead, PipelineStage, TeamMemberProfile, Vendor
+from core.models import CRMRole, Client, Event, EventFormat, EventRisk, Lead, PipelineStage, TeamMemberProfile, Vendor
 
 User = get_user_model()
 
@@ -327,3 +328,35 @@ def test_vendor_autocomplete_returns_matching_vendor_data(client, django_user_mo
 
     assert response.status_code == 200
     assert response.json()["results"][0]["name"] == "Stage Team"
+
+
+@pytest.mark.django_db
+def test_leads_attention_filter_returns_only_leads_without_response(client, django_user_model):
+    """Фильтр внимания по лидам оставляет только обращения без ответа более 24 часов."""
+    user = django_user_model.objects.create_user(username="attention_lead_filter", password="TestPass123!")
+    old_lead = Lead.objects.create(name="Старый лид")
+    recent_lead = Lead.objects.create(name="Свежий лид")
+    Lead.objects.filter(pk=old_lead.pk).update(created_at=timezone.now() - timezone.timedelta(hours=25))
+    client.force_login(user)
+
+    response = client.get(reverse("core:leads"), {"attention": "needs_response"})
+
+    assert list(response.context["leads"]) == [old_lead]
+    assert response.context["attention_filter"] == "needs_response"
+
+
+@pytest.mark.django_db
+def test_events_attention_filters_return_risks_or_missing_outcomes(client, django_user_model):
+    """Фильтры внимания по мероприятиям разделяют риски и незаполненные итоги."""
+    user = django_user_model.objects.create_user(username="attention_event_filter", password="TestPass123!")
+    client_record = Client.objects.create(name="Клиент фильтра внимания")
+    risky_event = Event.objects.create(client=client_record, date=timezone.localdate(), city="Москва", title="С риском")
+    empty_event = Event.objects.create(client=client_record, date=timezone.localdate(), city="Москва", title="Без итогов")
+    EventRisk.objects.create(event=risky_event, description="Задержка площадки")
+    client.force_login(user)
+
+    risks_response = client.get(reverse("core:events"), {"attention": "risks"})
+    outcomes_response = client.get(reverse("core:events"), {"attention": "outcomes"})
+
+    assert list(risks_response.context["events"]) == [risky_event]
+    assert {event.title for event in outcomes_response.context["events"]} == {"С риском", "Без итогов"}

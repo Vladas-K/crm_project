@@ -212,6 +212,7 @@ class DashboardView(CRMLoginRequiredMixin, TemplateView):
         if overdue_tasks.exists():
             attention_sections.append(
                 {
+                    "kind": "tasks",
                     "title": "Просроченные задачи",
                     "description": "Задачи, по которым уже прошёл срок выполнения.",
                     "items": overdue_tasks[:5],
@@ -221,10 +222,33 @@ class DashboardView(CRMLoginRequiredMixin, TemplateView):
         if unanswered_leads.exists():
             attention_sections.append(
                 {
+                    "kind": "leads",
                     "title": "Лиды без ответа",
                     "description": "Новые обращения, с которыми не было контакта более 24 часов.",
                     "items": unanswered_leads[:5],
                     "count": unanswered_leads.count(),
+                }
+            )
+        risky_events = Event.objects.select_related("client").filter(risks__isnull=False).distinct()
+        events_without_outcome = Event.objects.select_related("client").filter(outcome__isnull=True)
+        if risky_events.exists():
+            attention_sections.append(
+                {
+                    "kind": "risks",
+                    "title": "Мероприятия с рисками",
+                    "description": "Проекты, в которых зафиксированы потенциальные проблемы.",
+                    "items": risky_events[:5],
+                    "count": risky_events.count(),
+                }
+            )
+        if events_without_outcome.exists():
+            attention_sections.append(
+                {
+                    "kind": "outcomes",
+                    "title": "Мероприятия без итогов",
+                    "description": "Проекты, по которым ещё не заполнена финальная оценка.",
+                    "items": events_without_outcome[:5],
+                    "count": events_without_outcome.count(),
                 }
             )
         context["attention_sections"] = attention_sections
@@ -257,6 +281,7 @@ class LeadListView(CRMLoginRequiredMixin, ListView):
         stage_filter = self.request.GET.get("stage", "")
         manager_filter = self.request.GET.get("manager", "")
         source_filter = self.request.GET.get("source", "")
+        attention_filter = self.request.GET.get("attention", "")
 
         if stage_filter.isdigit():
             queryset = queryset.filter(stage_id=stage_filter)
@@ -264,6 +289,11 @@ class LeadListView(CRMLoginRequiredMixin, ListView):
             queryset = queryset.filter(manager_id=manager_filter)
         if source_filter:
             queryset = queryset.filter(source=source_filter)
+        if attention_filter == "needs_response":
+            queryset = queryset.filter(
+                last_contact_at__isnull=True,
+                created_at__lt=timezone.now() - timezone.timedelta(hours=24),
+            )
         if search_query:
             queryset = [lead for lead in queryset if lead_matches_search(lead, search_query)]
 
@@ -277,6 +307,7 @@ class LeadListView(CRMLoginRequiredMixin, ListView):
         context["stage_filter"] = self.request.GET.get("stage", "")
         context["manager_filter"] = self.request.GET.get("manager", "")
         context["source_filter"] = self.request.GET.get("source", "")
+        context["attention_filter"] = self.request.GET.get("attention", "")
         context["pipeline_stages"] = PipelineStage.objects.order_by("order", "name")
         context["lead_managers"] = User.objects.filter(assigned_leads__isnull=False).distinct().order_by("username")
         context["lead_sources"] = (
@@ -416,6 +447,7 @@ class EventListView(CRMLoginRequiredMixin, ListView):
         date_to = self.request.GET.get("date_to", "")
         month_filter = self.request.GET.get("month", "")
         manager_filter = self.request.GET.get("manager", "")
+        attention_filter = self.request.GET.get("attention", "")
 
         if status_filter in {choice[0] for choice in Event.Status.choices}:
             queryset = queryset.filter(status=status_filter)
@@ -431,6 +463,10 @@ class EventListView(CRMLoginRequiredMixin, ListView):
                 queryset = queryset.filter(date__year=int(year), date__month=int(month))
         if manager_filter.isdigit():
             queryset = queryset.filter(manager_id=manager_filter)
+        if attention_filter == "risks":
+            queryset = queryset.filter(risks__isnull=False).distinct()
+        elif attention_filter == "outcomes":
+            queryset = queryset.filter(outcome__isnull=True)
         if search_query:
             queryset = [event for event in queryset if event_matches_search(event, search_query)]
 
@@ -447,6 +483,7 @@ class EventListView(CRMLoginRequiredMixin, ListView):
         context["event_date_to"] = self.request.GET.get("date_to", "")
         context["event_month_filter"] = self.request.GET.get("month", "")
         context["event_manager_filter"] = self.request.GET.get("manager", "")
+        context["event_attention_filter"] = self.request.GET.get("attention", "")
         context["event_managers"] = User.objects.filter(managed_events__isnull=False).distinct().order_by("username")
         context["event_statuses"] = Event.Status.choices
         context["event_formats"] = EventFormat.objects.order_by("name")

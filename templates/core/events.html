@@ -63,7 +63,7 @@
             </select>
         </div>
     </div>
-    {% if search_query or event_status_filter or event_format_filter or event_date_from or event_date_to or event_month_filter or event_manager_filter %}
+    {% if search_query or event_status_filter or event_format_filter or event_date_from or event_date_to or event_month_filter or event_manager_filter or event_attention_filter %}
         <div class="mt-3">
             <a href="{% url 'core:events' %}" class="small text-decoration-none">Сбросить фильтры</a>
         </div>

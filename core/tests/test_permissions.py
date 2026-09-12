@@ -4,7 +4,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.urls import reverse
 
-from core.models import CRMRole, Event, EventTimelineItem, Lead, TeamMemberProfile
+from core.models import CRMRole, Event, EventRisk, EventTimelineItem, Lead, TeamMemberProfile
 
 
 def create_user_with_profile(django_user_model, username, **profile_flags):
@@ -741,8 +741,8 @@ def test_dashboard_hides_or_downgrades_links_without_matching_permissions(client
 
 
 @pytest.mark.django_db
-def test_dashboard_attention_contains_overdue_tasks_and_unanswered_leads(client, django_user_model, crm_objects):
-    """Дашборд показывает просроченные задачи и лиды без ответа более 24 часов."""
+def test_dashboard_attention_contains_operational_issues(client, django_user_model, crm_objects):
+    """Дашборд показывает просроченные задачи, лиды без ответа и незаполненные итоги."""
     user = create_user_with_profile(
         django_user_model,
         "attention_viewer",
@@ -764,6 +764,25 @@ def test_dashboard_attention_contains_overdue_tasks_and_unanswered_leads(client,
     assert {section["title"] for section in response.context["attention_sections"]} == {
         "Просроченные задачи",
         "Лиды без ответа",
+        "Мероприятия без итогов",
     }
     assert overdue_task.title in html
     assert unanswered_lead.name in html
+    assert crm_objects["event"].title in html
+
+
+@pytest.mark.django_db
+def test_dashboard_attention_links_risky_event_to_risks_tab(client, django_user_model, crm_objects):
+    """Дашборд ведёт от мероприятия с риском сразу на вкладку рисков."""
+    user = create_user_with_profile(django_user_model, "risk_attention_viewer")
+    EventRisk.objects.create(
+        event=crm_objects["event"],
+        description="Риск задержки площадки",
+        plan_b="Подготовить резервную площадку",
+    )
+    client.force_login(user)
+
+    response = client.get(reverse("core:dashboard"))
+
+    assert response.status_code == 200
+    assert f"{reverse('core:event_detail', kwargs={'pk': crm_objects['event'].pk})}?tab=risks#event-tabs" in response.content.decode()

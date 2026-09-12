@@ -51,7 +51,7 @@
             <button type="submit" class="btn btn-primary flex-grow-1">Найти</button>
         </div>
     </div>
-    {% if search_query or stage_filter or manager_filter or source_filter %}
+    {% if search_query or stage_filter or manager_filter or source_filter or attention_filter %}
         <div class="mt-3">
             <a href="{% url 'core:leads' %}" class="small text-decoration-none">Сбросить фильтры</a>
         </div>
