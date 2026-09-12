@@ -772,6 +772,30 @@ def test_dashboard_attention_contains_operational_issues(client, django_user_mod
 
 
 @pytest.mark.django_db
+def test_dashboard_attention_excludes_completed_events(client, django_user_model, crm_objects):
+    """Завершённые мероприятия не попадают в текущие проблемы дашборда."""
+    user = create_user_with_profile(django_user_model, "completed_attention_viewer")
+    completed_event = Event.objects.create(
+        client=crm_objects["client"],
+        title="Завершённый проект",
+        date=timezone.localdate(),
+        city="Москва",
+        status=Event.Status.COMPLETED,
+    )
+    EventRisk.objects.create(event=completed_event, description="Закрытый риск")
+    client.force_login(user)
+
+    response = client.get(reverse("core:dashboard"))
+
+    assert response.status_code == 200
+    assert all(
+        completed_event.title not in [item.title for item in section["items"]]
+        for section in response.context["attention_sections"]
+        if section["kind"] in {"risks", "outcomes"}
+    )
+
+
+@pytest.mark.django_db
 def test_dashboard_attention_links_risky_event_to_risks_tab(client, django_user_model, crm_objects):
     """Дашборд ведёт от мероприятия с риском сразу на вкладку рисков."""
     user = create_user_with_profile(django_user_model, "risk_attention_viewer")

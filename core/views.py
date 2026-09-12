@@ -203,11 +203,11 @@ class DashboardView(CRMLoginRequiredMixin, TemplateView):
         today = timezone.localdate()
         overdue_tasks = EventTask.objects.select_related("event", "responsible").exclude(
             status=EventTask.Status.DONE
-        ).filter(deadline__lt=today)
+        ).filter(deadline__lt=today).order_by("deadline", "id")
         unanswered_leads = Lead.objects.select_related("stage", "manager").filter(
             last_contact_at__isnull=True,
             created_at__lt=timezone.now() - timezone.timedelta(hours=24),
-        )
+        ).order_by("created_at", "id")
         attention_sections = []
         if overdue_tasks.exists():
             attention_sections.append(
@@ -229,8 +229,15 @@ class DashboardView(CRMLoginRequiredMixin, TemplateView):
                     "count": unanswered_leads.count(),
                 }
             )
-        risky_events = Event.objects.select_related("client").filter(risks__isnull=False).distinct()
-        events_without_outcome = Event.objects.select_related("client").filter(outcome__isnull=True)
+        active_event_statuses = [Event.Status.PLANNING, Event.Status.IN_PROGRESS]
+        risky_events = Event.objects.select_related("client").filter(
+            risks__isnull=False,
+            status__in=active_event_statuses,
+        ).distinct().order_by("date", "id")
+        events_without_outcome = Event.objects.select_related("client").filter(
+            outcome__isnull=True,
+            status__in=active_event_statuses,
+        ).order_by("date", "id")
         if risky_events.exists():
             attention_sections.append(
                 {
@@ -293,7 +300,7 @@ class LeadListView(CRMLoginRequiredMixin, ListView):
             queryset = queryset.filter(
                 last_contact_at__isnull=True,
                 created_at__lt=timezone.now() - timezone.timedelta(hours=24),
-            )
+            ).order_by("created_at", "id")
         if search_query:
             queryset = [lead for lead in queryset if lead_matches_search(lead, search_query)]
 
@@ -464,9 +471,15 @@ class EventListView(CRMLoginRequiredMixin, ListView):
         if manager_filter.isdigit():
             queryset = queryset.filter(manager_id=manager_filter)
         if attention_filter == "risks":
-            queryset = queryset.filter(risks__isnull=False).distinct()
+            queryset = queryset.filter(
+                risks__isnull=False,
+                status__in=[Event.Status.PLANNING, Event.Status.IN_PROGRESS],
+            ).distinct().order_by("date", "id")
         elif attention_filter == "outcomes":
-            queryset = queryset.filter(outcome__isnull=True)
+            queryset = queryset.filter(
+                outcome__isnull=True,
+                status__in=[Event.Status.PLANNING, Event.Status.IN_PROGRESS],
+            ).order_by("date", "id")
         if search_query:
             queryset = [event for event in queryset if event_matches_search(event, search_query)]
 
