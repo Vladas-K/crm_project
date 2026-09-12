@@ -343,6 +343,7 @@ def test_leads_attention_filter_returns_only_leads_without_response(client, djan
 
     assert list(response.context["leads"]) == [old_lead]
     assert response.context["attention_filter"] == "needs_response"
+    assert "Показаны лиды без ответа более 24 часов." in response.content.decode()
 
 
 @pytest.mark.django_db
@@ -360,3 +361,5 @@ def test_events_attention_filters_return_risks_or_missing_outcomes(client, djang
 
     assert list(risks_response.context["events"]) == [risky_event]
     assert {event.title for event in outcomes_response.context["events"]} == {"С риском", "Без итогов"}
+    assert "Показаны мероприятия с рисками." in risks_response.content.decode()
+    assert "Показаны мероприятия без заполненных итогов." in outcomes_response.content.decode()
