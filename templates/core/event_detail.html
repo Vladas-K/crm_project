@@ -306,22 +306,22 @@
                             <span class="event-chip event-chip--danger">Просрочено</span>
                         {% endif %}
                         <span class="event-chip event-chip--soft">{{ task.get_status_display }}</span>
-                        {% if crm_permissions.can_manage_events and task.status != "in_progress" %}
+                        {% if crm_permissions.can_manage_events and task.status == "todo" %}
                             <form method="post" action="{% url 'core:task_status_update' task.pk %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="status" value="in_progress">
                                 <button type="submit" class="btn btn-sm btn-outline-secondary">В работу</button>
                             </form>
                         {% endif %}
-                        {% if crm_permissions.can_manage_events and task.status != "done" %}
+                        {% if crm_permissions.can_manage_events and task.status == "in_progress" %}
                             <form method="post" action="{% url 'core:task_status_update' task.pk %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="status" value="done">
                                 <button type="submit" class="btn btn-sm btn-outline-success">Готово</button>
                             </form>
                         {% endif %}
-                        {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_update' task.pk %}?return_tab=tasks" class="btn btn-sm btn-outline-primary">Изменить</a>{% endif %}
-                        {% if crm_permissions.can_manage_system %}<a href="{% url 'core:task_delete' task.pk %}?return_tab=tasks" class="btn btn-sm btn-outline-danger">Удалить</a>{% endif %}
+                        {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_update' task.pk %}?return_tab=tasks" class="panel-action-link">Изменить</a>{% endif %}
+                        {% if crm_permissions.can_manage_system %}<a href="{% url 'core:task_delete' task.pk %}?return_tab=tasks" class="panel-action-link panel-action-link--danger">Удалить</a>{% endif %}
                     </div>
                 </div>
             {% empty %}

@@ -738,6 +738,13 @@ body {
     margin: 0;
 }
 
+.task-card-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
 .event-chip {
     display: inline-flex;
     align-items: center;
@@ -858,6 +865,12 @@ body {
 .panel-action-link:focus {
     color: var(--crm-accent);
     text-decoration: underline;
+}
+
+.panel-action-link--danger,
+.panel-action-link--danger:hover,
+.panel-action-link--danger:focus {
+    color: var(--crm-rose);
 }
 
 .event-notes-grid {
@@ -1076,6 +1089,11 @@ body {
 
     .event-row-actions {
         justify-content: flex-start;
+    }
+
+    .task-card-actions {
+        align-items: flex-start;
+        flex-direction: column;
     }
 
     .premium-list__meta {
