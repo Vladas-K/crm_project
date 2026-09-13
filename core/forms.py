@@ -222,7 +222,11 @@ class EventOutcomeForm(BootstrapModelForm):
 class EventExpenseForm(BootstrapModelForm):
     class Meta:
         model = EventExpense
-        fields = ["event", "category", "vendor_name", "amount", "prepayment", "payment_status"]
+        fields = ["event", "category", "vendor_assignment", "vendor_name", "amount", "prepayment", "payment_status"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["vendor_assignment"].help_text = "Выберите подрядчика, назначенного на это мероприятие."
 
 
 class EventVendorForm(BootstrapModelForm):

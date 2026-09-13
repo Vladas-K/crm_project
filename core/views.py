@@ -1006,6 +1006,9 @@ class EventScopedFormMixin(CRMLoginRequiredMixin):
         """Фиксирует поле event на родительском мероприятии при создании из карточки."""
 
         form = super().get_form(form_class)
+        event = self.parent_event or getattr(form.instance, "event", None)
+        if event and "vendor_assignment" in form.fields:
+            form.fields["vendor_assignment"].queryset = EventVendor.objects.filter(event=event).select_related("vendor")
         if self.parent_event and "event" in form.fields:
             form.fields["event"].initial = self.parent_event
             form.fields["event"].queryset = Event.objects.filter(pk=self.parent_event.pk)

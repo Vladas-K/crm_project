@@ -334,3 +334,36 @@ def test_event_outcome_rating_cannot_exceed_five(crm_objects):
 
     with pytest.raises(ValidationError):
         outcome.full_clean()
+
+
+def test_expense_can_reference_event_vendor(crm_objects):
+    """Расход может быть связан с подрядчиком, назначенным на это мероприятие."""
+
+    expense = EventExpense(
+        event=crm_objects["event"],
+        category="Техника",
+        amount=Decimal("50000.00"),
+        vendor_assignment=crm_objects["event_vendor"],
+    )
+
+    expense.full_clean()
+
+
+def test_expense_cannot_reference_vendor_from_another_event(crm_objects):
+    """Расход не может ссылаться на подрядчика другого мероприятия."""
+
+    other_event = Event.objects.create(
+        client=crm_objects["client"],
+        title="Другое мероприятие",
+        date=timezone.localdate(),
+        city="Москва",
+    )
+    expense = EventExpense(
+        event=other_event,
+        category="Техника",
+        amount=Decimal("50000.00"),
+        vendor_assignment=crm_objects["event_vendor"],
+    )
+
+    with pytest.raises(ValidationError):
+        expense.full_clean()

@@ -357,7 +357,13 @@
                 <div class="premium-list__row premium-list__row--flat premium-list__row--expense">
                     <div>
                         <div class="fw-semibold">{{ expense.category }}</div>
-                        <div class="text-secondary small">{{ expense.vendor_name|default:"Подрядчик не указан" }}</div>
+                        <div class="text-secondary small">
+                            {% if expense.vendor_assignment %}
+                                {{ expense.vendor_assignment.vendor }}
+                            {% else %}
+                                {{ expense.vendor_name|default:"Подрядчик не указан" }}
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="expense-row__meta">
                         <div class="fw-semibold">{{ expense.amount }} ₽</div>

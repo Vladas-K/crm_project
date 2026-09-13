@@ -442,6 +442,14 @@ class EventExpense(models.Model):
     )
     category = models.CharField("Категория", max_length=120)
     vendor_name = models.CharField("Подрядчик", max_length=255, blank=True)
+    vendor_assignment = models.ForeignKey(
+        "EventVendor",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="expenses",
+        verbose_name="Назначенный подрядчик",
+    )
     amount = models.DecimalField("Сумма", max_digits=12, decimal_places=2, default=0)
     prepayment = models.DecimalField("Предоплата", max_digits=12, decimal_places=2, default=0)
     payment_status = models.CharField(
@@ -458,6 +466,13 @@ class EventExpense(models.Model):
 
     def __str__(self) -> str:
         return f"{self.category} - {self.amount}"
+
+    def clean(self) -> None:
+        """Не позволяет связать расход с подрядчиком другого мероприятия."""
+
+        super().clean()
+        if self.vendor_assignment and self.event_id != self.vendor_assignment.event_id:
+            raise ValidationError({"vendor_assignment": "Подрядчик должен быть назначен на это же мероприятие."})
 
 
 class EventVendor(models.Model):
