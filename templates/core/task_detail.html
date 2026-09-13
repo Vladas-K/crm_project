@@ -10,7 +10,7 @@
     </div>
     <div class="d-flex gap-2">
         {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_update' task.pk %}" class="btn btn-outline-primary">Изменить</a>{% endif %}
-        {% if crm_permissions.can_manage_system %}<a href="{% url 'core:task_delete' task.pk %}" class="btn btn-outline-danger">Удалить</a>{% endif %}
+        {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_delete' task.pk %}" class="btn btn-outline-danger">Удалить</a>{% endif %}
     </div>
 </div>
 

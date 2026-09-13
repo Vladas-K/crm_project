@@ -157,6 +157,21 @@ def test_timeline_delete_returns_to_timeline_tab(client, django_user_model, crm_
 
 
 @pytest.mark.django_db
+def test_task_delete_returns_to_tasks_tab_for_event_manager(client, django_user_model, crm_objects):
+    """Менеджер мероприятия может удалить задачу и вернуться на вкладку задач."""
+    login_user(client, django_user_model)
+    task = crm_objects["task"]
+
+    response = client.post(
+        f"{reverse('core:task_delete', kwargs={'pk': task.pk})}?return_tab=tasks",
+    )
+
+    assert not EventTask.objects.filter(pk=task.pk).exists()
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': task.event.pk})}?tab=tasks#event-tabs"
+
+
+@pytest.mark.django_db
 def test_nested_risk_create_returns_to_risks_tab(client, django_user_model, crm_objects):
     """Создание риска из карточки мероприятия возвращает на вкладку рисков."""
     login_user(client, django_user_model)

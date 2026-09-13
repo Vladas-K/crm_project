@@ -4,7 +4,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.urls import reverse
 
-from core.models import CRMRole, Event, EventRisk, EventTimelineItem, Lead, TeamMemberProfile
+from core.models import CRMRole, Event, EventRisk, EventTask, EventTimelineItem, Lead, TeamMemberProfile
 
 
 def create_user_with_profile(django_user_model, username, **profile_flags):
@@ -715,6 +715,22 @@ def test_timeline_delete_requires_event_management_access(client, django_user_mo
     client.force_login(user)
 
     response = client.get(reverse("core:event_timeline_delete", kwargs={"pk": item.pk}))
+
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_task_delete_requires_event_management_access(client, django_user_model, crm_objects):
+    """Удаление задачи недоступно без права управления мероприятиями."""
+    user = create_user_with_profile(
+        django_user_model,
+        "task_viewer",
+        can_manage_events=False,
+        can_manage_system=False,
+    )
+    client.force_login(user)
+
+    response = client.get(reverse("core:task_delete", kwargs={"pk": crm_objects["task"].pk}))
 
     assert response.status_code == 403
 
