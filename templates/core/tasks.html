@@ -71,11 +71,11 @@
                             </div>
                         </div>
                         {% if task.status == "done" %}
-                            <span class="badge text-bg-success">Готово</span>
+                            <span class="event-chip event-chip--success">Готово</span>
                         {% elif task.status == "in_progress" %}
-                            <span class="badge text-bg-primary">В работе</span>
+                            <span class="event-chip">В работе</span>
                         {% else %}
-                            <span class="badge text-bg-warning">К выполнению</span>
+                            <span class="event-chip event-chip--warning">К выполнению</span>
                         {% endif %}
                     </div>
 

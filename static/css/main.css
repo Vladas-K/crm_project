@@ -10,6 +10,106 @@
     --crm-violet: #7c3aed;
 }
 
+/* Общая система действий для всех страниц CRM. */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.7rem;
+    padding: 0.68rem 1.2rem;
+    border-radius: 999px;
+    border-width: 1px;
+    font-weight: 400;
+    line-height: 1.2;
+    box-shadow: none !important;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-sm {
+    min-height: 2.25rem;
+    padding: 0.48rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+}
+
+.btn-primary {
+    border-color: var(--crm-accent);
+    background: var(--crm-accent);
+    color: #fff;
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible {
+    border-color: #185abd;
+    background: #185abd;
+    color: #fff;
+}
+
+.btn-outline-primary {
+    border-color: rgba(31, 111, 235, 0.38);
+    color: var(--crm-accent);
+    background: transparent;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus-visible {
+    border-color: var(--crm-accent);
+    background: var(--crm-accent-soft);
+    color: #185abd;
+}
+
+.btn-secondary {
+    border-color: #64748b;
+    background: #64748b;
+    color: #fff;
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus-visible {
+    border-color: #475569;
+    background: #475569;
+    color: #fff;
+}
+
+.btn-outline-secondary {
+    border-color: rgba(100, 116, 139, 0.38);
+    color: #475569;
+    background: transparent;
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-secondary:focus-visible {
+    border-color: #64748b;
+    background: #f1f5f9;
+    color: #334155;
+}
+
+.btn-outline-danger {
+    border-color: rgba(225, 29, 72, 0.35);
+    color: var(--crm-rose);
+    background: transparent;
+}
+
+.btn-outline-danger:hover,
+.btn-outline-danger:focus-visible {
+    border-color: var(--crm-rose);
+    background: rgba(225, 29, 72, 0.08);
+    color: #be123c;
+}
+
+.btn-outline-success {
+    border-color: rgba(15, 159, 110, 0.35);
+    color: var(--crm-green);
+    background: transparent;
+}
+
+.btn-outline-success:hover,
+.btn-outline-success:focus-visible {
+    border-color: var(--crm-green);
+    background: rgba(15, 159, 110, 0.08);
+    color: #087f5b;
+}
+
 body {
     color: var(--crm-text);
     background:
@@ -662,6 +762,11 @@ body {
 .event-chip--warning {
     background: rgba(217, 119, 6, 0.1);
     color: var(--crm-amber);
+}
+
+.event-chip--success {
+    background: rgba(15, 159, 110, 0.1);
+    color: #087f5b;
 }
 
 .premium-panel {

@@ -18,7 +18,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <h2 class="h5 mb-0">{{ stage.name }}</h2>
-                        <span class="badge text-bg-primary-subtle">{{ stage.probability }}%</span>
+                        <span class="event-chip event-chip--soft">{{ stage.probability }}%</span>
                     </div>
                     <div class="small text-secondary mb-3">Лидов: {{ stage.leads.count }}</div>
                     {% if crm_permissions.can_manage_system %}
