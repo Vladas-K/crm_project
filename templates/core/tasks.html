@@ -111,7 +111,7 @@
                         <div class="d-flex gap-2">
                             <a href="{% url 'core:task_detail' task.pk %}" class="btn btn-sm btn-outline-secondary">Открыть</a>
                             {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_update' task.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>{% endif %}
-                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_delete' task.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>{% endif %}
+                            {% if crm_permissions.can_manage_system %}<a href="{% url 'core:task_delete' task.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>{% endif %}
                         </div>
                     </div>
                 </div>

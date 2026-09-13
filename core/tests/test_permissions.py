@@ -720,12 +720,12 @@ def test_timeline_delete_requires_event_management_access(client, django_user_mo
 
 
 @pytest.mark.django_db
-def test_task_delete_requires_event_management_access(client, django_user_model, crm_objects):
-    """Удаление задачи недоступно без права управления мероприятиями."""
+def test_task_delete_requires_system_access(client, django_user_model, crm_objects):
+    """Удаление задачи недоступно без системного права."""
     user = create_user_with_profile(
         django_user_model,
         "task_viewer",
-        can_manage_events=False,
+        can_manage_events=True,
         can_manage_system=False,
     )
     client.force_login(user)

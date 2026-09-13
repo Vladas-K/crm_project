@@ -158,8 +158,8 @@ def test_timeline_delete_returns_to_timeline_tab(client, django_user_model, crm_
 
 @pytest.mark.django_db
 def test_task_delete_returns_to_tasks_tab_for_event_manager(client, django_user_model, crm_objects):
-    """Менеджер мероприятия может удалить задачу и вернуться на вкладку задач."""
-    login_user(client, django_user_model)
+    """Пользователь с системным правом может удалить задачу и вернуться на вкладку задач."""
+    login_user(client, django_user_model, can_manage_system=True)
     task = crm_objects["task"]
 
     response = client.post(

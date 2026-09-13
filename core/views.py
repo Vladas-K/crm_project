@@ -1289,7 +1289,7 @@ class EventOutcomeUpdateView(EventManagementMixin, EventScopedFormMixin, CRUDCon
     cancel_url = reverse_lazy("core:events")
 
 
-class TaskDeleteView(EventManagementMixin, DeleteView):
+class TaskDeleteView(SystemAccessMixin, DeleteView):
     """Удаляет задачу и возвращает пользователя в список задач или вкладку мероприятия."""
 
     model = EventTask
