@@ -180,18 +180,18 @@
             </div>
             {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_timeline_create' event.pk %}?return_tab=timeline" class="btn btn-sm btn-primary">Добавить</a>{% endif %}
         </div>
-        <div class="premium-list">
+        <div class="premium-list premium-list--timeline">
             {% for item in detail_timeline_items %}
-                <div class="premium-list__row">
+                <div class="premium-list__row premium-list__row--timeline">
                     <div>
                         <div class="fw-semibold">{{ item.time|time:"H:i" }} · {{ item.block }}</div>
                         <div class="text-secondary small">{{ item.description|default:"Описание не указано" }}</div>
                     </div>
                     <div class="premium-list__meta text-end">
                         <div class="text-secondary small">{{ item.responsible|default:"Ответственный не указан" }}</div>
-                        <div class="mt-2">
-                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_timeline_update' item.pk %}?return_tab=timeline" class="btn btn-sm btn-outline-primary">Изменить</a>{% endif %}
-                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_timeline_delete' item.pk %}?return_tab=timeline" class="btn btn-sm btn-outline-danger">Удалить</a>{% endif %}
+                        <div class="timeline-row__actions">
+                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_timeline_update' item.pk %}?return_tab=timeline" class="panel-action-link">Изменить</a>{% endif %}
+                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_timeline_delete' item.pk %}?return_tab=timeline" class="panel-action-link panel-action-link--danger">Удалить</a>{% endif %}
                         </div>
                     </div>
                 </div>

@@ -1008,6 +1008,27 @@ body {
     background: transparent;
 }
 
+.premium-list--timeline {
+    gap: 0;
+}
+
+.premium-list__row--timeline {
+    padding-right: 0;
+    padding-left: 0;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.timeline-row__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1.1rem;
+    margin-top: 0.65rem;
+}
+
 .risk-row__actions {
     display: flex;
     align-items: center;
@@ -1102,6 +1123,10 @@ body {
     }
 
     .risk-row__actions {
+        justify-content: flex-start;
+    }
+
+    .timeline-row__actions {
         justify-content: flex-start;
     }
 }
