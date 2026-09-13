@@ -348,17 +348,25 @@
             <a href="{% url 'core:event_detail' event.pk %}?tab=expenses&expense_filter=partial#event-tabs" class="event-filter__link{% if expense_filter == 'partial' %} event-filter__link--active{% endif %}">Частично</a>
             <a href="{% url 'core:event_detail' event.pk %}?tab=expenses&expense_filter=paid#event-tabs" class="event-filter__link{% if expense_filter == 'paid' %} event-filter__link--active{% endif %}">Оплачено</a>
         </div>
-        <div class="premium-list">
+        <div class="premium-list premium-list--flat premium-list--expenses">
             {% for expense in detail_expenses %}
-                <div class="premium-list__row">
+                <div class="premium-list__row premium-list__row--flat premium-list__row--expense">
                     <div>
                         <div class="fw-semibold">{{ expense.category }}</div>
                         <div class="text-secondary small">{{ expense.vendor_name|default:"Подрядчик не указан" }}</div>
                     </div>
-                    <div class="text-end">
+                    <div class="expense-row__meta">
                         <div class="fw-semibold">{{ expense.amount }} ₽</div>
-                        <div class="text-secondary small">{{ expense.get_payment_status_display }}</div>
-                        {% if crm_permissions.can_view_finance %}<a href="{% url 'core:event_expense_update' expense.pk %}?return_tab=expenses" class="btn btn-sm btn-outline-primary mt-2">Изменить</a>{% endif %}
+                        <div class="expense-row__actions">
+                            {% if expense.payment_status == "paid" %}
+                                <span class="event-chip event-chip--success">{{ expense.get_payment_status_display }}</span>
+                            {% elif expense.payment_status == "partial" %}
+                                <span class="event-chip event-chip--warning">{{ expense.get_payment_status_display }}</span>
+                            {% else %}
+                                <span class="event-chip event-chip--soft">{{ expense.get_payment_status_display }}</span>
+                            {% endif %}
+                            {% if crm_permissions.can_view_finance %}<a href="{% url 'core:event_expense_update' expense.pk %}?return_tab=expenses" class="panel-action-link">Изменить</a>{% endif %}
+                        </div>
                     </div>
                 </div>
             {% empty %}
@@ -379,9 +387,9 @@
             <a href="{% url 'core:event_detail' event.pk %}?tab=vendors&vendor_filter=approved#event-tabs" class="event-filter__link{% if vendor_filter == 'approved' %} event-filter__link--active{% endif %}">Утверждены</a>
             <a href="{% url 'core:event_detail' event.pk %}?tab=vendors&vendor_filter=replaced#event-tabs" class="event-filter__link{% if vendor_filter == 'replaced' %} event-filter__link--active{% endif %}">Заменены</a>
         </div>
-        <div class="premium-list">
+        <div class="premium-list premium-list--flat premium-list--vendors">
             {% for assignment in detail_event_vendors %}
-                <div class="premium-list__row">
+                <div class="premium-list__row premium-list__row--flat premium-list__row--vendor">
                     <div>
                         <div class="fw-semibold">{{ assignment.vendor }}</div>
                         <div class="text-secondary small">{{ assignment.role }}</div>
@@ -390,7 +398,13 @@
                         {% if crm_permissions.can_view_finance %}
                             <div class="fw-semibold">{{ assignment.cost }} ₽</div>
                         {% endif %}
-                        <div class="text-secondary small">{{ assignment.get_status_display }}</div>
+                        {% if assignment.status == "approved" %}
+                            <span class="event-chip event-chip--success">{{ assignment.get_status_display }}</span>
+                        {% elif assignment.status == "replaced" %}
+                            <span class="event-chip event-chip--danger">{{ assignment.get_status_display }}</span>
+                        {% else %}
+                            <span class="event-chip event-chip--soft">{{ assignment.get_status_display }}</span>
+                        {% endif %}
                         <div class="event-row-actions justify-content-end mt-2">
                             {% if crm_permissions.can_manage_events and assignment.status != "approved" %}
                                 <form method="post" action="{% url 'core:event_vendor_status_update' assignment.pk %}">
@@ -406,7 +420,7 @@
                                     <button type="submit" class="btn btn-sm btn-outline-secondary">Заменён</button>
                                 </form>
                             {% endif %}
-                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_vendor_update' assignment.pk %}?return_tab=vendors" class="btn btn-sm btn-outline-primary">Изменить</a>{% endif %}
+                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_vendor_update' assignment.pk %}?return_tab=vendors" class="panel-action-link">Изменить</a>{% endif %}
                         </div>
                     </div>
                 </div>
@@ -428,11 +442,11 @@
             <a href="{% url 'core:event_detail' event.pk %}?tab=communications&communication_filter=message#event-tabs" class="event-filter__link{% if communication_filter == 'message' %} event-filter__link--active{% endif %}">Сообщения</a>
             <a href="{% url 'core:event_detail' event.pk %}?tab=communications&communication_filter=meeting#event-tabs" class="event-filter__link{% if communication_filter == 'meeting' %} event-filter__link--active{% endif %}">Встречи</a>
         </div>
-        <div class="premium-list">
+        <div class="premium-list premium-list--flat premium-list--communications">
             {% for communication in detail_communications %}
-                <div class="premium-list__row">
+                <div class="premium-list__row premium-list__row--flat premium-list__row--communication">
                     <div>
-                        <div class="fw-semibold">{{ communication.get_communication_type_display }}</div>
+                        <div class="fw-semibold"><span class="event-chip event-chip--soft">{{ communication.get_communication_type_display }}</span></div>
                         <div class="text-secondary small">
                             {{ communication.date|date:"d.m.Y H:i" }}
                             {% if communication.manager %} • {{ communication.manager }}{% endif %}
@@ -441,7 +455,7 @@
                     <div class="premium-list__meta">
                         {{ communication.comment|default:"Без комментария" }}
                         <div class="mt-2">
-                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_communication_update' communication.pk %}?return_tab=communications" class="btn btn-sm btn-outline-primary">Изменить</a>{% endif %}
+                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_communication_update' communication.pk %}?return_tab=communications" class="panel-action-link">Изменить</a>{% endif %}
                         </div>
                     </div>
                 </div>
@@ -463,21 +477,27 @@
             <a href="{% url 'core:event_detail' event.pk %}?tab=documents&document_filter=sent#event-tabs" class="event-filter__link{% if document_filter == 'sent' %} event-filter__link--active{% endif %}">Отправлены</a>
             <a href="{% url 'core:event_detail' event.pk %}?tab=documents&document_filter=signed#event-tabs" class="event-filter__link{% if document_filter == 'signed' %} event-filter__link--active{% endif %}">Подписаны</a>
         </div>
-        <div class="premium-list">
+        <div class="premium-list premium-list--flat premium-list--documents">
             {% for document in detail_documents %}
-                <div class="premium-list__row">
+                <div class="premium-list__row premium-list__row--flat premium-list__row--document">
                     <div>
                         <div class="fw-semibold">{{ document.get_document_type_display }}</div>
-                        <div class="text-secondary small">{{ document.get_status_display }}</div>
+                        {% if document.status == "signed" %}
+                            <span class="event-chip event-chip--success">{{ document.get_status_display }}</span>
+                        {% elif document.status == "sent" %}
+                            <span class="event-chip">{{ document.get_status_display }}</span>
+                        {% else %}
+                            <span class="event-chip event-chip--soft">{{ document.get_status_display }}</span>
+                        {% endif %}
                     </div>
                     <div class="premium-list__meta">
                         {% if document.file %}
-                            <a href="{{ document.file.url }}" class="text-decoration-none">Файл</a>
+                            <a href="{{ document.file.url }}" class="panel-action-link">Файл</a>
                         {% else %}
                             Файл не загружен
                         {% endif %}
                         <div class="mt-2">
-                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_document_update' document.pk %}?return_tab=documents" class="btn btn-sm btn-outline-primary">Изменить</a>{% endif %}
+                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_document_update' document.pk %}?return_tab=documents" class="panel-action-link">Изменить</a>{% endif %}
                         </div>
                     </div>
                 </div>

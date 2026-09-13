@@ -988,6 +988,10 @@ body {
     gap: 0.8rem;
 }
 
+.premium-list--flat {
+    gap: 0;
+}
+
 .premium-list__row {
     display: flex;
     justify-content: space-between;
@@ -997,6 +1001,29 @@ body {
     border-radius: 1.1rem;
     background: linear-gradient(180deg, #fcfdff, #f6f9fc);
     border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.premium-list__row--flat {
+    padding-right: 0;
+    padding-left: 0;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.expense-row__meta {
+    min-width: min(100%, 25rem);
+    text-align: right;
+}
+
+.expense-row__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.9rem;
+    margin-top: 0.45rem;
 }
 
 .premium-list__row--risk {
@@ -1145,6 +1172,16 @@ body {
 
     .premium-list__row--task .premium-list__meta {
         max-width: 100%;
+    }
+
+    .expense-row__meta {
+        min-width: 0;
+        width: 100%;
+        text-align: left;
+    }
+
+    .expense-row__actions {
+        justify-content: flex-start;
     }
 
     .risk-row__actions {
