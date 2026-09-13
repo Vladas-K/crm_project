@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils import timezone
 
 User = get_user_model()
@@ -665,7 +666,11 @@ class EventOutcome(models.Model):
     final_profit = models.DecimalField("Финальная прибыль", max_digits=12, decimal_places=2, default=0)
     lessons_learned = models.TextField("Проблемы / выводы", blank=True)
     media_links = models.TextField("Фото / видео материалы", blank=True)
-    project_rating = models.PositiveSmallIntegerField("Оценка проекта", default=0)
+    project_rating = models.PositiveSmallIntegerField(
+        "Оценка проекта",
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+    )
 
     class Meta:
         verbose_name = "Итоги мероприятия"
@@ -673,6 +678,13 @@ class EventOutcome(models.Model):
 
     def __str__(self) -> str:
         return f"Итоги: {self.event}"
+
+    def clean(self) -> None:
+        """Проверяет, что оценка проекта находится в диапазоне от 0 до 5."""
+
+        super().clean()
+        if not 0 <= self.project_rating <= 5:
+            raise ValidationError({"project_rating": "Оценка должна быть от 0 до 5."})
 
 
 class EventFormatTaskTemplate(models.Model):

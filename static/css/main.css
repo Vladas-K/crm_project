@@ -1026,6 +1026,20 @@ body {
     margin-top: 0.45rem;
 }
 
+.vendor-row__meta {
+    min-width: min(100%, 34rem);
+    text-align: right;
+}
+
+.vendor-row__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.9rem;
+    margin-top: 0.45rem;
+}
+
 .premium-list__row--risk {
     padding-right: 0;
     padding-left: 0;
@@ -1181,6 +1195,16 @@ body {
     }
 
     .expense-row__actions {
+        justify-content: flex-start;
+    }
+
+    .vendor-row__meta {
+        min-width: 0;
+        width: 100%;
+        text-align: left;
+    }
+
+    .vendor-row__actions {
         justify-content: flex-start;
     }
 

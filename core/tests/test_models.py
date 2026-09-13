@@ -15,6 +15,7 @@ from core.models import (
     EventFormatTaskTemplate,
     EventFormatTimelineTemplate,
     EventFormatVendorTemplate,
+    EventOutcome,
     EventTask,
     EventTimelineItem,
     EventVendor,
@@ -324,3 +325,12 @@ def test_event_financial_properties_are_calculated_from_expenses():
     assert event.balance == Decimal("85000.00")
     assert event.profit == Decimal("50000.00")
     assert event.margin == Decimal("50.0")
+
+
+def test_event_outcome_rating_cannot_exceed_five(crm_objects):
+    """Оценка итогов мероприятия не может быть выше максимального значения 5."""
+
+    outcome = EventOutcome(event=crm_objects["event"], project_rating=6)
+
+    with pytest.raises(ValidationError):
+        outcome.full_clean()

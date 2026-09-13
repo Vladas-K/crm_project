@@ -214,7 +214,8 @@ class EventOutcomeForm(BootstrapModelForm):
         widgets = {
             "client_feedback": forms.Textarea(attrs={"rows": 3}),
             "lessons_learned": forms.Textarea(attrs={"rows": 3}),
-            "media_links": forms.Textarea(attrs={"rows": 3}),
+            "media_links": forms.Textarea(attrs={"rows": 3, "placeholder": "https://..."}),
+            "project_rating": forms.NumberInput(attrs={"min": 0, "max": 5}),
         }
 
 

@@ -268,7 +268,11 @@
                 <div class="col-md-4">
                     <div class="premium-note h-100">
                         <span>Фото и видео</span>
-                        <p>{{ event_outcome.media_links|default:"Ссылки не добавлены" }}</p>
+                        {% if event_outcome.media_links %}
+                            <p><a href="{{ event_outcome.media_links }}" class="panel-action-link" target="_blank" rel="noopener">Открыть материалы</a></p>
+                        {% else %}
+                            <p>Ссылки не добавлены</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -394,18 +398,18 @@
                         <div class="fw-semibold">{{ assignment.vendor }}</div>
                         <div class="text-secondary small">{{ assignment.role }}</div>
                     </div>
-                    <div class="text-end">
+                    <div class="vendor-row__meta">
                         {% if crm_permissions.can_view_finance %}
                             <div class="fw-semibold">{{ assignment.cost }} ₽</div>
                         {% endif %}
-                        {% if assignment.status == "approved" %}
-                            <span class="event-chip event-chip--success">{{ assignment.get_status_display }}</span>
-                        {% elif assignment.status == "replaced" %}
-                            <span class="event-chip event-chip--danger">{{ assignment.get_status_display }}</span>
-                        {% else %}
-                            <span class="event-chip event-chip--soft">{{ assignment.get_status_display }}</span>
-                        {% endif %}
-                        <div class="event-row-actions justify-content-end mt-2">
+                        <div class="vendor-row__actions">
+                            {% if assignment.status == "approved" %}
+                                <span class="event-chip event-chip--success">{{ assignment.get_status_display }}</span>
+                            {% elif assignment.status == "replaced" %}
+                                <span class="event-chip event-chip--danger">{{ assignment.get_status_display }}</span>
+                            {% else %}
+                                <span class="event-chip event-chip--soft">{{ assignment.get_status_display }}</span>
+                            {% endif %}
                             {% if crm_permissions.can_manage_events and assignment.status != "approved" %}
                                 <form method="post" action="{% url 'core:event_vendor_status_update' assignment.pk %}">
                                     {% csrf_token %}
