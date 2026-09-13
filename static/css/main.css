@@ -1021,6 +1021,27 @@ body {
     background: transparent;
 }
 
+.premium-list--tasks {
+    gap: 0;
+}
+
+.premium-list__row--task {
+    padding-right: 0;
+    padding-left: 0;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.premium-list__row--task > :first-child {
+    flex: 1;
+}
+
+.premium-list__row--task .premium-list__meta {
+    max-width: 56%;
+}
+
 .timeline-row__actions {
     display: flex;
     align-items: center;
@@ -1120,6 +1141,10 @@ body {
     .premium-list__meta {
         max-width: 100%;
         text-align: left;
+    }
+
+    .premium-list__row--task .premium-list__meta {
+        max-width: 100%;
     }
 
     .risk-row__actions {

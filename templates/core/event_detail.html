@@ -289,9 +289,9 @@
             <a href="{% url 'core:event_detail' event.pk %}?tab=tasks&task_filter=overdue#event-tabs" class="event-filter__link{% if task_filter == 'overdue' %} event-filter__link--active{% endif %}">Просроченные</a>
             <a href="{% url 'core:event_detail' event.pk %}?tab=tasks&task_filter=done#event-tabs" class="event-filter__link{% if task_filter == 'done' %} event-filter__link--active{% endif %}">Готовые</a>
         </div>
-        <div class="premium-list">
+        <div class="premium-list premium-list--tasks">
             {% for task in detail_tasks %}
-                <div class="premium-list__row">
+                <div class="premium-list__row premium-list__row--task">
                     <div>
                         <div class="fw-semibold">
                             <a href="{% url 'core:task_detail' task.pk %}" class="text-decoration-none text-reset">{{ task.title }}</a>
@@ -305,7 +305,13 @@
                         {% if task.deadline and task.deadline < today and task.status != "done" %}
                             <span class="event-chip event-chip--danger">Просрочено</span>
                         {% endif %}
-                        <span class="event-chip event-chip--soft">{{ task.get_status_display }}</span>
+                        {% if task.status == "done" %}
+                            <span class="event-chip event-chip--success">{{ task.get_status_display }}</span>
+                        {% elif task.status == "in_progress" %}
+                            <span class="event-chip">{{ task.get_status_display }}</span>
+                        {% else %}
+                            <span class="event-chip event-chip--warning">{{ task.get_status_display }}</span>
+                        {% endif %}
                         {% if crm_permissions.can_manage_events and task.status == "todo" %}
                             <form method="post" action="{% url 'core:task_status_update' task.pk %}">
                                 {% csrf_token %}
