@@ -398,14 +398,14 @@ class Command(BaseCommand):
                 },
             )
             event.create_structure_from_format()
-            for category, vendor_name, amount, prepayment in spec["extra_expenses"]:
+            for category, vendor_name, amount, paid_amount in spec["extra_expenses"]:
                 EventExpense.objects.update_or_create(
                     event=event,
                     category=category,
                     vendor_name=vendor_name,
                     defaults={
                         "amount": amount,
-                        "prepayment": prepayment,
+                        "paid_amount": paid_amount,
                         "payment_status": EventExpense.PaymentStatus.PARTIAL,
                     },
                 )
@@ -440,7 +440,7 @@ class Command(BaseCommand):
             vendor_name="Event Build",
             defaults={
                 "amount": Decimal("760000.00"),
-                "prepayment": Decimal("250000.00"),
+                "paid_amount": Decimal("250000.00"),
                 "payment_status": EventExpense.PaymentStatus.PAID,
             },
         )

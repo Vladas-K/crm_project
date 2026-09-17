@@ -347,16 +347,16 @@ class Event(models.Model):
         return sum((expense.amount for expense in self.expenses.all()), Decimal("0"))
 
     @property
-    def prepayment_total(self) -> Decimal:
-        """Возвращает общую сумму предоплат по расходам мероприятия."""
+    def paid_amount_total(self) -> Decimal:
+        """Возвращает общую сумму оплаченных расходов мероприятия."""
 
-        return sum((expense.prepayment for expense in self.expenses.all()), Decimal("0"))
+        return sum((expense.paid_amount for expense in self.expenses.all()), Decimal("0"))
 
     @property
     def balance(self) -> Decimal:
-        """Возвращает остаток планового бюджета после предоплат."""
+        """Возвращает остаток планового бюджета после оплаченных расходов."""
 
-        return Decimal(self.planned_budget) - self.prepayment_total
+        return Decimal(self.planned_budget) - self.paid_amount_total
 
     @property
     def profit(self) -> Decimal:
@@ -427,7 +427,7 @@ class Event(models.Model):
 
 
 class EventExpense(models.Model):
-    """Строка расходов мероприятия с суммой, предоплатой и статусом оплаты."""
+    """Строка расходов мероприятия с суммой и статусом оплаты."""
 
     class PaymentStatus(models.TextChoices):
         PLANNED = "planned", "Запланировано"
@@ -451,7 +451,13 @@ class EventExpense(models.Model):
         verbose_name="Назначенный подрядчик",
     )
     amount = models.DecimalField("Сумма", max_digits=12, decimal_places=2, default=0)
-    prepayment = models.DecimalField("Предоплата", max_digits=12, decimal_places=2, default=0)
+    paid_amount = models.DecimalField(
+        "Оплачено",
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(0)],
+    )
     payment_status = models.CharField(
         "Статус оплаты",
         max_length=20,
@@ -468,11 +474,22 @@ class EventExpense(models.Model):
         return f"{self.category} - {self.amount}"
 
     def clean(self) -> None:
-        """Не позволяет связать расход с подрядчиком другого мероприятия."""
+        """Проверяет подрядчика и сумму оплаты расхода."""
 
         super().clean()
+        errors = {}
         if self.vendor_assignment and self.event_id != self.vendor_assignment.event_id:
-            raise ValidationError({"vendor_assignment": "Подрядчик должен быть назначен на это же мероприятие."})
+            errors["vendor_assignment"] = "Подрядчик должен быть назначен на это же мероприятие."
+        if self.paid_amount > self.amount:
+            errors["paid_amount"] = "Оплаченная сумма не может быть больше общей суммы."
+        if errors:
+            raise ValidationError(errors)
+
+    @property
+    def remaining_amount(self) -> Decimal:
+        """Возвращает сумму, которая осталась к оплате."""
+
+        return self.amount - self.paid_amount
 
 
 class EventVendor(models.Model):

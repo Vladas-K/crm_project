@@ -96,8 +96,8 @@
                 {% if crm_permissions.can_view_finance %}
                     <div class="col-md-6">
                         <div class="metric-card">
-                            <span>Предоплата</span>
-                            <strong>{{ event.prepayment_total }} ₽</strong>
+                            <span>Оплачено</span>
+                            <strong>{{ event.paid_amount_total }} ₽</strong>
                         </div>
                     </div>
                 {% endif %}
@@ -379,6 +379,9 @@
                     </div>
                     <div class="expense-row__meta">
                         <div class="fw-semibold">{{ expense.amount }} ₽</div>
+                        {% if expense.payment_status == "partial" %}
+                            <div class="text-secondary small">Оплачено {{ expense.paid_amount }} ₽ · осталось {{ expense.remaining_amount }} ₽</div>
+                        {% endif %}
                         <div class="expense-row__actions">
                             {% if expense.payment_status == "paid" %}
                                 <span class="event-chip event-chip--success">{{ expense.get_payment_status_display }}</span>

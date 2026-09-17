@@ -222,7 +222,7 @@ class EventOutcomeForm(BootstrapModelForm):
 class EventExpenseForm(BootstrapModelForm):
     class Meta:
         model = EventExpense
-        fields = ["event", "category", "vendor_assignment", "amount", "prepayment", "payment_status"]
+        fields = ["event", "category", "vendor_assignment", "amount", "paid_amount", "payment_status"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

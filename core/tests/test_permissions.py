@@ -621,7 +621,7 @@ def test_event_detail_shows_financial_ui_with_finance_access(client, django_user
     assert "Расходы" in html
     assert "Прибыль" in html
     assert "Маржа" in html
-    assert "Предоплата" in html
+    assert "Оплачено" in html
     assert reverse("core:event_expense_create", kwargs={"event_pk": crm_objects["event"].pk}) in html
     assert reverse("core:event_expense_update", kwargs={"pk": crm_objects["expense"].pk}) in html
 

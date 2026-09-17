@@ -416,7 +416,7 @@ def test_nested_expense_create_returns_to_expenses_tab(client, django_user_model
             "category": "Кейтеринг",
             "vendor_name": "Food Team",
             "amount": "45000.00",
-            "prepayment": "15000.00",
+            "paid_amount": "15000.00",
             "payment_status": EventExpense.PaymentStatus.PARTIAL,
             "return_tab": "expenses",
         },
@@ -425,7 +425,7 @@ def test_nested_expense_create_returns_to_expenses_tab(client, django_user_model
 
     assert expense.event == event
     assert expense.amount == Decimal("45000.00")
-    assert expense.prepayment == Decimal("15000.00")
+    assert expense.paid_amount == Decimal("15000.00")
     assert response.status_code == 302
     assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=expenses#event-tabs"
 
@@ -443,7 +443,7 @@ def test_nested_expense_update_returns_to_expenses_tab(client, django_user_model
             "category": "Площадка обновлена",
             "vendor_name": "Venue Team",
             "amount": "65000.00",
-            "prepayment": "25000.00",
+            "paid_amount": "25000.00",
             "payment_status": EventExpense.PaymentStatus.PAID,
             "return_tab": "expenses",
         },
@@ -452,7 +452,7 @@ def test_nested_expense_update_returns_to_expenses_tab(client, django_user_model
 
     assert expense.category == "Площадка обновлена"
     assert expense.amount == Decimal("65000.00")
-    assert expense.prepayment == Decimal("25000.00")
+    assert expense.paid_amount == Decimal("25000.00")
     assert expense.payment_status == EventExpense.PaymentStatus.PAID
     assert response.status_code == 302
     assert response.url == f"{reverse('core:event_detail', kwargs={'pk': expense.event.pk})}?tab=expenses#event-tabs"

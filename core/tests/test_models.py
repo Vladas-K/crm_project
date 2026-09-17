@@ -311,17 +311,17 @@ def test_event_financial_properties_are_calculated_from_expenses():
         event=event,
         category="Площадка",
         amount=Decimal("30000.00"),
-        prepayment=Decimal("10000.00"),
+        paid_amount=Decimal("10000.00"),
     )
     EventExpense.objects.create(
         event=event,
         category="Техника",
         amount=Decimal("20000.00"),
-        prepayment=Decimal("5000.00"),
+        paid_amount=Decimal("5000.00"),
     )
 
     assert event.total_expenses == Decimal("50000.00")
-    assert event.prepayment_total == Decimal("15000.00")
+    assert event.paid_amount_total == Decimal("15000.00")
     assert event.balance == Decimal("85000.00")
     assert event.profit == Decimal("50000.00")
     assert event.margin == Decimal("50.0")
@@ -360,6 +360,33 @@ def test_expense_can_reference_event_vendor(crm_objects):
     )
 
     expense.full_clean()
+
+
+def test_expense_calculates_remaining_amount(crm_objects):
+    """Расход рассчитывает остаток после частичной оплаты."""
+
+    expense = EventExpense(
+        event=crm_objects["event"],
+        category="Техника",
+        amount=Decimal("150000.00"),
+        paid_amount=Decimal("50000.00"),
+    )
+
+    assert expense.remaining_amount == Decimal("100000.00")
+
+
+def test_expense_rejects_payment_above_total(crm_objects):
+    """Расход не позволяет указать оплату выше общей суммы."""
+
+    expense = EventExpense(
+        event=crm_objects["event"],
+        category="Техника",
+        amount=Decimal("150000.00"),
+        paid_amount=Decimal("160000.00"),
+    )
+
+    with pytest.raises(ValidationError):
+        expense.full_clean()
 
 
 def test_expense_cannot_reference_vendor_from_another_event(crm_objects):
