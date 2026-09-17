@@ -233,16 +233,18 @@
                 <p class="premium-panel__subtitle">Финальная оценка проекта, обратная связь и выводы команды.</p>
             </div>
             {% if crm_permissions.can_manage_events %}
+                <div class="event-outcome__actions">
                 {% if event_outcome %}
                     <a href="{% url 'core:event_outcome_update' event_outcome.pk %}?return_tab=outcome" class="btn btn-sm btn-primary">Изменить</a>
                     {% if crm_permissions.can_manage_system %}<a href="{% url 'core:event_outcome_delete' event_outcome.pk %}?return_tab=outcome" class="panel-action-link panel-action-link--danger">Удалить</a>{% endif %}
                 {% else %}
                     <a href="{% url 'core:event_outcome_create' event.pk %}?return_tab=outcome" class="btn btn-sm btn-primary">Добавить</a>
                 {% endif %}
+                </div>
             {% endif %}
         </div>
         {% if event_outcome %}
-            <div class="row g-3">
+            <div class="row g-3 event-outcome-metrics">
                 <div class="col-md-6">
                     <div class="metric-card">
                         <span>Финальная прибыль</span>
