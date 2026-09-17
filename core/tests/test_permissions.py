@@ -521,6 +521,22 @@ def test_outcome_delete_requires_system_access(client, django_user_model, crm_ob
 
 
 @pytest.mark.django_db
+def test_expense_delete_requires_system_access(client, django_user_model, crm_objects):
+    """Удаление расхода доступно только пользователю с системным правом."""
+    user = create_user_with_profile(
+        django_user_model,
+        "expense_user",
+        can_view_finance=True,
+        can_manage_system=False,
+    )
+    client.force_login(user)
+
+    response = client.get(reverse("core:event_expense_delete", kwargs={"pk": crm_objects["expense"].pk}))
+
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
 def test_sidebar_hides_permission_restricted_links(client, django_user_model):
     """Sidebar скрывает пункты, недоступные текущему пользователю CRM."""
     user = create_user_with_profile(

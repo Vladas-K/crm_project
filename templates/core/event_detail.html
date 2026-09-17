@@ -388,6 +388,7 @@
                                 <span class="event-chip event-chip--soft">{{ expense.get_payment_status_display }}</span>
                             {% endif %}
                             {% if crm_permissions.can_view_finance %}<a href="{% url 'core:event_expense_update' expense.pk %}?return_tab=expenses" class="panel-action-link">Изменить</a>{% endif %}
+                            {% if crm_permissions.can_manage_system %}<a href="{% url 'core:event_expense_delete' expense.pk %}?return_tab=expenses" class="panel-action-link panel-action-link--danger">Удалить</a>{% endif %}
                         </div>
                     </div>
                 </div>

@@ -17,6 +17,7 @@ from .views import (
     EventDocumentCreateView,
     EventDocumentUpdateView,
     EventExpenseCreateView,
+    EventExpenseDeleteView,
     EventExpenseUpdateView,
     EventRiskCreateView,
     EventRiskDeleteView,
@@ -114,6 +115,7 @@ urlpatterns = [
     path("tasks/<int:pk>/status/", TaskStatusUpdateView.as_view(), name="task_status_update"),
     path("tasks/<int:pk>/delete/", TaskDeleteView.as_view(), name="task_delete"),
     path("expenses/<int:pk>/edit/", EventExpenseUpdateView.as_view(), name="event_expense_update"),
+    path("expenses/<int:pk>/delete/", EventExpenseDeleteView.as_view(), name="event_expense_delete"),
     path("event-vendors/<int:pk>/edit/", EventVendorUpdateView.as_view(), name="event_vendor_update"),
     path("event-vendors/<int:pk>/status/", EventVendorStatusUpdateView.as_view(), name="event_vendor_status_update"),
     path(

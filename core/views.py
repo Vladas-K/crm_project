@@ -1373,6 +1373,18 @@ class EventExpenseUpdateView(FinanceAccessMixin, EventScopedFormMixin, CRUDConte
     cancel_url = reverse_lazy("core:events")
 
 
+class EventExpenseDeleteView(SystemAccessMixin, DeleteView):
+    """Удаляет расход после подтверждения и возвращает пользователя к расходам мероприятия."""
+
+    model = EventExpense
+    template_name = "core/object_confirm_delete.html"
+
+    def get_success_url(self):
+        """Возвращает пользователя на вкладку расходов после удаления."""
+
+        return f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=expenses#event-tabs"
+
+
 class EventVendorCreateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Добавляет подрядчика в конкретное мероприятие."""
 

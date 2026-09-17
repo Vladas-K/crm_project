@@ -69,6 +69,7 @@ def test_detail_and_form_views_require_login(client, crm_objects):
         reverse("core:task_delete", kwargs={"pk": crm_objects["task"].pk}),
         reverse("core:event_timeline_delete", kwargs={"pk": timeline_item.pk}),
         reverse("core:event_expense_update", kwargs={"pk": crm_objects["expense"].pk}),
+        reverse("core:event_expense_delete", kwargs={"pk": crm_objects["expense"].pk}),
         reverse("core:event_vendor_update", kwargs={"pk": crm_objects["event_vendor"].pk}),
         reverse("core:event_communication_update", kwargs={"pk": crm_objects["communication"].pk}),
         reverse("core:event_document_update", kwargs={"pk": crm_objects["document"].pk}),

@@ -459,6 +459,26 @@ def test_nested_expense_update_returns_to_expenses_tab(client, django_user_model
 
 
 @pytest.mark.django_db
+def test_expense_delete_returns_to_expenses_tab(client, django_user_model, crm_objects):
+    """Удаление расхода возвращает системного пользователя на вкладку расходов."""
+    user = django_user_model.objects.create_user(username="expense_admin", password="TestPass123!")
+    TeamMemberProfile.objects.create(
+        user=user,
+        role=CRMRole.ADMIN,
+        can_view_finance=True,
+        can_manage_system=True,
+    )
+    client.force_login(user)
+    expense = crm_objects["expense"]
+
+    response = client.post(reverse("core:event_expense_delete", kwargs={"pk": expense.pk}))
+
+    assert not EventExpense.objects.filter(pk=expense.pk).exists()
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': crm_objects['event'].pk})}?tab=expenses#event-tabs"
+
+
+@pytest.mark.django_db
 def test_nested_event_vendor_create_returns_to_vendors_tab(client, django_user_model, crm_objects):
     """Создание назначения подрядчика возвращает на вкладку подрядчиков."""
     login_user(client, django_user_model)
