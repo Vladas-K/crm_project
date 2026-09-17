@@ -227,6 +227,30 @@ def test_nested_risk_update_returns_to_risks_tab(client, django_user_model, crm_
 
 
 @pytest.mark.django_db
+def test_risk_delete_returns_to_risks_tab(client, django_user_model, crm_objects):
+    """Удаление риска возвращает системного пользователя на вкладку рисков."""
+    user = django_user_model.objects.create_user(username="risk_admin", password="TestPass123!")
+    TeamMemberProfile.objects.create(
+        user=user,
+        role=CRMRole.ADMIN,
+        can_manage_events=True,
+        can_manage_system=True,
+    )
+    client.force_login(user)
+    risk = EventRisk.objects.create(
+        event=crm_objects["event"],
+        description="Удаляемый риск",
+        probability=EventRisk.Probability.LOW,
+    )
+
+    response = client.post(reverse("core:event_risk_delete", kwargs={"pk": risk.pk}))
+
+    assert not EventRisk.objects.filter(pk=risk.pk).exists()
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': crm_objects['event'].pk})}?tab=risks#event-tabs"
+
+
+@pytest.mark.django_db
 def test_nested_outcome_create_returns_to_outcome_tab(client, django_user_model, crm_objects):
     """Создание итогов из карточки мероприятия возвращает на вкладку итогов."""
     login_user(client, django_user_model)

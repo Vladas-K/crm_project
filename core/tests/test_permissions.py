@@ -497,6 +497,18 @@ def test_expense_actions_allow_user_with_finance_access_flag(client, django_user
 
 
 @pytest.mark.django_db
+def test_risk_delete_requires_system_access(client, django_user_model, crm_objects):
+    """Удаление риска доступно только пользователю с системным правом."""
+    user = create_user_with_profile(django_user_model, "risk_user", can_manage_system=False)
+    client.force_login(user)
+    risk = crm_objects["event"].risks.create(description="Риск")
+
+    response = client.get(reverse("core:event_risk_delete", kwargs={"pk": risk.pk}))
+
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
 def test_sidebar_hides_permission_restricted_links(client, django_user_model):
     """Sidebar скрывает пункты, недоступные текущему пользователю CRM."""
     user = create_user_with_profile(

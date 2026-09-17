@@ -1266,6 +1266,18 @@ class EventRiskUpdateView(EventManagementMixin, EventScopedFormMixin, CRUDContex
     cancel_url = reverse_lazy("core:events")
 
 
+class EventRiskDeleteView(SystemAccessMixin, DeleteView):
+    """Удаляет риск после подтверждения и возвращает пользователя к рискам мероприятия."""
+
+    model = EventRisk
+    template_name = "core/object_confirm_delete.html"
+
+    def get_success_url(self):
+        """Возвращает пользователя на вкладку рисков после удаления."""
+
+        return f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=risks#event-tabs"
+
+
 class EventOutcomeCreateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Добавляет итоги к мероприятию."""
 
