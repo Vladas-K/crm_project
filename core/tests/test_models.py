@@ -336,6 +336,19 @@ def test_event_outcome_rating_cannot_exceed_five(crm_objects):
         outcome.full_clean()
 
 
+def test_event_outcome_distinguishes_empty_profit_from_zero(crm_objects):
+    """Итоги различают неуказанную прибыль и фактический нулевой результат."""
+
+    empty_outcome = EventOutcome(event=crm_objects["event"], final_profit=None)
+    zero_outcome = EventOutcome(event=crm_objects["event"], final_profit=Decimal("0.00"))
+
+    empty_outcome.full_clean()
+    zero_outcome.full_clean()
+
+    assert empty_outcome.final_profit is None
+    assert zero_outcome.final_profit == Decimal("0.00")
+
+
 def test_expense_can_reference_event_vendor(crm_objects):
     """Расход может быть связан с подрядчиком, назначенным на это мероприятие."""
 

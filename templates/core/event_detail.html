@@ -246,13 +246,21 @@
                 <div class="col-md-6">
                     <div class="metric-card">
                         <span>Финальная прибыль</span>
-                        <strong>{{ event_outcome.final_profit }} ₽</strong>
+                        {% if event_outcome.final_profit is not None %}
+                            <strong>{{ event_outcome.final_profit }} ₽</strong>
+                        {% else %}
+                            <strong>Не указано</strong>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="metric-card">
                         <span>Оценка проекта</span>
-                        <strong>{{ event_outcome.project_rating }}/5</strong>
+                        {% if event_outcome.project_rating %}
+                            <strong>{{ event_outcome.project_rating }}/5</strong>
+                        {% else %}
+                            <strong>Не оценено</strong>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="col-md-4">

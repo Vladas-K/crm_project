@@ -678,7 +678,13 @@ class EventOutcome(models.Model):
         verbose_name="Мероприятие",
     )
     client_feedback = models.TextField("Отзыв клиента", blank=True)
-    final_profit = models.DecimalField("Финальная прибыль", max_digits=12, decimal_places=2, default=0)
+    final_profit = models.DecimalField(
+        "Финальная прибыль",
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
     lessons_learned = models.TextField("Проблемы / выводы", blank=True)
     media_links = models.TextField("Фото / видео материалы", blank=True)
     project_rating = models.PositiveSmallIntegerField(
