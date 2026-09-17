@@ -1304,6 +1304,18 @@ class EventOutcomeUpdateView(EventManagementMixin, EventScopedFormMixin, CRUDCon
     cancel_url = reverse_lazy("core:events")
 
 
+class EventOutcomeDeleteView(SystemAccessMixin, DeleteView):
+    """Удаляет итоги мероприятия после подтверждения."""
+
+    model = EventOutcome
+    template_name = "core/object_confirm_delete.html"
+
+    def get_success_url(self):
+        """Возвращает пользователя на вкладку итогов после удаления."""
+
+        return f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=outcome#event-tabs"
+
+
 class TaskDeleteView(SystemAccessMixin, DeleteView):
     """Удаляет задачу и возвращает пользователя в список задач или вкладку мероприятия."""
 

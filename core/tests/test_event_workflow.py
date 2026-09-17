@@ -311,6 +311,26 @@ def test_nested_outcome_update_returns_to_outcome_tab(client, django_user_model,
 
 
 @pytest.mark.django_db
+def test_outcome_delete_returns_to_outcome_tab(client, django_user_model, crm_objects):
+    """Удаление итогов возвращает системного пользователя на вкладку итогов."""
+    user = django_user_model.objects.create_user(username="outcome_admin", password="TestPass123!")
+    TeamMemberProfile.objects.create(
+        user=user,
+        role=CRMRole.ADMIN,
+        can_manage_events=True,
+        can_manage_system=True,
+    )
+    client.force_login(user)
+    outcome = EventOutcome.objects.create(event=crm_objects["event"], project_rating=4)
+
+    response = client.post(reverse("core:event_outcome_delete", kwargs={"pk": outcome.pk}))
+
+    assert not EventOutcome.objects.filter(pk=outcome.pk).exists()
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': crm_objects['event'].pk})}?tab=outcome#event-tabs"
+
+
+@pytest.mark.django_db
 def test_task_status_quick_action_updates_status_and_returns_to_tasks_tab(client, django_user_model, crm_objects):
     """Быстрое действие карточки меняет статус задачи и возвращает на вкладку задач."""
     login_user(client, django_user_model)

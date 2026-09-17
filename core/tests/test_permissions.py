@@ -4,7 +4,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.urls import reverse
 
-from core.models import CRMRole, Event, EventRisk, EventTask, EventTimelineItem, Lead, TeamMemberProfile
+from core.models import CRMRole, Event, EventOutcome, EventRisk, EventTask, EventTimelineItem, Lead, TeamMemberProfile
 
 
 def create_user_with_profile(django_user_model, username, **profile_flags):
@@ -504,6 +504,18 @@ def test_risk_delete_requires_system_access(client, django_user_model, crm_objec
     risk = crm_objects["event"].risks.create(description="Риск")
 
     response = client.get(reverse("core:event_risk_delete", kwargs={"pk": risk.pk}))
+
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_outcome_delete_requires_system_access(client, django_user_model, crm_objects):
+    """Удаление итогов доступно только пользователю с системным правом."""
+    user = create_user_with_profile(django_user_model, "outcome_user", can_manage_system=False)
+    client.force_login(user)
+    outcome = EventOutcome.objects.create(event=crm_objects["event"], project_rating=4)
+
+    response = client.get(reverse("core:event_outcome_delete", kwargs={"pk": outcome.pk}))
 
     assert response.status_code == 403
 
