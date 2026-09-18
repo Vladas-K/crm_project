@@ -464,6 +464,42 @@ def test_nested_expense_update_returns_to_expenses_tab(client, django_user_model
 
 
 @pytest.mark.django_db
+def test_duplicate_expense_requires_confirmation_for_same_vendor(client, django_user_model, crm_objects):
+    """Повторный расход для того же подрядчика требует отдельного подтверждения."""
+    login_user(client, django_user_model, can_view_finance=True)
+    event = crm_objects["event"]
+    event_vendor = crm_objects["event_vendor"]
+    category = ExpenseCategory.objects.create(name="Техника")
+    EventExpense.objects.create(
+        event=event,
+        category=category,
+        vendor_assignment=event_vendor,
+        amount=Decimal("50000.00"),
+    )
+    create_url = f"{reverse('core:event_expense_create', kwargs={'event_pk': event.pk})}?return_tab=expenses"
+    payload = {
+        "category": category.pk,
+        "vendor_assignment": event_vendor.pk,
+        "amount": "60000.00",
+        "paid_amount": "0",
+        "payment_status": EventExpense.PaymentStatus.PLANNED,
+        "return_tab": "expenses",
+    }
+
+    response = client.post(create_url, payload)
+
+    assert response.status_code == 200
+    assert response.context["form"].show_duplicate_warning is True
+    assert event.expenses.filter(vendor_assignment=event_vendor).count() == 1
+
+    payload["confirm_duplicate"] = "1"
+    response = client.post(create_url, payload)
+
+    assert response.status_code == 302
+    assert event.expenses.filter(vendor_assignment=event_vendor).count() == 2
+
+
+@pytest.mark.django_db
 def test_expense_delete_returns_to_expenses_tab(client, django_user_model, crm_objects):
     """Удаление расхода возвращает системного пользователя на вкладку расходов."""
     user = django_user_model.objects.create_user(username="expense_admin", password="TestPass123!")

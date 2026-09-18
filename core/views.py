@@ -969,6 +969,21 @@ class SuccessMessageMixin:
         return response
 
 
+class ExpenseDuplicateWarningMixin:
+    """Просит подтвердить сохранение расхода с уже использованным подрядчиком."""
+
+    def form_valid(self, form):
+        """Показывает предупреждение до сохранения возможного дубля."""
+
+        if (
+            form.show_duplicate_warning
+            and self.request.POST.get("confirm_duplicate") != "1"
+        ):
+            form.show_duplicate_warning = True
+            return self.render_to_response(self.get_context_data(form=form))
+        return super().form_valid(form)
+
+
 class EventScopedFormMixin(CRMLoginRequiredMixin):
     """Привязывает nested-формы к мероприятию и возвращает пользователя в нужную вкладку."""
 
@@ -1347,7 +1362,14 @@ class TaskStatusUpdateView(EventManagementMixin, View):
         return redirect(f"{reverse('core:event_detail', kwargs={'pk': task.event.pk})}?tab=tasks#event-tabs")
 
 
-class EventExpenseCreateView(FinanceAccessMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+class EventExpenseCreateView(
+    ExpenseDuplicateWarningMixin,
+    FinanceAccessMixin,
+    EventScopedFormMixin,
+    CRUDContextMixin,
+    SuccessMessageMixin,
+    CreateView,
+):
     """Добавляет расход к мероприятию."""
 
     model = EventExpense
@@ -1360,7 +1382,14 @@ class EventExpenseCreateView(FinanceAccessMixin, EventScopedFormMixin, CRUDConte
     cancel_url = reverse_lazy("core:events")
 
 
-class EventExpenseUpdateView(FinanceAccessMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class EventExpenseUpdateView(
+    ExpenseDuplicateWarningMixin,
+    FinanceAccessMixin,
+    EventScopedFormMixin,
+    CRUDContextMixin,
+    SuccessMessageMixin,
+    UpdateView,
+):
     """Редактирует расход мероприятия."""
 
     model = EventExpense

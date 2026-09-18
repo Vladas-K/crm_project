@@ -234,8 +234,31 @@ class EventExpenseForm(BootstrapModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.show_duplicate_warning = False
+        self.duplicate_warning_message = ""
         self.fields["category"].queryset = ExpenseCategory.objects.filter(is_active=True).order_by("order", "name")
         self.fields["vendor_assignment"].help_text = "Выберите подрядчика, назначенного на это мероприятие."
+
+    def clean(self):
+        """Предупреждает о повторном расходе для того же подрядчика в мероприятии."""
+
+        cleaned_data = super().clean()
+        event = cleaned_data.get("event")
+        vendor_assignment = cleaned_data.get("vendor_assignment")
+        if event and vendor_assignment:
+            duplicate_expenses = EventExpense.objects.filter(
+                event=event,
+                vendor_assignment__vendor=vendor_assignment.vendor,
+            )
+            if self.instance.pk:
+                duplicate_expenses = duplicate_expenses.exclude(pk=self.instance.pk)
+            if duplicate_expenses.exists():
+                self.show_duplicate_warning = True
+                self.duplicate_warning_message = (
+                    f"В этом мероприятии уже есть расход для подрядчика «{vendor_assignment.vendor}». "
+                    "Проверьте, не является ли новая запись дублем."
+                )
+        return cleaned_data
 
 
 class EventVendorForm(BootstrapModelForm):
