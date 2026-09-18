@@ -68,7 +68,7 @@
                 {% for vendor in vendors %}
                     <tr>
                         <td class="fw-semibold">{{ vendor.name }}</td>
-                        <td>{{ vendor.roles }}</td>
+                        <td>{{ vendor.role_label }}</td>
                         {% if crm_permissions.can_view_finance %}
                             <td>{{ vendor.min_cost }} / {{ vendor.avg_cost }} ₽</td>
                         {% endif %}

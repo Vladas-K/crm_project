@@ -24,6 +24,7 @@ from .models import (
     ServicePackage,
     TeamMemberProfile,
     Vendor,
+    VendorRole,
 )
 
 User = get_user_model()
@@ -108,9 +109,20 @@ class EventFormatAdmin(admin.ModelAdmin):
 
 @admin.register(Vendor)
 class VendorAdmin(admin.ModelAdmin):
-    list_display = ("name", "roles", "avg_cost", "rating", "reliability", "blacklisted")
+    list_display = ("name", "role_list", "avg_cost", "rating", "reliability", "blacklisted")
     list_filter = ("blacklisted",)
     search_fields = ("name", "roles", "contacts")
+
+    @admin.display(description="Роли")
+    def role_list(self, obj):
+        return obj.role_label
+
+
+@admin.register(VendorRole)
+class VendorRoleAdmin(admin.ModelAdmin):
+    list_display = ("name", "order", "is_active")
+    list_editable = ("order", "is_active")
+    search_fields = ("name",)
 
 
 @admin.register(ServicePackage)

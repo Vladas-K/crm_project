@@ -87,7 +87,7 @@ def vendor_matches_search(vendor, query):
     normalized_query = query.casefold()
     return any(
         normalized_query in (value or "").casefold()
-        for value in (vendor.name, vendor.roles, vendor.contacts)
+        for value in (vendor.name, vendor.role_label, vendor.contacts)
     )
 
 
@@ -788,7 +788,7 @@ class VendorAutocompleteView(CRMLoginRequiredMixin, View):
                     {
                         "id": vendor.pk,
                         "name": vendor.name,
-                        "roles": vendor.roles,
+                        "roles": vendor.role_label,
                         "contacts": vendor.contacts,
                     }
                     for vendor in vendors

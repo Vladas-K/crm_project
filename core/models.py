@@ -232,11 +232,33 @@ class Client(ContactMixin):
         return self.name
 
 
+class VendorRole(models.Model):
+    """Роль или специализация подрядчика из управляемого справочника."""
+
+    name = models.CharField("Название", max_length=120, unique=True)
+    order = models.PositiveIntegerField("Порядок", default=0)
+    is_active = models.BooleanField("Активна", default=True)
+
+    class Meta:
+        ordering = ("order", "name")
+        verbose_name = "Роль подрядчика"
+        verbose_name_plural = "Роли подрядчиков"
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Vendor(models.Model):
     """Справочник подрядчиков, которых можно рекомендовать и назначать на мероприятия."""
 
     name = models.CharField("Имя / компания", max_length=255)
-    roles = models.CharField("Роли", max_length=255, help_text="Например: ведущий, фотограф")
+    roles = models.CharField("Старые роли", max_length=255, blank=True, help_text="Сохраняется для совместимости со старыми записями")
+    role_categories = models.ManyToManyField(
+        VendorRole,
+        blank=True,
+        related_name="vendors",
+        verbose_name="Роли и специализации",
+    )
     event_formats = models.ManyToManyField(
         EventFormat,
         blank=True,
@@ -258,6 +280,13 @@ class Vendor(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    @property
+    def role_label(self) -> str:
+        """Возвращает роли из справочника или старое текстовое значение."""
+
+        roles = ", ".join(self.role_categories.values_list("name", flat=True))
+        return roles or self.roles
 
 
 class ServicePackage(models.Model):

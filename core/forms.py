@@ -18,6 +18,7 @@ from .models import (
     PipelineStage,
     ServicePackage,
     Vendor,
+    VendorRole,
 )
 
 User = get_user_model()
@@ -112,7 +113,7 @@ class VendorForm(BootstrapModelForm):
         model = Vendor
         fields = [
             "name",
-            "roles",
+            "role_categories",
             "event_formats",
             "min_cost",
             "avg_cost",
@@ -126,6 +127,10 @@ class VendorForm(BootstrapModelForm):
             "contacts": forms.Textarea(attrs={"rows": 3}),
             "availability_notes": forms.Textarea(attrs={"rows": 3}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["role_categories"].queryset = VendorRole.objects.filter(is_active=True).order_by("order", "name")
 
 
 class ServicePackageForm(BootstrapModelForm):
