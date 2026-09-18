@@ -447,6 +447,7 @@
                                 </form>
                             {% endif %}
                             {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_vendor_update' assignment.pk %}?return_tab=vendors" class="panel-action-link">Изменить</a>{% endif %}
+                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_vendor_delete' assignment.pk %}?return_tab=vendors" class="panel-action-link panel-action-link--danger">Удалить</a>{% endif %}
                         </div>
                     </div>
                 </div>

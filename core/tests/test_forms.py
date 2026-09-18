@@ -33,3 +33,12 @@ def test_event_vendor_form_renders_role_as_select():
 
     assert form.fields["role"].widget.__class__.__name__ == "Select"
     assert form.fields["role"].choices[0] == ("", "Сначала выберите подрядчика")
+
+
+@pytest.mark.django_db
+def test_vendor_role_is_normalized_with_uppercase_first_letter():
+    """Новая роль подрядчика сохраняется с заглавной первой буквой."""
+
+    role = VendorRole.objects.create(name="  видеограф  ")
+
+    assert role.name == "Видеограф"

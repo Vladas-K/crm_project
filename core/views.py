@@ -1411,6 +1411,18 @@ class EventVendorUpdateView(EventManagementMixin, EventScopedFormMixin, CRUDCont
     cancel_url = reverse_lazy("core:events")
 
 
+class EventVendorDeleteView(EventManagementMixin, DeleteView):
+    """Удаляет назначение подрядчика только из конкретного мероприятия."""
+
+    model = EventVendor
+    template_name = "core/object_confirm_delete.html"
+
+    def get_success_url(self):
+        """Возвращает пользователя на вкладку подрядчиков после удаления назначения."""
+
+        return f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=vendors#event-tabs"
+
+
 class EventVendorStatusUpdateView(EventManagementMixin, View):
     """Быстро меняет статус подрядчика внутри карточки мероприятия."""
 

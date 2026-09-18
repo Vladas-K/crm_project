@@ -33,6 +33,7 @@ from .views import (
     EventAutocompleteView,
     EventUpdateView,
     EventVendorCreateView,
+    EventVendorDeleteView,
     EventVendorStatusUpdateView,
     EventVendorUpdateView,
     LeadListView,
@@ -117,6 +118,7 @@ urlpatterns = [
     path("expenses/<int:pk>/edit/", EventExpenseUpdateView.as_view(), name="event_expense_update"),
     path("expenses/<int:pk>/delete/", EventExpenseDeleteView.as_view(), name="event_expense_delete"),
     path("event-vendors/<int:pk>/edit/", EventVendorUpdateView.as_view(), name="event_vendor_update"),
+    path("event-vendors/<int:pk>/delete/", EventVendorDeleteView.as_view(), name="event_vendor_delete"),
     path("event-vendors/<int:pk>/status/", EventVendorStatusUpdateView.as_view(), name="event_vendor_status_update"),
     path(
         "communications/<int:pk>/edit/",

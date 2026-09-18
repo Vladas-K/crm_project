@@ -100,7 +100,6 @@ class PipelineStage(models.Model):
     def __str__(self) -> str:
         return self.name
 
-
 class EventFormat(models.Model):
     """Формат мероприятия, из которого можно создать структуру проекта."""
 
@@ -246,6 +245,12 @@ class VendorRole(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    def save(self, *args, **kwargs):
+        self.name = self.name.strip()
+        if self.name:
+            self.name = self.name[0].upper() + self.name[1:]
+        super().save(*args, **kwargs)
 
 
 class Vendor(models.Model):

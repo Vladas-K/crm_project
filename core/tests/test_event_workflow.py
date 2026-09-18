@@ -14,6 +14,7 @@ from core.models import (
     EventTimelineItem,
     EventVendor,
     TeamMemberProfile,
+    Vendor,
 )
 
 
@@ -533,6 +534,21 @@ def test_nested_event_vendor_update_returns_to_vendors_tab(client, django_user_m
     assert assignment.status == EventVendor.Status.APPROVED
     assert response.status_code == 302
     assert response.url == f"{reverse('core:event_detail', kwargs={'pk': assignment.event.pk})}?tab=vendors#event-tabs"
+
+
+@pytest.mark.django_db
+def test_event_vendor_delete_returns_to_vendors_tab(client, django_user_model, crm_objects):
+    """Удаление назначения подрядчика возвращает на вкладку подрядчиков."""
+    login_user(client, django_user_model)
+    assignment = crm_objects["event_vendor"]
+    vendor = assignment.vendor
+
+    response = client.post(reverse("core:event_vendor_delete", kwargs={"pk": assignment.pk}))
+
+    assert not EventVendor.objects.filter(pk=assignment.pk).exists()
+    assert Vendor.objects.filter(pk=vendor.pk).exists()
+    assert response.status_code == 302
+    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': crm_objects['event'].pk})}?tab=vendors#event-tabs"
 
 
 @pytest.mark.django_db
