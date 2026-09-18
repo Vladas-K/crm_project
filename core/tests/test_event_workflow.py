@@ -7,6 +7,7 @@ from core.models import (
     EventCommunication,
     EventDocument,
     EventExpense,
+    ExpenseCategory,
     EventOutcome,
     EventRisk,
     EventTask,
@@ -36,6 +37,7 @@ def test_nested_task_create_returns_to_tasks_tab(client, django_user_model, crm_
     """Создание задачи из карточки мероприятия возвращает на вкладку задач."""
     login_user(client, django_user_model)
     event = crm_objects["event"]
+    catering_category = ExpenseCategory.objects.create(name="Кейтеринг")
 
     response = client.post(
         f"{reverse('core:event_task_create', kwargs={'event_pk': event.pk})}?return_tab=tasks",
@@ -409,11 +411,12 @@ def test_nested_expense_create_returns_to_expenses_tab(client, django_user_model
     """Создание расхода из карточки мероприятия возвращает на вкладку расходов."""
     login_user(client, django_user_model, can_view_finance=True)
     event = crm_objects["event"]
+    catering_category = ExpenseCategory.objects.create(name="Кейтеринг")
 
     response = client.post(
         f"{reverse('core:event_expense_create', kwargs={'event_pk': event.pk})}?return_tab=expenses",
         {
-            "category": "Кейтеринг",
+            "category": catering_category.pk,
             "vendor_name": "Food Team",
             "amount": "45000.00",
             "paid_amount": "15000.00",
@@ -421,7 +424,7 @@ def test_nested_expense_create_returns_to_expenses_tab(client, django_user_model
             "return_tab": "expenses",
         },
     )
-    expense = event.expenses.get(category="Кейтеринг")
+    expense = event.expenses.get(category__name="Кейтеринг")
 
     assert expense.event == event
     assert expense.amount == Decimal("45000.00")
@@ -435,12 +438,13 @@ def test_nested_expense_update_returns_to_expenses_tab(client, django_user_model
     """Редактирование расхода из карточки мероприятия возвращает на вкладку расходов."""
     login_user(client, django_user_model, can_view_finance=True)
     expense = crm_objects["expense"]
+    updated_category = ExpenseCategory.objects.create(name="Площадка обновлена")
 
     response = client.post(
         f"{reverse('core:event_expense_update', kwargs={'pk': expense.pk})}?return_tab=expenses",
         {
             "event": expense.event.pk,
-            "category": "Площадка обновлена",
+            "category": updated_category.pk,
             "vendor_name": "Venue Team",
             "amount": "65000.00",
             "paid_amount": "25000.00",
@@ -450,7 +454,7 @@ def test_nested_expense_update_returns_to_expenses_tab(client, django_user_model
     )
     expense.refresh_from_db()
 
-    assert expense.category == "Площадка обновлена"
+    assert expense.category.name == "Площадка обновлена"
     assert expense.amount == Decimal("65000.00")
     assert expense.paid_amount == Decimal("25000.00")
     assert expense.payment_status == EventExpense.PaymentStatus.PAID

@@ -7,6 +7,7 @@ from .models import (
     EventCommunication,
     EventDocument,
     EventExpense,
+    ExpenseCategory,
     EventFormat,
     EventOutcome,
     EventRisk,
@@ -226,6 +227,7 @@ class EventExpenseForm(BootstrapModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["category"].queryset = ExpenseCategory.objects.filter(is_active=True).order_by("order", "name")
         self.fields["vendor_assignment"].help_text = "Выберите подрядчика, назначенного на это мероприятие."
 
 

@@ -405,9 +405,10 @@ class Event(models.Model):
                 },
             )
         for template in self.event_format.budget_templates.all():
+            expense_category, _ = ExpenseCategory.objects.get_or_create(name=template.category)
             EventExpense.objects.get_or_create(
                 event=self,
-                category=template.category,
+                category=expense_category,
                 vendor_name=template.vendor_name,
                 defaults={
                     "amount": template.amount,
@@ -426,6 +427,22 @@ class Event(models.Model):
             )
 
 
+class ExpenseCategory(models.Model):
+    """Категория, используемая для классификации расходов."""
+
+    name = models.CharField("Название", max_length=120, unique=True)
+    order = models.PositiveIntegerField("Порядок", default=0)
+    is_active = models.BooleanField("Активна", default=True)
+
+    class Meta:
+        ordering = ("order", "name")
+        verbose_name = "Категория расходов"
+        verbose_name_plural = "Категории расходов"
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class EventExpense(models.Model):
     """Строка расходов мероприятия с суммой и статусом оплаты."""
 
@@ -440,7 +457,12 @@ class EventExpense(models.Model):
         related_name="expenses",
         verbose_name="Мероприятие",
     )
-    category = models.CharField("Категория", max_length=120)
+    category = models.ForeignKey(
+        ExpenseCategory,
+        on_delete=models.PROTECT,
+        related_name="expenses",
+        verbose_name="Категория",
+    )
     vendor_name = models.CharField("Подрядчик", max_length=255, blank=True)
     vendor_assignment = models.ForeignKey(
         "EventVendor",

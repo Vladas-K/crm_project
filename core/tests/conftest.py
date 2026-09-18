@@ -7,6 +7,7 @@ from core.models import (
     EventCommunication,
     EventDocument,
     EventExpense,
+    ExpenseCategory,
     EventFormat,
     EventTask,
     EventVendor,
@@ -33,7 +34,8 @@ def crm_objects(db):
         planned_budget=100000,
     )
     task = EventTask.objects.create(event=event, title="Подготовить бриф")
-    expense = EventExpense.objects.create(event=event, category="Площадка", amount=50000)
+    expense_category = ExpenseCategory.objects.create(name="Площадка")
+    expense = EventExpense.objects.create(event=event, category=expense_category, amount=50000)
     vendor = Vendor.objects.create(name="Stage Pro", roles="Техника")
     event_vendor = EventVendor.objects.create(
         event=event,
@@ -65,6 +67,7 @@ def crm_objects(db):
         "event": event,
         "task": task,
         "expense": expense,
+        "expense_category": expense_category,
         "vendor": vendor,
         "event_vendor": event_vendor,
         "communication": communication,

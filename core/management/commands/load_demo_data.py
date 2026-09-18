@@ -11,6 +11,7 @@ from core.models import (
     Event,
     EventCommunication,
     EventExpense,
+    ExpenseCategory,
     EventFormat,
     EventFormatBudgetTemplate,
     EventFormatTaskTemplate,
@@ -399,9 +400,10 @@ class Command(BaseCommand):
             )
             event.create_structure_from_format()
             for category, vendor_name, amount, paid_amount in spec["extra_expenses"]:
+                expense_category, _ = ExpenseCategory.objects.get_or_create(name=category)
                 EventExpense.objects.update_or_create(
                     event=event,
-                    category=category,
+                    category=expense_category,
                     vendor_name=vendor_name,
                     defaults={
                         "amount": amount,
@@ -434,9 +436,10 @@ class Command(BaseCommand):
                 "manager": users["pm_elena"],
             },
         )
+        expense_category, _ = ExpenseCategory.objects.get_or_create(name="Общий продакшн")
         EventExpense.objects.update_or_create(
             event=completed_event,
-            category="Общий продакшн",
+            category=expense_category,
             vendor_name="Event Build",
             defaults={
                 "amount": Decimal("760000.00"),

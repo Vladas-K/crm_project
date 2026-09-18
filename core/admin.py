@@ -18,6 +18,7 @@ from .models import (
     EventTask,
     EventTimelineItem,
     EventVendor,
+    ExpenseCategory,
     Lead,
     PipelineStage,
     ServicePackage,
@@ -70,6 +71,13 @@ class TeamMemberProfileAdmin(admin.ModelAdmin):
         "can_manage_system",
     )
     list_filter = ("role",)
+
+
+@admin.register(ExpenseCategory)
+class ExpenseCategoryAdmin(admin.ModelAdmin):
+    list_display = ("name", "order", "is_active")
+    list_editable = ("order", "is_active")
+    search_fields = ("name",)
 
 
 @admin.register(PipelineStage)

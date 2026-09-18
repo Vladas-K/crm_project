@@ -19,6 +19,7 @@ from core.models import (
     EventTask,
     EventTimelineItem,
     EventVendor,
+    ExpenseCategory,
     Lead,
     PipelineStage,
     TeamMemberProfile,
@@ -146,7 +147,7 @@ def test_event_structure_is_created_only_when_requested():
 
     task = event.tasks.get(title="Согласовать концепцию")
     timeline_item = event.timeline_items.get(block="Сбор гостей")
-    expense = event.expenses.get(category="Фото")
+    expense = event.expenses.get(category__name="Фото")
     event_vendor = event.event_vendors.get(vendor=vendor)
     assert task.description == "Moodboard и референсы"
     assert task.deadline_offset_days == -10
@@ -210,7 +211,7 @@ def test_event_structure_creates_all_templates_from_format():
 
     assert set(event.tasks.values_list("title", flat=True)) == {"Собрать программу", "Подтвердить спикеров"}
     assert set(event.timeline_items.values_list("block", flat=True)) == {"Регистрация", "Открытие"}
-    assert set(event.expenses.values_list("category", flat=True)) == {"Свет", "Звук"}
+    assert set(event.expenses.values_list("category__name", flat=True)) == {"Свет", "Звук"}
     assert set(event.event_vendors.values_list("role", flat=True)) == {"Свет", "Звук"}
 
 
@@ -309,13 +310,13 @@ def test_event_financial_properties_are_calculated_from_expenses():
     )
     EventExpense.objects.create(
         event=event,
-        category="Площадка",
+        category=ExpenseCategory.objects.create(name="Площадка"),
         amount=Decimal("30000.00"),
         paid_amount=Decimal("10000.00"),
     )
     EventExpense.objects.create(
         event=event,
-        category="Техника",
+        category=ExpenseCategory.objects.create(name="Техника"),
         amount=Decimal("20000.00"),
         paid_amount=Decimal("5000.00"),
     )
@@ -354,7 +355,7 @@ def test_expense_can_reference_event_vendor(crm_objects):
 
     expense = EventExpense(
         event=crm_objects["event"],
-        category="Техника",
+        category=ExpenseCategory.objects.create(name="Техника"),
         amount=Decimal("50000.00"),
         vendor_assignment=crm_objects["event_vendor"],
     )
@@ -367,7 +368,7 @@ def test_expense_calculates_remaining_amount(crm_objects):
 
     expense = EventExpense(
         event=crm_objects["event"],
-        category="Техника",
+        category=ExpenseCategory.objects.create(name="Техника"),
         amount=Decimal("150000.00"),
         paid_amount=Decimal("50000.00"),
     )
@@ -380,7 +381,7 @@ def test_expense_rejects_payment_above_total(crm_objects):
 
     expense = EventExpense(
         event=crm_objects["event"],
-        category="Техника",
+        category=ExpenseCategory.objects.create(name="Техника"),
         amount=Decimal("150000.00"),
         paid_amount=Decimal("160000.00"),
     )
@@ -400,7 +401,7 @@ def test_expense_cannot_reference_vendor_from_another_event(crm_objects):
     )
     expense = EventExpense(
         event=other_event,
-        category="Техника",
+        category=ExpenseCategory.objects.create(name="Техника"),
         amount=Decimal("50000.00"),
         vendor_assignment=crm_objects["event_vendor"],
     )
