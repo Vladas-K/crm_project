@@ -1,4 +1,7 @@
-from core.forms import EventExpenseForm, EventForm
+import pytest
+
+from core.forms import EventExpenseForm, EventForm, EventVendorForm
+from core.models import VendorRole
 
 
 def test_event_form_preserves_event_date_in_date_input(crm_objects):
@@ -18,3 +21,15 @@ def test_expense_form_uses_linked_vendor_assignment(crm_objects):
 
     assert "vendor_assignment" in form.fields
     assert "vendor_name" not in form.fields
+
+
+@pytest.mark.django_db
+def test_event_vendor_form_renders_role_as_select():
+    """Форма назначения подрядчика показывает роль как выпадающий список."""
+
+    VendorRole.objects.create(name="Техника")
+
+    form = EventVendorForm()
+
+    assert form.fields["role"].widget.__class__.__name__ == "Select"
+    assert form.fields["role"].choices[0] == ("", "Сначала выберите подрядчика")

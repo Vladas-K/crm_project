@@ -1,3 +1,5 @@
+import json
+
 from django import forms
 from django.contrib.auth import get_user_model
 
@@ -243,7 +245,34 @@ class EventVendorForm(BootstrapModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["vendor"].queryset = Vendor.objects.order_by("name")
+        vendors = Vendor.objects.prefetch_related("role_categories").order_by("name")
+        self.fields["vendor"].queryset = vendors
+        role_map = {}
+        for vendor in vendors:
+            role_names = set(vendor.role_categories.values_list("name", flat=True))
+            role_names.update(role.strip() for role in vendor.roles.split(",") if role.strip())
+            role_map[str(vendor.pk)] = sorted(role_names, key=str.casefold)
+        self.fields["vendor"].widget.attrs["data-role-map"] = json.dumps(role_map, ensure_ascii=False)
+        self.fields["role"] = forms.ChoiceField(label="Роль", required=True)
+        vendor_id = self.data.get("vendor") if self.is_bound else getattr(self.instance, "vendor_id", None)
+        if vendor_id:
+            vendor = Vendor.objects.prefetch_related("role_categories").filter(pk=vendor_id).first()
+        else:
+            vendor = None
+
+        if vendor:
+            role_names = set(vendor.role_categories.values_list("name", flat=True))
+            role_names.update(role.strip() for role in vendor.roles.split(",") if role.strip())
+        else:
+            role_names = set()
+
+        if self.instance.role:
+            role_names.add(self.instance.role)
+        if self.is_bound and self.data.get("role"):
+            role_names.add(self.data["role"])
+        self.fields["role"].choices = [("", "Сначала выберите подрядчика")] + [
+            (name, name) for name in sorted(role_names, key=str.casefold)
+        ]
 
 
 class EventCommunicationForm(BootstrapModelForm):

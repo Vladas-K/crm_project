@@ -42,4 +42,26 @@
         </form>
     </div>
 </div>
+{% if form.vendor and form.role %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const vendorSelect = document.getElementById("{{ form.vendor.id_for_label }}");
+        const roleSelect = document.getElementById("{{ form.role.id_for_label }}");
+        if (!vendorSelect || !roleSelect) return;
+
+        const roleMap = JSON.parse(vendorSelect.dataset.roleMap || "{}");
+        const selectedRole = roleSelect.value;
+
+        const updateRoles = (roleToSelect = "") => {
+            const roles = roleMap[vendorSelect.value] || [];
+            roleSelect.replaceChildren(new Option("Сначала выберите подрядчика", ""));
+            roles.forEach((role) => roleSelect.add(new Option(role, role)));
+            roleSelect.value = roles.includes(roleToSelect) ? roleToSelect : "";
+        };
+
+        vendorSelect.addEventListener("change", () => updateRoles());
+        updateRoles(selectedRole);
+    });
+</script>
+{% endif %}
 {% endblock %}
