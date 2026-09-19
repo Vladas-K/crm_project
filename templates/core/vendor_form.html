@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | CRM{% endblock %}
+
+{% block content %}
+<div class="vendor-form-shell">
+    <div class="vendor-form-header">
+        <div>
+            <p class="vendor-form-header__eyebrow mb-2">Справочник подрядчиков</p>
+            <h1 class="vendor-form-header__title">{{ page_title }}</h1>
+            <p class="vendor-form-header__subtitle">Заполните основную информацию, контакты и условия работы.</p>
+        </div>
+    </div>
+
+    <form id="vendor-form" method="post" class="vendor-form" novalidate>
+        {% csrf_token %}
+
+        {% for error in form.non_field_errors %}
+            <div class="alert alert-danger mb-0">{{ error }}</div>
+        {% endfor %}
+
+        <div class="vendor-form-actions">
+            <div>
+                <strong>{{ page_title }}</strong>
+                <span>Поля со звёздочкой обязательны</span>
+            </div>
+            <div class="vendor-form-actions__buttons">
+                <a href="{{ cancel_url }}" class="btn btn-outline-secondary">Отмена</a>
+                <button type="submit" class="btn btn-primary">{{ submit_label }}</button>
+            </div>
+        </div>
+
+        <section class="vendor-form-section">
+            <div class="vendor-form-section__header">
+                <div><span class="vendor-form-section__number">01</span><h2>Основная информация</h2></div>
+                <p>Название, специализация и типы мероприятий.</p>
+            </div>
+            <div class="vendor-form-grid">
+                {% include "core/includes/vendor_form_field.html" with field=form.name field_class="vendor-form-field--wide" %}
+                <fieldset class="vendor-form-choice vendor-form-field--wide">
+                    <legend>Роли и специализации</legend>
+                    {{ form.role_categories }}
+                    {% for error in form.role_categories.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </fieldset>
+                <fieldset class="vendor-form-choice vendor-form-field--wide">
+                    <legend>Форматы мероприятий</legend>
+                    {{ form.event_formats }}
+                    {% for error in form.event_formats.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </fieldset>
+                {% include "core/includes/vendor_form_field.html" with field=form.service_area field_class="vendor-form-field--wide" %}
+            </div>
+        </section>
+
+        <section class="vendor-form-section">
+            <div class="vendor-form-section__header">
+                <div><span class="vendor-form-section__number">02</span><h2>Контактное лицо</h2></div>
+                <p>Основной представитель подрядчика и предпочтительный канал связи.</p>
+            </div>
+            <div class="vendor-form-grid">
+                {% include "core/includes/vendor_form_field.html" with field=form.contact_person %}
+                {% include "core/includes/vendor_form_field.html" with field=form.contact_position %}
+                {% include "core/includes/vendor_form_field.html" with field=form.phone %}
+                {% include "core/includes/vendor_form_field.html" with field=form.email %}
+                {% include "core/includes/vendor_form_field.html" with field=form.preferred_contact_method field_class="vendor-form-field--wide" %}
+            </div>
+        </section>
+
+        <section class="vendor-form-section">
+            <div class="vendor-form-section__header">
+                <div><span class="vendor-form-section__number">03</span><h2>Онлайн-контакты</h2></div>
+                <p>Сайт, мессенджеры, социальные сети и портфолио.</p>
+            </div>
+            <div class="vendor-form-grid">
+                {% include "core/includes/vendor_form_field.html" with field=form.website field_class="vendor-form-field--wide" %}
+                {% include "core/includes/vendor_form_field.html" with field=form.telegram %}
+                <div class="vendor-form-field">
+                    <div class="vendor-form-field__label-row">
+                        <label class="vendor-form-field__label" for="{{ form.whatsapp.id_for_label }}">{{ form.whatsapp.label }}</label>
+                        <button type="button" class="vendor-form-copy-link" data-copy-phone-to-whatsapp>Использовать основной телефон</button>
+                    </div>
+                    {{ form.whatsapp }}
+                    {% if form.whatsapp.help_text %}<div class="vendor-form-field__help">{{ form.whatsapp.help_text }}</div>{% endif %}
+                    {% for error in form.whatsapp.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div>
+                {% include "core/includes/vendor_form_field.html" with field=form.max_messenger %}
+                {% include "core/includes/vendor_form_field.html" with field=form.instagram %}
+                {% include "core/includes/vendor_form_field.html" with field=form.vk %}
+                {% include "core/includes/vendor_form_field.html" with field=form.social_links field_class="vendor-form-field--wide" %}
+            </div>
+        </section>
+
+        <section class="vendor-form-section">
+            <div class="vendor-form-section__header">
+                <div><span class="vendor-form-section__number">04</span><h2>Условия работы</h2></div>
+                <p>Стоимость, внутренние показатели и рабочие примечания.</p>
+            </div>
+            <div class="vendor-form-grid vendor-form-grid--metrics">
+                {% include "core/includes/vendor_form_field.html" with field=form.min_cost %}
+                {% include "core/includes/vendor_form_field.html" with field=form.avg_cost %}
+                {% include "core/includes/vendor_form_field.html" with field=form.rating %}
+                {% include "core/includes/vendor_form_field.html" with field=form.reliability %}
+                {% include "core/includes/vendor_form_field.html" with field=form.availability_notes field_class="vendor-form-field--wide" %}
+                <div class="vendor-form-toggle vendor-form-field--wide">
+                    {{ form.blacklisted }}
+                    <label for="{{ form.blacklisted.id_for_label }}">
+                        <strong>{{ form.blacklisted.label }}</strong>
+                        <span>Подрядчик останется в справочнике, но будет отмечен как недоступный для новых назначений.</span>
+                    </label>
+                    {% for error in form.blacklisted.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div>
+            </div>
+        </section>
+    </form>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const phoneInput = document.getElementById("{{ form.phone.id_for_label }}");
+        const whatsappInput = document.getElementById("{{ form.whatsapp.id_for_label }}");
+
+        document.querySelectorAll("[data-russian-phone]").forEach((input) => {
+            input.addEventListener("input", () => {
+                const value = input.value.trimStart();
+                if (value.startsWith("8")) input.value = `+7${value.slice(1)}`;
+            });
+        });
+        document.querySelectorAll("[data-website-url]").forEach((input) => {
+            input.addEventListener("blur", () => {
+                const value = input.value.trim();
+                if (value && !/^https?:\/\//i.test(value)) input.value = `https://${value}`;
+            });
+        });
+        document.querySelector("[data-copy-phone-to-whatsapp]")?.addEventListener("click", () => {
+            if (phoneInput && whatsappInput) {
+                whatsappInput.value = phoneInput.value;
+                whatsappInput.focus();
+            }
+        });
+    });
+</script>
+{% endblock %}

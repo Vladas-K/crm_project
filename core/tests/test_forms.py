@@ -67,6 +67,10 @@ def test_vendor_form_contains_structured_contact_fields():
     }.issubset(form.fields)
     assert form.fields["phone"].widget.attrs["data-russian-phone"] == "true"
     assert form.fields["website"].widget.attrs["data-website-url"] == "true"
+    assert form.fields["role_categories"].widget.__class__.__name__ == "CheckboxSelectMultiple"
+    assert form.fields["event_formats"].widget.__class__.__name__ == "CheckboxSelectMultiple"
+    assert form.fields["role_categories"].widget.attrs["class"] == "vendor-choice-grid"
+    assert form.fields["event_formats"].widget.attrs["class"] == "vendor-choice-grid"
 
 
 @pytest.mark.django_db

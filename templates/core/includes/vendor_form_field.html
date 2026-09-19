@@ -1,0 +1,9 @@
+<div class="vendor-form-field{% if field_class %} {{ field_class }}{% endif %}">
+    <label class="vendor-form-field__label" for="{{ field.id_for_label }}">
+        {{ field.label }}
+        {% if field.field.required %}<span class="vendor-form-field__required" aria-label="обязательное поле">*</span>{% endif %}
+    </label>
+    {{ field }}
+    {% if field.help_text %}<div class="vendor-form-field__help">{{ field.help_text }}</div>{% endif %}
+    {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+</div>

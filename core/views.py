@@ -1622,8 +1622,9 @@ class VendorCreateView(SystemAccessMixin, CRUDContextMixin, SuccessMessageMixin,
 
     model = Vendor
     form_class = VendorForm
-    template_name = "core/object_form.html"
+    template_name = "core/vendor_form.html"
     page_title = "Новый подрядчик"
+    submit_label = "Создать подрядчика"
     success_message = "Подрядчик создан."
     success_url = reverse_lazy("core:vendors")
     cancel_url = reverse_lazy("core:vendors")
@@ -1634,8 +1635,9 @@ class VendorUpdateView(SystemAccessMixin, CRUDContextMixin, SuccessMessageMixin,
 
     model = Vendor
     form_class = VendorForm
-    template_name = "core/object_form.html"
+    template_name = "core/vendor_form.html"
     page_title = "Редактирование подрядчика"
+    submit_label = "Сохранить изменения"
     success_message = "Подрядчик обновлён."
     success_url = reverse_lazy("core:vendors")
     cancel_url = reverse_lazy("core:vendors")

@@ -140,6 +140,8 @@ class VendorForm(BootstrapModelForm):
             "blacklisted",
         ]
         widgets = {
+            "role_categories": forms.CheckboxSelectMultiple(),
+            "event_formats": forms.CheckboxSelectMultiple(),
             "social_links": forms.Textarea(attrs={"rows": 3}),
             "availability_notes": forms.Textarea(attrs={"rows": 3}),
         }
@@ -147,6 +149,15 @@ class VendorForm(BootstrapModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["role_categories"].queryset = VendorRole.objects.filter(is_active=True).order_by("order", "name")
+        self.fields["role_categories"].widget.attrs["class"] = "vendor-choice-grid"
+        self.fields["event_formats"].widget.attrs["class"] = "vendor-choice-grid"
+        self.fields["telegram"].help_text = "Имя пользователя или полная ссылка"
+        self.fields["whatsapp"].help_text = "Номер телефона или полная ссылка"
+        self.fields["max_messenger"].help_text = "Контакт или полная ссылка"
+        self.fields["instagram"].help_text = "Имя пользователя или полная ссылка"
+        self.fields["vk"].help_text = "Имя пользователя или полная ссылка"
+        self.fields["social_links"].label = "Другие ссылки и портфолио"
+        self.fields["social_links"].help_text = "По одной полной ссылке в строке"
         self.fields["phone"].widget.attrs.update(
             {
                 "autocomplete": "tel",

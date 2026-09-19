@@ -151,6 +151,30 @@ def test_vendor_detail_respects_system_action_permission(client, django_user_mod
 
 
 @pytest.mark.django_db
+def test_vendor_update_uses_sectioned_contact_form(client, django_user_model, crm_objects):
+    """Редактирование подрядчика использует отдельную форму с понятными разделами."""
+
+    user = create_vendor_viewer(
+        django_user_model,
+        "vendor_form_editor",
+        can_manage_system=True,
+    )
+    client.force_login(user)
+
+    response = client.get(reverse("core:vendor_update", kwargs={"pk": crm_objects["vendor"].pk}))
+    html = response.content.decode()
+
+    assert response.status_code == 200
+    assert any(template.name == "core/vendor_form.html" for template in response.templates)
+    assert "Основная информация" in html
+    assert "Контактное лицо" in html
+    assert "Онлайн-контакты" in html
+    assert "Условия работы" in html
+    assert "Использовать основной телефон" in html
+    assert "Редактирование данных без перехода в Django admin." not in html
+
+
+@pytest.mark.django_db
 def test_vendor_links_open_detail_page(client, django_user_model, crm_objects):
     """Список и карточка мероприятия ведут в профиль подрядчика."""
 
