@@ -82,12 +82,23 @@ def event_matches_search(event, query):
 
 
 def vendor_matches_search(vendor, query):
-    """Проверяет совпадение запроса в имени, ролях или контактах подрядчика."""
+    """Проверяет совпадение запроса в профиле и контактах подрядчика."""
 
     normalized_query = query.casefold()
     return any(
         normalized_query in (value or "").casefold()
-        for value in (vendor.name, vendor.role_label, vendor.contacts)
+        for value in (
+            vendor.name,
+            vendor.role_label,
+            vendor.contact_person,
+            vendor.contact_position,
+            vendor.phone,
+            vendor.email,
+            vendor.website,
+            vendor.telegram,
+            vendor.social_links,
+            vendor.service_area,
+        )
     )
 
 
@@ -838,7 +849,7 @@ class VendorAutocompleteView(CRMLoginRequiredMixin, View):
                         "id": vendor.pk,
                         "name": vendor.name,
                         "roles": vendor.role_label,
-                        "contacts": vendor.contacts,
+                        "contacts": vendor.contact_summary,
                     }
                     for vendor in vendors
                 ]

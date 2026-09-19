@@ -29,7 +29,15 @@ def test_vendor_detail_shows_profile_and_event_history(client, django_user_model
 
     user = create_vendor_viewer(django_user_model, "vendor_viewer")
     vendor = crm_objects["vendor"]
-    vendor.contacts = "manager@stage-pro.test"
+    vendor.contact_person = "Сергей Орлов"
+    vendor.contact_position = "Менеджер проектов"
+    vendor.phone = "+7 999 100-20-30"
+    vendor.email = "manager@stage-pro.test"
+    vendor.website = "https://example.com/stage-pro"
+    vendor.telegram = "@stage_pro"
+    vendor.social_links = "https://vk.com/stage_pro"
+    vendor.service_area = "Москва и область"
+    vendor.preferred_contact_method = vendor.PreferredContactMethod.TELEGRAM
     vendor.availability_notes = "Свободен по выходным"
     vendor.rating = 4.75
     vendor.reliability = 96
@@ -46,6 +54,15 @@ def test_vendor_detail_shows_profile_and_event_history(client, django_user_model
 
     assert response.status_code == 200
     assert vendor.name in html
+    assert "Сергей Орлов" in html
+    assert "Менеджер проектов" in html
+    assert 'href="tel:+7 999 100-20-30"' in html
+    assert 'href="mailto:manager@stage-pro.test"' in html
+    assert 'href="https://t.me/stage_pro"' in html
+    assert 'href="https://example.com/stage-pro"' in html
+    assert 'href="https://vk.com/stage_pro"' in html
+    assert "Москва и область" in html
+    assert "Предпочтительный способ связи" in html
     assert "manager@stage-pro.test" in html
     assert "Свободен по выходным" in html
     assert crm_objects["event"].title in html

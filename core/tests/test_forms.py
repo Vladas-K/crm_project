@@ -1,6 +1,6 @@
 import pytest
 
-from core.forms import EventExpenseForm, EventForm, EventVendorForm
+from core.forms import EventExpenseForm, EventForm, EventVendorForm, VendorForm
 from core.models import VendorRole
 
 
@@ -42,3 +42,41 @@ def test_vendor_role_is_normalized_with_uppercase_first_letter():
     role = VendorRole.objects.create(name="  видеограф  ")
 
     assert role.name == "Видеограф"
+
+
+@pytest.mark.django_db
+def test_vendor_form_contains_structured_contact_fields():
+    """Форма подрядчика показывает отдельные поля для основных каналов связи."""
+
+    form = VendorForm()
+
+    assert {
+        "contact_person",
+        "contact_position",
+        "phone",
+        "email",
+        "website",
+        "telegram",
+        "social_links",
+        "service_area",
+        "preferred_contact_method",
+    }.issubset(form.fields)
+
+
+@pytest.mark.django_db
+def test_vendor_form_rejects_social_link_without_scheme():
+    """Ссылки на соцсети должны быть полными и безопасными для отображения."""
+
+    form = VendorForm(
+        data={
+            "name": "Media Team",
+            "social_links": "instagram.com/media-team",
+            "min_cost": 0,
+            "avg_cost": 0,
+            "rating": 0,
+            "reliability": 0,
+        }
+    )
+
+    assert not form.is_valid()
+    assert "social_links" in form.errors

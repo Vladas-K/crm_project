@@ -687,6 +687,59 @@ body {
     margin: 0;
 }
 
+.vendor-contact-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.vendor-contact-list__item {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(15, 23, 42, 0.07);
+    border-radius: 1rem;
+    color: var(--crm-text);
+    background: #f8fafc;
+    text-decoration: none;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.vendor-contact-list__item:hover,
+.vendor-contact-list__item:focus {
+    border-color: rgba(31, 111, 235, 0.22);
+    color: var(--crm-accent);
+    background: var(--crm-accent-soft);
+}
+
+.vendor-contact-list__item span {
+    color: var(--crm-muted);
+    font-size: 0.8rem;
+}
+
+.vendor-contact-list__item strong {
+    overflow-wrap: anywhere;
+    font-size: 0.95rem;
+}
+
+.vendor-social-links {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.vendor-social-links a {
+    overflow-wrap: anywhere;
+    color: var(--crm-accent);
+    text-decoration: none;
+}
+
+.vendor-social-links a:hover,
+.vendor-social-links a:focus {
+    text-decoration: underline;
+}
+
 .vendor-format-list {
     display: flex;
     flex-wrap: wrap;
@@ -1355,6 +1408,10 @@ body {
 
 @media (max-width: 575.98px) {
     .vendor-profile-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .vendor-contact-list {
         grid-template-columns: 1fr;
     }
 }

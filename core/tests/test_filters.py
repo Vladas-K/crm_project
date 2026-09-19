@@ -297,7 +297,10 @@ def test_vendors_search_filters_by_status_and_format(client, django_user_model):
     matching_vendor = Vendor.objects.create(
         name="Stage Team",
         roles="Технический продакшн",
-        contacts="stage@example.com",
+        contact_person="Сергей Орлов",
+        phone="+7 999 100-20-30",
+        email="stage@example.com",
+        service_area="Москва и область",
     )
     matching_vendor.event_formats.add(event_format)
     Vendor.objects.create(name="Другой подрядчик", roles="Декор", blacklisted=True)
@@ -319,15 +322,21 @@ def test_vendors_search_filters_by_status_and_format(client, django_user_model):
 
 @pytest.mark.django_db
 def test_vendor_autocomplete_returns_matching_vendor_data(client, django_user_model):
-    """Autocomplete подрядчиков возвращает совпадения по ролям и контактам."""
+    """Autocomplete подрядчиков ищет по структурированным контактам."""
     user = django_user_model.objects.create_user(username="vendor_autocomplete_user", password="TestPass123!")
     client.force_login(user)
-    Vendor.objects.create(name="Stage Team", roles="Технический продакшн", contacts="stage@example.com")
+    Vendor.objects.create(
+        name="Stage Team",
+        roles="Технический продакшн",
+        phone="+7 999 100-20-30",
+        email="stage@example.com",
+    )
 
-    response = client.get(reverse("core:vendor_autocomplete"), {"q": "ТЕХНИЧЕСКИЙ"})
+    response = client.get(reverse("core:vendor_autocomplete"), {"q": "100-20-30"})
 
     assert response.status_code == 200
     assert response.json()["results"][0]["name"] == "Stage Team"
+    assert response.json()["results"][0]["contacts"] == "stage@example.com"
 
 
 @pytest.mark.django_db

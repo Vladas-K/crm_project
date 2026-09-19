@@ -167,6 +167,52 @@ class Command(BaseCommand):
             ("Stage Pro", "свет, звук, экран", ["Корпоратив"], Decimal("90000.00"), Decimal("150000.00"), Decimal("4.70"), 93),
             ("Taste Factory", "кейтеринг", ["Корпоратив", "Свадьба"], Decimal("180000.00"), Decimal("260000.00"), Decimal("4.60"), 90),
         ]
+        contact_details = {
+            "Bloom Atelier": {
+                "contact_person": "Анна Белова",
+                "contact_position": "Основатель",
+                "phone": "+7 999 410-10-01",
+                "email": "bloomatelier@example.com",
+                "website": "https://example.com/bloom-atelier",
+                "telegram": "@bloom_atelier",
+                "social_links": "https://instagram.com/bloom_atelier",
+                "service_area": "Москва и Московская область",
+                "preferred_contact_method": Vendor.PreferredContactMethod.TELEGRAM,
+            },
+            "Visual Stories": {
+                "contact_person": "Михаил Волков",
+                "contact_position": "Продюсер",
+                "phone": "+7 999 410-10-02",
+                "email": "visualstories@example.com",
+                "website": "https://example.com/visual-stories",
+                "telegram": "@visual_stories",
+                "social_links": "https://vimeo.com/visual-stories",
+                "service_area": "Москва, Санкт-Петербург; выезд по России",
+                "preferred_contact_method": Vendor.PreferredContactMethod.EMAIL,
+            },
+            "Stage Pro": {
+                "contact_person": "Сергей Орлов",
+                "contact_position": "Менеджер проектов",
+                "phone": "+7 999 410-10-03",
+                "email": "stagepro@example.com",
+                "website": "https://example.com/stage-pro",
+                "telegram": "@stage_pro",
+                "social_links": "https://vk.com/stage_pro",
+                "service_area": "Москва и Центральный федеральный округ",
+                "preferred_contact_method": Vendor.PreferredContactMethod.PHONE,
+            },
+            "Taste Factory": {
+                "contact_person": "Елена Соколова",
+                "contact_position": "Банкетный менеджер",
+                "phone": "+7 999 410-10-04",
+                "email": "tastefactory@example.com",
+                "website": "https://example.com/taste-factory",
+                "telegram": "@taste_factory",
+                "social_links": "https://instagram.com/taste_factory",
+                "service_area": "Москва и Московская область",
+                "preferred_contact_method": Vendor.PreferredContactMethod.TELEGRAM,
+            },
+        }
         vendors = {}
         for name, roles, format_names, min_cost, avg_cost, rating, reliability in specs:
             vendor, _ = Vendor.objects.update_or_create(
@@ -177,7 +223,7 @@ class Command(BaseCommand):
                     "avg_cost": avg_cost,
                     "rating": rating,
                     "reliability": reliability,
-                    "contacts": f"{name.lower().replace(' ', '')}@example.com",
+                    **contact_details[name],
                     "availability_notes": "Свободен по будням, подтверждение за 7 дней.",
                     "blacklisted": False,
                 },

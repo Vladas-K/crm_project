@@ -117,16 +117,24 @@ class VendorForm(BootstrapModelForm):
             "name",
             "role_categories",
             "event_formats",
+            "contact_person",
+            "contact_position",
+            "phone",
+            "email",
+            "website",
+            "telegram",
+            "social_links",
+            "service_area",
+            "preferred_contact_method",
+            "availability_notes",
             "min_cost",
             "avg_cost",
             "rating",
             "reliability",
-            "contacts",
-            "availability_notes",
             "blacklisted",
         ]
         widgets = {
-            "contacts": forms.Textarea(attrs={"rows": 3}),
+            "social_links": forms.Textarea(attrs={"rows": 3}),
             "availability_notes": forms.Textarea(attrs={"rows": 3}),
         }
 

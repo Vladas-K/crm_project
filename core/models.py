@@ -3,10 +3,27 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator, URLValidator
 from django.utils import timezone
 
 User = get_user_model()
+
+
+def validate_url_list(value):
+    """Проверяет список URL, указанных по одному в каждой строке."""
+
+    validator = URLValidator()
+    errors = []
+    for line in value.splitlines():
+        url = line.strip()
+        if not url:
+            continue
+        try:
+            validator(url)
+        except ValidationError:
+            errors.append(url)
+    if errors:
+        raise ValidationError("Укажите полные ссылки, включая https://, по одной в строке.")
 
 
 class ContactMixin(models.Model):
@@ -256,6 +273,12 @@ class VendorRole(models.Model):
 class Vendor(models.Model):
     """Справочник подрядчиков, которых можно рекомендовать и назначать на мероприятия."""
 
+    class PreferredContactMethod(models.TextChoices):
+        PHONE = "phone", "Телефон"
+        EMAIL = "email", "Email"
+        TELEGRAM = "telegram", "Telegram"
+        OTHER = "other", "Другой"
+
     name = models.CharField("Имя / компания", max_length=255)
     roles = models.CharField("Старые роли", max_length=255, blank=True, help_text="Сохраняется для совместимости со старыми записями")
     role_categories = models.ManyToManyField(
@@ -274,7 +297,25 @@ class Vendor(models.Model):
     avg_cost = models.DecimalField("Средняя стоимость", max_digits=12, decimal_places=2, default=0)
     rating = models.DecimalField("Рейтинг", max_digits=3, decimal_places=2, default=0)
     reliability = models.PositiveSmallIntegerField("Надёжность (%)", default=0)
-    contacts = models.TextField("Контакты", blank=True)
+    contact_person = models.CharField("Контактное лицо", max_length=255, blank=True)
+    contact_position = models.CharField("Должность контактного лица", max_length=150, blank=True)
+    phone = models.CharField("Телефон", max_length=30, blank=True)
+    email = models.EmailField("Email", blank=True)
+    website = models.URLField("Сайт", blank=True)
+    telegram = models.CharField("Telegram", max_length=150, blank=True, help_text="Username или полная ссылка")
+    social_links = models.TextField(
+        "Соцсети и портфолио",
+        blank=True,
+        validators=[validate_url_list],
+        help_text="Полные ссылки, включая https://, по одной в строке",
+    )
+    service_area = models.CharField("Город / регион работы", max_length=255, blank=True)
+    preferred_contact_method = models.CharField(
+        "Предпочтительный способ связи",
+        max_length=20,
+        choices=PreferredContactMethod.choices,
+        blank=True,
+    )
     availability_notes = models.TextField("Календарь занятости", blank=True)
     blacklisted = models.BooleanField("Чёрный список", default=False)
 
@@ -292,6 +333,29 @@ class Vendor(models.Model):
 
         roles = ", ".join(self.role_categories.values_list("name", flat=True))
         return roles or self.roles
+
+    @property
+    def contact_summary(self) -> str:
+        """Возвращает наиболее полезный контакт для списков и подсказок."""
+
+        return self.email or self.phone or self.telegram or self.contact_person
+
+    @property
+    def telegram_url(self) -> str:
+        """Возвращает кликабельную ссылку Telegram для username или готового URL."""
+
+        value = self.telegram.strip()
+        if not value:
+            return ""
+        if value.startswith(("http://", "https://")):
+            return value
+        return f"https://t.me/{value.lstrip('@')}"
+
+    @property
+    def social_link_list(self) -> list[str]:
+        """Возвращает заполненные ссылки на соцсети и портфолио."""
+
+        return [line.strip() for line in self.social_links.splitlines() if line.strip()]
 
 
 class ServicePackage(models.Model):

@@ -109,9 +109,9 @@ class EventFormatAdmin(admin.ModelAdmin):
 
 @admin.register(Vendor)
 class VendorAdmin(admin.ModelAdmin):
-    list_display = ("name", "role_list", "avg_cost", "rating", "reliability", "blacklisted")
+    list_display = ("name", "role_list", "contact_person", "phone", "email", "rating", "reliability", "blacklisted")
     list_filter = ("blacklisted",)
-    search_fields = ("name", "roles", "contacts")
+    search_fields = ("name", "roles", "contact_person", "phone", "email", "telegram")
 
     @admin.display(description="Роли")
     def role_list(self, obj):
