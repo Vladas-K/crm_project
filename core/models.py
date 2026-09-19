@@ -44,6 +44,20 @@ def normalize_website_url(value: str) -> str:
     return normalized
 
 
+def social_profile_url(value: str, domain: str) -> str:
+    """Строит ссылку на социальный профиль из username или введённого адреса."""
+
+    normalized = (value or "").strip()
+    if not normalized:
+        return ""
+    if normalized.startswith(("http://", "https://")):
+        return normalized
+    normalized = normalized.removeprefix("www.")
+    if normalized.lower().startswith(f"{domain}/"):
+        return f"https://{normalized}"
+    return f"https://{domain}/{normalized.lstrip('@/')}"
+
+
 class ContactMixin(models.Model):
     """Общие контактные поля для лидов и клиентов."""
 
@@ -297,6 +311,8 @@ class Vendor(models.Model):
         TELEGRAM = "telegram", "Telegram"
         WHATSAPP = "whatsapp", "WhatsApp"
         MAX = "max", "MAX"
+        INSTAGRAM = "instagram", "Instagram"
+        VK = "vk", "ВКонтакте"
         OTHER = "other", "Другой"
 
     name = models.CharField("Имя / компания", max_length=255)
@@ -325,6 +341,8 @@ class Vendor(models.Model):
     telegram = models.CharField("Telegram", max_length=150, blank=True, help_text="Username или полная ссылка")
     whatsapp = models.CharField("WhatsApp", max_length=150, blank=True, help_text="Номер телефона или полная ссылка")
     max_messenger = models.CharField("MAX", max_length=150, blank=True, help_text="Контакт или полная ссылка")
+    instagram = models.CharField("Instagram", max_length=150, blank=True, help_text="Username или полная ссылка")
+    vk = models.CharField("ВКонтакте", max_length=150, blank=True, help_text="Username или полная ссылка")
     social_links = models.TextField(
         "Соцсети и портфолио",
         blank=True,
@@ -367,7 +385,16 @@ class Vendor(models.Model):
     def contact_summary(self) -> str:
         """Возвращает наиболее полезный контакт для списков и подсказок."""
 
-        return self.email or self.phone or self.whatsapp or self.telegram or self.max_messenger or self.contact_person
+        return (
+            self.email
+            or self.phone
+            or self.whatsapp
+            or self.telegram
+            or self.max_messenger
+            or self.instagram
+            or self.vk
+            or self.contact_person
+        )
 
     @property
     def telegram_url(self) -> str:
@@ -400,6 +427,18 @@ class Vendor(models.Model):
         if value.startswith(("http://", "https://")):
             return value
         return ""
+
+    @property
+    def instagram_url(self) -> str:
+        """Возвращает ссылку на профиль Instagram."""
+
+        return social_profile_url(self.instagram, "instagram.com")
+
+    @property
+    def vk_url(self) -> str:
+        """Возвращает ссылку на профиль ВКонтакте."""
+
+        return social_profile_url(self.vk, "vk.com")
 
     @property
     def social_link_list(self) -> list[str]:

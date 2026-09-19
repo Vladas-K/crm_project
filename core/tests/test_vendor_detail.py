@@ -37,6 +37,8 @@ def test_vendor_detail_shows_profile_and_event_history(client, django_user_model
     vendor.telegram = "@stage_pro"
     vendor.whatsapp = "8 (999) 100-20-30"
     vendor.max_messenger = "https://max.ru/stage-pro"
+    vendor.instagram = "@stage_pro"
+    vendor.vk = "vk.com/stage_pro"
     vendor.social_links = "https://vk.com/stage_pro"
     vendor.service_area = "Москва и область"
     vendor.preferred_contact_method = vendor.PreferredContactMethod.TELEGRAM
@@ -63,6 +65,8 @@ def test_vendor_detail_shows_profile_and_event_history(client, django_user_model
     assert 'href="https://t.me/stage_pro"' in html
     assert 'href="https://wa.me/79991002030"' in html
     assert 'href="https://max.ru/stage-pro"' in html
+    assert 'href="https://instagram.com/stage_pro"' in html
+    assert 'href="https://vk.com/stage_pro"' in html
     assert 'href="https://example.com/stage-pro"' in html
     assert 'href="https://vk.com/stage_pro"' in html
     assert "Москва и область" in html

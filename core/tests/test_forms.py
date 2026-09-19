@@ -59,6 +59,8 @@ def test_vendor_form_contains_structured_contact_fields():
         "telegram",
         "whatsapp",
         "max_messenger",
+        "instagram",
+        "vk",
         "social_links",
         "service_area",
         "preferred_contact_method",

@@ -127,6 +127,8 @@ class VendorForm(BootstrapModelForm):
             "telegram",
             "whatsapp",
             "max_messenger",
+            "instagram",
+            "vk",
             "social_links",
             "service_area",
             "preferred_contact_method",
