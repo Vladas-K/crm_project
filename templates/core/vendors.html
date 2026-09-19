@@ -67,7 +67,7 @@
             <tbody>
                 {% for vendor in vendors %}
                     <tr>
-                        <td class="fw-semibold">{{ vendor.name }}</td>
+                        <td class="fw-semibold"><a href="{% url 'core:vendor_detail' vendor.pk %}" class="table-primary-link">{{ vendor.name }}</a></td>
                         <td>{{ vendor.role_label }}</td>
                         {% if crm_permissions.can_view_finance %}
                             <td>{{ vendor.min_cost }} / {{ vendor.avg_cost }} ₽</td>

@@ -77,6 +77,7 @@ def test_detail_and_form_views_require_login(client, crm_objects):
         reverse("core:format_update", kwargs={"pk": crm_objects["event_format"].pk}),
         reverse("core:format_delete", kwargs={"pk": crm_objects["event_format"].pk}),
         reverse("core:vendor_create"),
+        reverse("core:vendor_detail", kwargs={"pk": crm_objects["vendor"].pk}),
         reverse("core:vendor_update", kwargs={"pk": crm_objects["vendor"].pk}),
         reverse("core:vendor_delete", kwargs={"pk": crm_objects["vendor"].pk}),
         reverse("core:package_create"),

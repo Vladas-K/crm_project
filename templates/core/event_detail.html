@@ -371,7 +371,7 @@
                         <div class="fw-semibold">{{ expense.category }}</div>
                         <div class="text-secondary small">
                             {% if expense.vendor_assignment %}
-                                {{ expense.vendor_assignment.vendor }}
+                                <a href="{% url 'core:vendor_detail' expense.vendor_assignment.vendor.pk %}" class="panel-action-link">{{ expense.vendor_assignment.vendor }}</a>
                             {% else %}
                                 {{ expense.vendor_name|default:"Подрядчик не указан" }}
                             {% endif %}
@@ -417,7 +417,7 @@
             {% for assignment in detail_event_vendors %}
                 <div class="premium-list__row premium-list__row--flat premium-list__row--vendor">
                     <div>
-                        <div class="fw-semibold">{{ assignment.vendor }}</div>
+                        <div class="fw-semibold"><a href="{% url 'core:vendor_detail' assignment.vendor.pk %}" class="table-primary-link">{{ assignment.vendor }}</a></div>
                         <div class="text-secondary small">{{ assignment.role }}</div>
                     </div>
                     <div class="vendor-row__meta">

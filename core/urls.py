@@ -62,6 +62,7 @@ from .views import (
     VendorListView,
     VendorAutocompleteView,
     VendorCreateView,
+    VendorDetailView,
     VendorDeleteView,
     VendorUpdateView,
 )
@@ -136,6 +137,7 @@ urlpatterns = [
     path("vendors/", VendorListView.as_view(), name="vendors"),
     path("vendors/autocomplete/", VendorAutocompleteView.as_view(), name="vendor_autocomplete"),
     path("vendors/create/", VendorCreateView.as_view(), name="vendor_create"),
+    path("vendors/<int:pk>/", VendorDetailView.as_view(), name="vendor_detail"),
     path("vendors/<int:pk>/edit/", VendorUpdateView.as_view(), name="vendor_update"),
     path("vendors/<int:pk>/delete/", VendorDeleteView.as_view(), name="vendor_delete"),
     path("packages/", PackageListView.as_view(), name="packages"),

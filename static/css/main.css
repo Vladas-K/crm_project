@@ -609,6 +609,121 @@ body {
     margin-bottom: 1.5rem;
 }
 
+.table-primary-link {
+    color: var(--crm-text);
+    text-decoration: none;
+    text-underline-offset: 0.2rem;
+}
+
+.table-primary-link:hover,
+.table-primary-link:focus {
+    color: var(--crm-accent);
+    text-decoration: underline;
+}
+
+.vendor-profile-hero {
+    overflow: hidden;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 2rem;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 28px 60px rgba(15, 23, 42, 0.08);
+}
+
+.vendor-profile-hero__content {
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.vendor-profile-hero__eyebrow {
+    color: var(--crm-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.vendor-profile-hero__title {
+    font-size: clamp(2rem, 4vw, 3.6rem);
+    font-weight: 700;
+    letter-spacing: -0.055em;
+}
+
+.vendor-profile-hero__subtitle {
+    color: var(--crm-muted);
+    font-size: 1rem;
+}
+
+.vendor-profile-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.vendor-profile-info {
+    display: grid;
+    gap: 1rem;
+}
+
+.vendor-profile-info__item {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.07);
+}
+
+.vendor-profile-info__item:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.vendor-profile-info__item > span {
+    display: block;
+    margin-bottom: 0.45rem;
+    color: var(--crm-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.vendor-profile-info__item p {
+    margin: 0;
+}
+
+.vendor-format-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+}
+
+.vendor-history__event {
+    min-width: 0;
+}
+
+.vendor-history__title {
+    color: var(--crm-text);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.vendor-history__title:hover,
+.vendor-history__title:focus {
+    color: var(--crm-accent);
+}
+
+.vendor-history__meta {
+    display: flex;
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 0.65rem;
+    text-align: right;
+}
+
+.vendor-history__finance {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    color: var(--crm-muted);
+    font-size: 0.86rem;
+}
+
 .analytics-period-filter {
     display: flex;
     align-items: center;
@@ -1156,6 +1271,15 @@ body {
         align-items: flex-start;
     }
 
+    .vendor-profile-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .vendor-history__meta {
+        align-items: flex-start;
+        text-align: left;
+    }
+
     .analytics-period-filter {
         width: 100%;
     }
@@ -1226,5 +1350,11 @@ body {
 
     .timeline-row__actions {
         justify-content: flex-start;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .vendor-profile-metrics {
+        grid-template-columns: 1fr;
     }
 }

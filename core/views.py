@@ -742,7 +742,7 @@ class VendorListView(CRMLoginRequiredMixin, ListView):
     def get_queryset(self):
         """Фильтрует подрядчиков по поиску, чёрному списку и формату мероприятия."""
 
-        queryset = Vendor.objects.prefetch_related("event_formats")
+        queryset = Vendor.objects.prefetch_related("event_formats", "role_categories")
         search_query = self.request.GET.get("q", "").strip()
         blacklist_filter = self.request.GET.get("blacklisted", "")
         format_filter = self.request.GET.get("event_format", "")
@@ -764,6 +764,55 @@ class VendorListView(CRMLoginRequiredMixin, ListView):
         context["vendor_blacklist_filter"] = self.request.GET.get("blacklisted", "")
         context["vendor_format_filter"] = self.request.GET.get("event_format", "")
         context["vendor_formats"] = EventFormat.objects.order_by("name")
+        return context
+
+
+class VendorDetailView(CRMLoginRequiredMixin, DetailView):
+    """Показывает профиль подрядчика, историю назначений и финансовую сводку."""
+
+    model = Vendor
+    template_name = "core/vendor_detail.html"
+    context_object_name = "vendor"
+    queryset = Vendor.objects.prefetch_related("event_formats", "role_categories")
+
+    def get_context_data(self, **kwargs):
+        """Собирает показатели и историю сотрудничества с учётом финансового доступа."""
+
+        context = super().get_context_data(**kwargs)
+        assignments = self.object.event_assignments.select_related(
+            "event",
+            "event__client",
+            "event__event_format",
+        ).annotate(
+            expense_amount_total=Sum("expenses__amount"),
+            paid_amount_total=Sum("expenses__paid_amount"),
+        ).order_by("-event__date", "-id")
+        context["vendor_assignments"] = assignments
+        context["vendor_summary"] = {
+            "events": assignments.values("event_id").distinct().count(),
+            "approved": assignments.filter(status=EventVendor.Status.APPROVED).count(),
+            "completed": assignments.filter(event__status=Event.Status.COMPLETED).count(),
+        }
+
+        try:
+            can_view_finance = self.request.user.crm_profile.can_view_finance
+        except TeamMemberProfile.DoesNotExist:
+            can_view_finance = False
+
+        if can_view_finance:
+            assignment_totals = self.object.event_assignments.aggregate(total_cost=Sum("cost"))
+            expense_totals = EventExpense.objects.filter(
+                vendor_assignment__vendor=self.object
+            ).aggregate(total=Sum("amount"), paid=Sum("paid_amount"))
+            total = expense_totals["total"] or 0
+            paid = expense_totals["paid"] or 0
+            context["vendor_finance_summary"] = {
+                "total_cost": assignment_totals["total_cost"] or 0,
+                "expenses": total,
+                "paid": paid,
+                "remaining": total - paid,
+            }
+
         return context
 
 

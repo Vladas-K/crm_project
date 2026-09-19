@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}{{ vendor.name }} | CRM{% endblock %}
+
+{% block content %}
+<div class="vendor-profile-hero mb-4">
+    <div class="vendor-profile-hero__content">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            {% if vendor.blacklisted %}
+                <span class="event-chip event-chip--danger">Чёрный список</span>
+            {% else %}
+                <span class="event-chip event-chip--success">Активен</span>
+            {% endif %}
+            {% for role in vendor.role_categories.all %}
+                <span class="event-chip event-chip--soft">{{ role.name }}</span>
+            {% empty %}
+                {% if vendor.roles %}<span class="event-chip event-chip--soft">{{ vendor.roles }}</span>{% endif %}
+            {% endfor %}
+        </div>
+
+        <div class="d-flex flex-column flex-xl-row justify-content-between gap-4">
+            <div>
+                <p class="vendor-profile-hero__eyebrow mb-2">Профиль подрядчика</p>
+                <h1 class="vendor-profile-hero__title mb-2">{{ vendor.name }}</h1>
+                <p class="vendor-profile-hero__subtitle mb-0">
+                    {{ vendor.role_label|default:"Роли и специализации пока не указаны" }}
+                </p>
+            </div>
+            <div class="event-actions align-self-start">
+                <a href="{% url 'core:vendors' %}" class="btn btn-outline-secondary">К списку</a>
+                {% if crm_permissions.can_manage_system %}
+                    <a href="{% url 'core:vendor_update' vendor.pk %}" class="btn btn-primary">Редактировать</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="vendor-profile-metrics mb-4">
+    <div class="metric-card metric-card--large">
+        <span>Мероприятий</span>
+        <strong>{{ vendor_summary.events }}</strong>
+    </div>
+    <div class="metric-card metric-card--large">
+        <span>Утверждённых назначений</span>
+        <strong>{{ vendor_summary.approved }}</strong>
+    </div>
+    <div class="metric-card metric-card--large">
+        <span>Рейтинг</span>
+        <strong>{{ vendor.rating }}</strong>
+    </div>
+    <div class="metric-card metric-card--large">
+        <span>Надёжность</span>
+        <strong>{{ vendor.reliability }}%</strong>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-xl-7">
+        <section class="premium-panel h-100">
+            <div class="premium-panel__header">
+                <div>
+                    <h2 class="premium-panel__title">Контакты и рабочий контекст</h2>
+                    <p class="premium-panel__subtitle">Основная информация для взаимодействия с подрядчиком.</p>
+                </div>
+            </div>
+            <div class="vendor-profile-info">
+                <div class="vendor-profile-info__item">
+                    <span>Контакты</span>
+                    <p>{{ vendor.contacts|default:"Не указаны"|linebreaksbr }}</p>
+                </div>
+                <div class="vendor-profile-info__item">
+                    <span>Занятость и примечания</span>
+                    <p>{{ vendor.availability_notes|default:"Примечаний пока нет"|linebreaksbr }}</p>
+                </div>
+            </div>
+        </section>
+    </div>
+    <div class="col-xl-5">
+        <section class="premium-panel h-100">
+            <div class="premium-panel__header">
+                <div>
+                    <h2 class="premium-panel__title">Подходит для форматов</h2>
+                    <p class="premium-panel__subtitle">Форматы, в которых подрядчик может быть рекомендован.</p>
+                </div>
+            </div>
+            <div class="vendor-format-list">
+                {% for format in vendor.event_formats.all %}
+                    <span class="event-chip event-chip--soft">{{ format.name }}</span>
+                {% empty %}
+                    <p class="text-secondary mb-0">Форматы пока не указаны.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</div>
+
+{% if crm_permissions.can_view_finance %}
+    <section class="premium-panel premium-panel--events mb-4">
+        <div class="premium-panel__header">
+            <div>
+                <h2 class="premium-panel__title">Финансовая сводка</h2>
+                <p class="premium-panel__subtitle">Согласованные стоимости и расходы по связанным мероприятиям.</p>
+            </div>
+        </div>
+        <div class="vendor-profile-metrics">
+            <div class="metric-card">
+                <span>Согласовано</span>
+                <strong>{{ vendor_finance_summary.total_cost }} ₽</strong>
+            </div>
+            <div class="metric-card">
+                <span>Расходы</span>
+                <strong>{{ vendor_finance_summary.expenses }} ₽</strong>
+            </div>
+            <div class="metric-card">
+                <span>Оплачено</span>
+                <strong>{{ vendor_finance_summary.paid }} ₽</strong>
+            </div>
+            <div class="metric-card">
+                <span>Осталось оплатить</span>
+                <strong>{{ vendor_finance_summary.remaining }} ₽</strong>
+            </div>
+        </div>
+    </section>
+{% endif %}
+
+<section class="premium-panel">
+    <div class="premium-panel__header">
+        <div>
+            <h2 class="premium-panel__title">История мероприятий</h2>
+            <p class="premium-panel__subtitle">Назначения, роли и состояние сотрудничества по каждому проекту.</p>
+        </div>
+        <span class="event-chip event-chip--soft">Завершено: {{ vendor_summary.completed }}</span>
+    </div>
+    <div class="premium-list premium-list--flat vendor-history">
+        {% for assignment in vendor_assignments %}
+            <div class="premium-list__row premium-list__row--flat vendor-history__row">
+                <div class="vendor-history__event">
+                    <a href="{% url 'core:event_detail' assignment.event.pk %}" class="vendor-history__title">
+                        {{ assignment.event.title|default:assignment.event.client }}
+                    </a>
+                    <div class="text-secondary small mt-1">
+                        {{ assignment.event.date|date:"d.m.Y" }} · {{ assignment.event.city }} · {{ assignment.event.client }}
+                    </div>
+                    <div class="text-secondary small mt-1">
+                        {{ assignment.role }}{% if assignment.event.event_format %} · {{ assignment.event.event_format }}{% endif %}
+                    </div>
+                </div>
+                <div class="vendor-history__meta">
+                    {% if assignment.status == "approved" %}
+                        <span class="event-chip event-chip--success">{{ assignment.get_status_display }}</span>
+                    {% elif assignment.status == "replaced" %}
+                        <span class="event-chip event-chip--danger">{{ assignment.get_status_display }}</span>
+                    {% else %}
+                        <span class="event-chip event-chip--warning">{{ assignment.get_status_display }}</span>
+                    {% endif %}
+                    {% if crm_permissions.can_view_finance %}
+                        <div class="vendor-history__finance">
+                            <span>Стоимость {{ assignment.cost }} ₽</span>
+                            {% if assignment.expense_amount_total is not None %}
+                                <span>Расходы {{ assignment.expense_amount_total }} ₽ · оплачено {{ assignment.paid_amount_total }} ₽</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% empty %}
+            <p class="text-secondary mb-0">Подрядчик пока не назначался на мероприятия.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
