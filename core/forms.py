@@ -125,6 +125,8 @@ class VendorForm(BootstrapModelForm):
             "email",
             "website",
             "telegram",
+            "whatsapp",
+            "max_messenger",
             "social_links",
             "service_area",
             "preferred_contact_method",

@@ -57,6 +57,8 @@ def test_vendor_form_contains_structured_contact_fields():
         "email",
         "website",
         "telegram",
+        "whatsapp",
+        "max_messenger",
         "social_links",
         "service_area",
         "preferred_contact_method",

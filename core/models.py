@@ -295,6 +295,8 @@ class Vendor(models.Model):
         PHONE = "phone", "Телефон"
         EMAIL = "email", "Email"
         TELEGRAM = "telegram", "Telegram"
+        WHATSAPP = "whatsapp", "WhatsApp"
+        MAX = "max", "MAX"
         OTHER = "other", "Другой"
 
     name = models.CharField("Имя / компания", max_length=255)
@@ -321,6 +323,8 @@ class Vendor(models.Model):
     email = models.EmailField("Email", blank=True)
     website = models.URLField("Сайт", blank=True)
     telegram = models.CharField("Telegram", max_length=150, blank=True, help_text="Username или полная ссылка")
+    whatsapp = models.CharField("WhatsApp", max_length=150, blank=True, help_text="Номер телефона или полная ссылка")
+    max_messenger = models.CharField("MAX", max_length=150, blank=True, help_text="Контакт или полная ссылка")
     social_links = models.TextField(
         "Соцсети и портфолио",
         blank=True,
@@ -363,7 +367,7 @@ class Vendor(models.Model):
     def contact_summary(self) -> str:
         """Возвращает наиболее полезный контакт для списков и подсказок."""
 
-        return self.email or self.phone or self.telegram or self.contact_person
+        return self.email or self.phone or self.whatsapp or self.telegram or self.max_messenger or self.contact_person
 
     @property
     def telegram_url(self) -> str:
@@ -375,6 +379,27 @@ class Vendor(models.Model):
         if value.startswith(("http://", "https://")):
             return value
         return f"https://t.me/{value.lstrip('@')}"
+
+    @property
+    def whatsapp_url(self) -> str:
+        """Возвращает готовую ссылку WhatsApp для номера телефона или URL."""
+
+        value = self.whatsapp.strip()
+        if not value:
+            return ""
+        if value.startswith(("http://", "https://")):
+            return value
+        digits = "".join(character for character in normalize_russian_phone(value) if character.isdigit())
+        return f"https://wa.me/{digits}" if digits else ""
+
+    @property
+    def max_messenger_url(self) -> str:
+        """Возвращает ссылку MAX, только если пользователь указал полный URL."""
+
+        value = self.max_messenger.strip()
+        if value.startswith(("http://", "https://")):
+            return value
+        return ""
 
     @property
     def social_link_list(self) -> list[str]:

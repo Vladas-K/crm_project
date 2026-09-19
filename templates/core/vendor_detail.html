@@ -95,13 +95,39 @@
                             <strong>{{ vendor.telegram }}</strong>
                         </a>
                     {% endif %}
+                    {% if vendor.whatsapp %}
+                        {% if vendor.whatsapp_url %}
+                            <a href="{{ vendor.whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="vendor-contact-list__item">
+                                <span>WhatsApp</span>
+                                <strong>{{ vendor.whatsapp }}</strong>
+                            </a>
+                        {% else %}
+                            <div class="vendor-contact-list__item">
+                                <span>WhatsApp</span>
+                                <strong>{{ vendor.whatsapp }}</strong>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                    {% if vendor.max_messenger %}
+                        {% if vendor.max_messenger_url %}
+                            <a href="{{ vendor.max_messenger_url }}" target="_blank" rel="noopener noreferrer" class="vendor-contact-list__item">
+                                <span>MAX</span>
+                                <strong>{{ vendor.max_messenger }}</strong>
+                            </a>
+                        {% else %}
+                            <div class="vendor-contact-list__item">
+                                <span>MAX</span>
+                                <strong>{{ vendor.max_messenger }}</strong>
+                            </div>
+                        {% endif %}
+                    {% endif %}
                     {% if vendor.website %}
                         <a href="{{ vendor.website }}" target="_blank" rel="noopener noreferrer" class="vendor-contact-list__item">
                             <span>Сайт</span>
                             <strong>Открыть сайт</strong>
                         </a>
                     {% endif %}
-                    {% if not vendor.phone and not vendor.email and not vendor.telegram and not vendor.website %}
+                    {% if not vendor.phone and not vendor.email and not vendor.telegram and not vendor.whatsapp and not vendor.max_messenger and not vendor.website %}
                         <p class="text-secondary mb-0">Основные каналы связи пока не указаны.</p>
                     {% endif %}
                 </div>

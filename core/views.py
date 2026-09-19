@@ -96,6 +96,8 @@ def vendor_matches_search(vendor, query):
             vendor.email,
             vendor.website,
             vendor.telegram,
+            vendor.whatsapp,
+            vendor.max_messenger,
             vendor.social_links,
             vendor.service_area,
         )
