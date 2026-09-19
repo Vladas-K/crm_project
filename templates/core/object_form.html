@@ -51,6 +51,26 @@
         </form>
     </div>
 </div>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll("[data-russian-phone]").forEach((input) => {
+            input.addEventListener("input", () => {
+                const value = input.value.trimStart();
+                if (value.startsWith("8")) {
+                    input.value = `+7${value.slice(1)}`;
+                }
+            });
+        });
+        document.querySelectorAll("[data-website-url]").forEach((input) => {
+            input.addEventListener("blur", () => {
+                const value = input.value.trim();
+                if (value && !/^https?:\/\//i.test(value)) {
+                    input.value = `https://${value}`;
+                }
+            });
+        });
+    });
+</script>
 {% if form.vendor and form.role %}
 <script>
     document.addEventListener("DOMContentLoaded", () => {

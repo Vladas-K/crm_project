@@ -408,3 +408,21 @@ def test_expense_cannot_reference_vendor_from_another_event(crm_objects):
 
     with pytest.raises(ValidationError):
         expense.full_clean()
+
+
+@pytest.mark.django_db
+def test_vendor_saves_russian_phone_with_country_code():
+    """Подрядчик сохраняет номер с +7, если пользователь ввёл начальную восьмёрку."""
+
+    vendor = Vendor.objects.create(name="Phone Team", phone="8 999 123-45-67")
+
+    assert vendor.phone == "+7 999 123-45-67"
+
+
+@pytest.mark.django_db
+def test_vendor_saves_website_with_https_scheme():
+    """Подрядчик сохраняет адрес сайта с https://, если схема не введена."""
+
+    vendor = Vendor.objects.create(name="Web Team", website="example.com/portfolio")
+
+    assert vendor.website == "https://example.com/portfolio"

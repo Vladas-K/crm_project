@@ -61,6 +61,46 @@ def test_vendor_form_contains_structured_contact_fields():
         "service_area",
         "preferred_contact_method",
     }.issubset(form.fields)
+    assert form.fields["phone"].widget.attrs["data-russian-phone"] == "true"
+    assert form.fields["website"].widget.attrs["data-website-url"] == "true"
+
+
+@pytest.mark.django_db
+def test_vendor_form_normalizes_phone_starting_with_eight():
+    """Форма заменяет начальную восьмёрку российского номера на +7."""
+
+    form = VendorForm(
+        data={
+            "name": "Phone Team",
+            "phone": "8 (999) 123-45-67",
+            "min_cost": 0,
+            "avg_cost": 0,
+            "rating": 0,
+            "reliability": 0,
+        }
+    )
+
+    assert form.is_valid(), form.errors
+    assert form.cleaned_data["phone"] == "+7 (999) 123-45-67"
+
+
+@pytest.mark.django_db
+def test_vendor_form_adds_https_to_website_without_scheme():
+    """Форма дополняет адрес сайта безопасной схемой, если она не указана."""
+
+    form = VendorForm(
+        data={
+            "name": "Web Team",
+            "website": "example.com/portfolio",
+            "min_cost": 0,
+            "avg_cost": 0,
+            "rating": 0,
+            "reliability": 0,
+        }
+    )
+
+    assert form.is_valid(), form.errors
+    assert form.cleaned_data["website"] == "https://example.com/portfolio"
 
 
 @pytest.mark.django_db

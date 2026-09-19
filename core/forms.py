@@ -21,6 +21,8 @@ from .models import (
     ServicePackage,
     Vendor,
     VendorRole,
+    normalize_russian_phone,
+    normalize_website_url,
 )
 
 User = get_user_model()
@@ -141,6 +143,30 @@ class VendorForm(BootstrapModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["role_categories"].queryset = VendorRole.objects.filter(is_active=True).order_by("order", "name")
+        self.fields["phone"].widget.attrs.update(
+            {
+                "autocomplete": "tel",
+                "data-russian-phone": "true",
+                "inputmode": "tel",
+            }
+        )
+        self.fields["website"].widget.attrs.update(
+            {
+                "autocomplete": "url",
+                "data-website-url": "true",
+                "inputmode": "url",
+            }
+        )
+
+    def clean_phone(self):
+        """Нормализует российский номер до сохранения формы."""
+
+        return normalize_russian_phone(self.cleaned_data.get("phone", ""))
+
+    def clean_website(self):
+        """Добавляет https:// к адресу сайта без указанной схемы."""
+
+        return normalize_website_url(self.cleaned_data.get("website", ""))
 
 
 class ServicePackageForm(BootstrapModelForm):

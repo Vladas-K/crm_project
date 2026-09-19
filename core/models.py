@@ -26,6 +26,24 @@ def validate_url_list(value):
         raise ValidationError("Укажите полные ссылки, включая https://, по одной в строке.")
 
 
+def normalize_russian_phone(value: str) -> str:
+    """Заменяет начальную российскую восьмёрку на международный код +7."""
+
+    normalized = (value or "").strip()
+    if normalized.startswith("8"):
+        return f"+7{normalized[1:]}"
+    return normalized
+
+
+def normalize_website_url(value: str) -> str:
+    """Добавляет безопасную схему к адресу сайта, если она не указана."""
+
+    normalized = (value or "").strip()
+    if normalized and not normalized.lower().startswith(("http://", "https://")):
+        return f"https://{normalized}"
+    return normalized
+
+
 class ContactMixin(models.Model):
     """Общие контактные поля для лидов и клиентов."""
 
@@ -326,6 +344,13 @@ class Vendor(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    def save(self, *args, **kwargs):
+        """Нормализует телефон и адрес сайта подрядчика перед сохранением."""
+
+        self.phone = normalize_russian_phone(self.phone)
+        self.website = normalize_website_url(self.website)
+        super().save(*args, **kwargs)
 
     @property
     def role_label(self) -> str:
