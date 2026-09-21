@@ -46,6 +46,7 @@ from .models import (
     ServicePackage,
     TeamMemberProfile,
     Vendor,
+    VendorRole,
 )
 
 User = get_user_model()
@@ -755,17 +756,36 @@ class VendorListView(CRMLoginRequiredMixin, ListView):
     context_object_name = "vendors"
 
     def get_queryset(self):
-        """Фильтрует подрядчиков по поиску, чёрному списку и формату мероприятия."""
+        """Фильтрует и сортирует подрядчиков для рабочего каталога."""
 
         queryset = Vendor.objects.prefetch_related("event_formats", "role_categories")
         search_query = self.request.GET.get("q", "").strip()
         blacklist_filter = self.request.GET.get("blacklisted", "")
         format_filter = self.request.GET.get("event_format", "")
+        role_filter = self.request.GET.get("role", "")
+        requested_sort = self.request.GET.get("sort", "name")
 
         if blacklist_filter in {"yes", "no"}:
             queryset = queryset.filter(blacklisted=blacklist_filter == "yes")
         if format_filter.isdigit():
             queryset = queryset.filter(event_formats__id=format_filter).distinct()
+        if role_filter.isdigit():
+            queryset = queryset.filter(role_categories__id=role_filter).distinct()
+
+        ordering = {
+            "name": ("name",),
+            "rating": ("-rating", "name"),
+            "reliability": ("-reliability", "name"),
+            "cost": ("avg_cost", "name"),
+        }
+        try:
+            can_view_finance = self.request.user.crm_profile.can_view_finance
+        except TeamMemberProfile.DoesNotExist:
+            can_view_finance = False
+        if requested_sort == "cost" and not can_view_finance:
+            requested_sort = "name"
+        self.vendor_sort = requested_sort if requested_sort in ordering else "name"
+        queryset = queryset.order_by(*ordering[self.vendor_sort])
         if search_query:
             queryset = [vendor for vendor in queryset if vendor_matches_search(vendor, search_query)]
 
@@ -778,7 +798,16 @@ class VendorListView(CRMLoginRequiredMixin, ListView):
         context["vendor_search_query"] = self.request.GET.get("q", "")
         context["vendor_blacklist_filter"] = self.request.GET.get("blacklisted", "")
         context["vendor_format_filter"] = self.request.GET.get("event_format", "")
+        context["vendor_role_filter"] = self.request.GET.get("role", "")
+        context["vendor_sort"] = getattr(self, "vendor_sort", "name")
         context["vendor_formats"] = EventFormat.objects.order_by("name")
+        context["vendor_roles"] = VendorRole.objects.filter(is_active=True).order_by("order", "name")
+        context["vendor_selected_format"] = EventFormat.objects.filter(
+            pk=context["vendor_format_filter"] if context["vendor_format_filter"].isdigit() else None
+        ).first()
+        context["vendor_selected_role"] = VendorRole.objects.filter(
+            pk=context["vendor_role_filter"] if context["vendor_role_filter"].isdigit() else None
+        ).first()
         return context
 
 

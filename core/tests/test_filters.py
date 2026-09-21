@@ -3,7 +3,18 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
 
-from core.models import CRMRole, Client, Event, EventFormat, EventRisk, Lead, PipelineStage, TeamMemberProfile, Vendor
+from core.models import (
+    CRMRole,
+    Client,
+    Event,
+    EventFormat,
+    EventRisk,
+    Lead,
+    PipelineStage,
+    TeamMemberProfile,
+    Vendor,
+    VendorRole,
+)
 
 User = get_user_model()
 
@@ -289,11 +300,12 @@ def test_events_filter_by_manager(client, django_user_model):
 
 
 @pytest.mark.django_db
-def test_vendors_search_filters_by_status_and_format(client, django_user_model):
-    """Поиск подрядчиков и фильтры статуса и формата работают вместе."""
+def test_vendors_search_filters_by_status_format_and_role(client, django_user_model):
+    """Поиск подрядчиков и фильтры статуса, формата и специализации работают вместе."""
     user = django_user_model.objects.create_user(username="vendor_filter_user", password="TestPass123!")
     client.force_login(user)
     event_format = EventFormat.objects.create(name="Конференция подрядчиков")
+    vendor_role = VendorRole.objects.create(name="Технический продакшн")
     matching_vendor = Vendor.objects.create(
         name="Stage Team",
         roles="Технический продакшн",
@@ -303,6 +315,7 @@ def test_vendors_search_filters_by_status_and_format(client, django_user_model):
         service_area="Москва и область",
     )
     matching_vendor.event_formats.add(event_format)
+    matching_vendor.role_categories.add(vendor_role)
     Vendor.objects.create(name="Другой подрядчик", roles="Декор", blacklisted=True)
 
     response = client.get(
@@ -311,6 +324,7 @@ def test_vendors_search_filters_by_status_and_format(client, django_user_model):
             "q": "stage",
             "blacklisted": "no",
             "event_format": event_format.pk,
+            "role": vendor_role.pk,
         },
     )
 
@@ -318,6 +332,45 @@ def test_vendors_search_filters_by_status_and_format(client, django_user_model):
     assert list(response.context["vendors"]) == [matching_vendor]
     assert response.context["vendor_blacklist_filter"] == "no"
     assert response.context["vendor_format_filter"] == str(event_format.pk)
+    assert response.context["vendor_role_filter"] == str(vendor_role.pk)
+    assert response.context["vendor_selected_role"] == vendor_role
+
+
+@pytest.mark.django_db
+def test_vendors_can_be_sorted_by_rating(client, django_user_model):
+    """Каталог подрядчиков поддерживает сортировку по рейтингу."""
+
+    user = django_user_model.objects.create_user(username="vendor_sort_user", password="TestPass123!")
+    client.force_login(user)
+    top_vendor = Vendor.objects.create(name="Top Team", rating="4.90")
+    Vendor.objects.create(name="Base Team", rating="4.20")
+
+    response = client.get(reverse("core:vendors"), {"sort": "rating"})
+
+    assert response.status_code == 200
+    assert list(response.context["vendors"])[0] == top_vendor
+    assert response.context["vendor_sort"] == "rating"
+
+
+@pytest.mark.django_db
+def test_vendor_cost_sort_requires_finance_access(client, django_user_model):
+    """Сортировка по стоимости не раскрывает финансовый порядок без соответствующего права."""
+
+    user = django_user_model.objects.create_user(username="vendor_sort_no_finance", password="TestPass123!")
+    TeamMemberProfile.objects.create(
+        user=user,
+        role=CRMRole.PROJECT_MANAGER,
+        can_view_finance=False,
+    )
+    client.force_login(user)
+    first_by_name = Vendor.objects.create(name="Alpha Team", avg_cost="90000.00")
+    Vendor.objects.create(name="Zeta Team", avg_cost="10000.00")
+
+    response = client.get(reverse("core:vendors"), {"sort": "cost"})
+
+    assert response.status_code == 200
+    assert list(response.context["vendors"])[0] == first_by_name
+    assert response.context["vendor_sort"] == "name"
 
 
 @pytest.mark.django_db

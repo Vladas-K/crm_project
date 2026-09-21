@@ -888,6 +888,380 @@ body {
     font-size: 0.84rem;
 }
 
+.vendor-directory-header__eyebrow {
+    color: var(--crm-accent);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.vendor-filter-panel {
+    position: relative;
+    z-index: 30;
+    padding: 1.15rem;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 1.35rem;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.06);
+}
+
+.vendor-filter-grid {
+    display: grid;
+    grid-template-columns: minmax(13rem, 1.4fr) repeat(4, minmax(0, 1fr)) auto;
+    align-items: end;
+    gap: 0.85rem;
+}
+
+.vendor-filter-field {
+    min-width: 0;
+}
+
+.vendor-filter-field .form-label {
+    margin-bottom: 0.4rem;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.vendor-filter-field .form-control,
+.vendor-filter-field .form-select {
+    min-height: 2.8rem;
+    border-color: rgba(15, 23, 42, 0.11);
+    border-radius: 0.85rem;
+    background-color: #fff;
+    font-size: 0.9rem;
+}
+
+.vendor-filter-submit {
+    min-height: 2.8rem;
+    padding-right: 1.15rem;
+    padding-left: 1.15rem;
+}
+
+.vendor-active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.vendor-active-filters__label {
+    margin-right: 0.15rem;
+    color: var(--crm-muted);
+    font-size: 0.78rem;
+}
+
+.vendor-active-filters .event-chip {
+    padding: 0.32rem 0.62rem;
+    font-size: 0.76rem;
+}
+
+.vendor-filter-reset {
+    margin-left: auto;
+    color: var(--crm-accent);
+    font-size: 0.8rem;
+    text-decoration: none;
+}
+
+.vendor-filter-reset:hover,
+.vendor-filter-reset:focus {
+    text-decoration: underline;
+}
+
+.vendor-directory-summary {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 0.8rem;
+    padding: 0 0.25rem;
+}
+
+.vendor-directory-summary h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.vendor-directory-summary p {
+    margin: 0.18rem 0 0;
+    color: var(--crm-muted);
+    font-size: 0.82rem;
+}
+
+.vendor-directory {
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 1.4rem;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.06);
+}
+
+.vendor-directory__head,
+.vendor-card {
+    display: grid;
+    grid-template-columns: minmax(12rem, 1.25fr) minmax(14rem, 1.45fr) minmax(8.5rem, 0.75fr) minmax(7rem, 0.65fr) 2.5rem;
+    gap: 1rem;
+}
+
+.vendor-directory--financial .vendor-directory__head,
+.vendor-directory--financial .vendor-card {
+    grid-template-columns: minmax(12rem, 1.2fr) minmax(14rem, 1.35fr) minmax(8rem, 0.72fr) minmax(8.5rem, 0.72fr) minmax(7rem, 0.62fr) 2.5rem;
+}
+
+.vendor-directory__head {
+    align-items: center;
+    padding: 0.8rem 1.25rem;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.07);
+    color: var(--crm-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.vendor-card {
+    position: relative;
+    align-items: center;
+    padding: 1.15rem 1.25rem;
+    transition: background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.vendor-card + .vendor-card {
+    border-top: 1px solid rgba(15, 23, 42, 0.07);
+}
+
+.vendor-card:first-child {
+    border-radius: 0 0 0 0;
+}
+
+.vendor-card:last-child {
+    border-radius: 0 0 1.4rem 1.4rem;
+}
+
+.vendor-card:hover {
+    z-index: 2;
+    background: rgba(248, 251, 255, 0.92);
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+}
+
+.vendor-card__identity,
+.vendor-card__taxonomy,
+.vendor-card__cost {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.vendor-card__identity {
+    gap: 0.22rem;
+}
+
+.vendor-card__name {
+    overflow: hidden;
+    color: var(--crm-text);
+    font-size: 1rem;
+    font-weight: 700;
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.vendor-card__name:hover,
+.vendor-card__name:focus {
+    color: var(--crm-accent);
+}
+
+.vendor-card__contact,
+.vendor-card__region,
+.vendor-card__cost span,
+.vendor-card__quality span,
+.vendor-card__empty {
+    color: var(--crm-muted);
+    font-size: 0.77rem;
+}
+
+.vendor-card__region {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.vendor-card__taxonomy {
+    gap: 0.5rem;
+}
+
+.vendor-card__chips,
+.vendor-card__formats {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.vendor-card__chips .event-chip {
+    padding: 0.28rem 0.58rem;
+    font-size: 0.74rem;
+}
+
+.vendor-card__formats span:not(.vendor-card__empty) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: #475569;
+    font-size: 0.76rem;
+}
+
+.vendor-card__formats span:not(.vendor-card__empty)::before {
+    width: 0.28rem;
+    height: 0.28rem;
+    border-radius: 999px;
+    background: rgba(31, 111, 235, 0.5);
+    content: "";
+}
+
+.vendor-card__cost {
+    gap: 0.18rem;
+}
+
+.vendor-card__cost strong {
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.vendor-card__quality {
+    display: flex;
+    gap: 0.85rem;
+}
+
+.vendor-card__quality > div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.05rem;
+}
+
+.vendor-card__quality strong {
+    font-size: 0.9rem;
+}
+
+.vendor-card__quality span:not(.vendor-card__mobile-label) {
+    white-space: nowrap;
+}
+
+.vendor-card__status .event-chip {
+    padding: 0.34rem 0.62rem;
+    font-size: 0.74rem;
+    white-space: nowrap;
+}
+
+.vendor-card__actions {
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.vendor-action-menu {
+    position: relative;
+}
+
+.vendor-action-menu summary,
+.vendor-card__open {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.35rem;
+    height: 2.35rem;
+    border: 1px solid rgba(15, 23, 42, 0.09);
+    border-radius: 999px;
+    color: #475569;
+    background: #fff;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.vendor-action-menu summary {
+    padding-bottom: 0.45rem;
+    list-style: none;
+}
+
+.vendor-action-menu summary::-webkit-details-marker {
+    display: none;
+}
+
+.vendor-action-menu summary:hover,
+.vendor-action-menu summary:focus,
+.vendor-card__open:hover,
+.vendor-card__open:focus {
+    border-color: rgba(31, 111, 235, 0.25);
+    color: var(--crm-accent);
+    background: var(--crm-accent-soft);
+}
+
+.vendor-action-menu__popover {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 0.45rem);
+    right: 0;
+    display: grid;
+    min-width: 11rem;
+    overflow: hidden;
+    padding: 0.4rem;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 0.9rem;
+    background: #fff;
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.14);
+}
+
+.vendor-action-menu__popover a {
+    padding: 0.55rem 0.65rem;
+    border-radius: 0.55rem;
+    color: var(--crm-text);
+    font-size: 0.82rem;
+    text-decoration: none;
+}
+
+.vendor-action-menu__popover a:hover,
+.vendor-action-menu__popover a:focus {
+    background: rgba(15, 23, 42, 0.045);
+}
+
+.vendor-action-menu__popover .vendor-action-menu__danger {
+    color: var(--crm-rose);
+}
+
+.vendor-card__mobile-label {
+    display: none;
+    margin-bottom: 0.25rem;
+    color: var(--crm-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.vendor-directory-empty {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 3rem 1.5rem;
+    color: var(--crm-muted);
+    text-align: center;
+}
+
+.vendor-directory-empty strong {
+    color: var(--crm-text);
+    font-size: 1rem;
+}
+
+.vendor-directory-empty .btn {
+    margin-top: 0.6rem;
+}
+
 .table-primary-link {
     color: var(--crm-text);
     text-decoration: none;
@@ -1586,6 +1960,60 @@ body {
     text-align: right;
 }
 
+@media (max-width: 1199.98px) {
+    .vendor-filter-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .vendor-filter-field--search {
+        grid-column: span 2;
+    }
+
+    .vendor-filter-submit {
+        width: 100%;
+    }
+
+    .vendor-directory {
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .vendor-directory__head {
+        display: none;
+    }
+
+    .vendor-directory__list {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .vendor-directory .vendor-card,
+    .vendor-directory--financial .vendor-card {
+        grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+        align-items: start;
+        padding: 1.2rem 4.2rem 1.2rem 1.2rem;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 1.25rem;
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.05);
+    }
+
+    .vendor-card + .vendor-card {
+        border-top: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    .vendor-card__actions {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+    }
+
+    .vendor-card__mobile-label {
+        display: block;
+    }
+}
+
 @media (max-width: 991.98px) {
     .crm-shell {
         grid-template-columns: 1fr;
@@ -1691,6 +2119,38 @@ body {
 }
 
 @media (max-width: 575.98px) {
+    .vendor-directory-header .btn {
+        width: 100%;
+    }
+
+    .vendor-filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .vendor-filter-field--search {
+        grid-column: auto;
+    }
+
+    .vendor-active-filters {
+        align-items: flex-start;
+    }
+
+    .vendor-filter-reset {
+        width: 100%;
+        margin-top: 0.25rem;
+        margin-left: 0;
+    }
+
+    .vendor-directory .vendor-card,
+    .vendor-directory--financial .vendor-card {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .vendor-card__quality {
+        gap: 1.5rem;
+    }
+
     .vendor-profile-metrics {
         grid-template-columns: 1fr;
     }

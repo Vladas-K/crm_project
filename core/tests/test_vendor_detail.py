@@ -189,3 +189,31 @@ def test_vendor_links_open_detail_page(client, django_user_model, crm_objects):
 
     assert detail_url in vendors_response.content.decode()
     assert detail_url in event_response.content.decode()
+
+
+@pytest.mark.django_db
+def test_vendor_list_renders_catalog_cards_and_compact_actions(client, django_user_model, crm_objects):
+    """Список подрядчиков показывает рабочий контекст и прячет мутации в компактное меню."""
+
+    user = create_vendor_viewer(
+        django_user_model,
+        "vendor_catalog_manager",
+        can_view_finance=True,
+        can_manage_system=True,
+    )
+    vendor = crm_objects["vendor"]
+    vendor.contact_person = "Анна Белова"
+    vendor.service_area = "Москва и область"
+    vendor.save(update_fields=["contact_person", "service_area"])
+    client.force_login(user)
+
+    response = client.get(reverse("core:vendors"))
+    html = response.content.decode()
+
+    assert response.status_code == 200
+    assert "vendor-card" in html
+    assert "Анна Белова" in html
+    assert "Москва и область" in html
+    assert "Открыть профиль" in html
+    assert "Специализация" in html
+    assert "Сортировка" in html
