@@ -17,7 +17,7 @@
         <div class="vendor-filter-field vendor-filter-field--search">
             <label for="vendor-search" class="form-label">Поиск</label>
             <div class="crm-search-autocomplete" data-autocomplete-url="{% url 'core:vendor_autocomplete' %}">
-                <input id="vendor-search" type="search" name="q" value="{{ vendor_search_query }}" class="form-control" placeholder="Имя, контакт или регион" autocomplete="off">
+                <input id="vendor-search" type="search" name="q" value="{{ vendor_search_query }}" class="form-control" placeholder="Имя, контакт, регион" autocomplete="off">
                 <div class="crm-suggestions" role="listbox" hidden></div>
             </div>
         </div>

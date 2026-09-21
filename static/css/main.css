@@ -908,7 +908,7 @@ body {
 
 .vendor-filter-grid {
     display: grid;
-    grid-template-columns: minmax(13rem, 1.4fr) repeat(4, minmax(0, 1fr)) auto;
+    grid-template-columns: minmax(12rem, 1.3fr) minmax(12.5rem, 1.2fr) repeat(3, minmax(9rem, 1fr)) auto;
     align-items: end;
     gap: 0.85rem;
 }
@@ -931,6 +931,11 @@ body {
     border-radius: 0.85rem;
     background-color: #fff;
     font-size: 0.9rem;
+}
+
+.vendor-filter-field .form-control::placeholder {
+    color: var(--crm-text);
+    opacity: 1;
 }
 
 .vendor-filter-submit {
@@ -1960,19 +1965,23 @@ body {
     text-align: right;
 }
 
-@media (max-width: 1199.98px) {
+@media (max-width: 1399.98px) {
     .vendor-filter-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .vendor-filter-field--search {
-        grid-column: span 2;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .vendor-filter-submit {
         width: 100%;
     }
+}
 
+@media (max-width: 767.98px) {
+    .vendor-filter-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 1199.98px) {
     .vendor-directory {
         border: 0;
         background: transparent;
@@ -2121,14 +2130,6 @@ body {
 @media (max-width: 575.98px) {
     .vendor-directory-header .btn {
         width: 100%;
-    }
-
-    .vendor-filter-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .vendor-filter-field--search {
-        grid-column: auto;
     }
 
     .vendor-active-filters {
