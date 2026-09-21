@@ -1372,9 +1372,86 @@ body {
     background: var(--crm-accent-soft);
 }
 
-.vendor-contact-list__item span {
+.vendor-contact-list__label {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.vendor-contact-list__label-text {
     color: var(--crm-muted);
     font-size: 0.8rem;
+}
+
+.vendor-contact-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    flex: 0 0 1.75rem;
+    border-radius: 0.6rem;
+}
+
+.vendor-contact-icon svg {
+    width: 1rem;
+    height: 1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.vendor-contact-icon svg .vendor-contact-icon__fill {
+    fill: currentColor;
+    stroke: none;
+}
+
+.vendor-contact-icon__wordmark {
+    font-size: 0.55rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+
+.vendor-contact-icon--phone {
+    color: #2563eb;
+    background: #dbeafe;
+}
+
+.vendor-contact-icon--email {
+    color: #475569;
+    background: #e2e8f0;
+}
+
+.vendor-contact-icon--telegram {
+    color: #168acd;
+    background: #e0f2fe;
+}
+
+.vendor-contact-icon--whatsapp {
+    color: #168b52;
+    background: #dcfce7;
+}
+
+.vendor-contact-icon--max {
+    color: #315efb;
+    background: #e0e7ff;
+}
+
+.vendor-contact-icon--instagram {
+    color: #c13584;
+    background: #fce7f3;
+}
+
+.vendor-contact-icon--vk {
+    color: #2787f5;
+    background: #dbeafe;
+}
+
+.vendor-contact-icon--website {
+    color: #6366f1;
+    background: #eef2ff;
 }
 
 .vendor-contact-list__item strong {
