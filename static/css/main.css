@@ -889,11 +889,34 @@ body {
 }
 
 .vendor-directory-header__eyebrow {
-    color: var(--crm-accent);
+    color: #2997ff;
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+}
+
+.vendor-directory-header {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1.65rem;
+    background:
+        radial-gradient(circle at 82% 18%, rgba(255, 255, 255, 0.12), transparent 28%),
+        #000;
+    box-shadow: 0 22px 48px rgba(15, 23, 42, 0.18);
+}
+
+.vendor-directory-header h1 {
+    color: #f5f5f7;
+    font-size: clamp(2rem, 3vw, 2.75rem);
+    font-weight: 650;
+    letter-spacing: -0.035em;
+}
+
+.vendor-directory-header .text-secondary {
+    color: #a1a1a6 !important;
 }
 
 .vendor-filter-panel {
