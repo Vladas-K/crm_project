@@ -4,7 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.db.models import Count, Sum
+from django.db.models import Avg, Case, Count, IntegerField, Sum, Value, When
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.http import urlencode
@@ -319,6 +319,7 @@ class LeadListView(CRMLoginRequiredMixin, ListView):
         manager_filter = self.request.GET.get("manager", "")
         source_filter = self.request.GET.get("source", "")
         attention_filter = self.request.GET.get("attention", "")
+        sort = self.request.GET.get("sort", "newest")
 
         if stage_filter.isdigit():
             queryset = queryset.filter(stage_id=stage_filter)
@@ -330,7 +331,25 @@ class LeadListView(CRMLoginRequiredMixin, ListView):
             queryset = queryset.filter(
                 last_contact_at__isnull=True,
                 created_at__lt=timezone.now() - timezone.timedelta(hours=24),
-            ).order_by("created_at", "id")
+            )
+
+        if sort == "oldest":
+            queryset = queryset.order_by("created_at", "id")
+        elif sort == "probability":
+            queryset = queryset.order_by("-probability", "-created_at", "id")
+        elif sort == "attention":
+            attention_deadline = timezone.now() - timezone.timedelta(hours=24)
+            queryset = queryset.annotate(
+                attention_priority=Case(
+                    When(last_contact_at__isnull=True, created_at__lt=attention_deadline, then=Value(0)),
+                    default=Value(1),
+                    output_field=IntegerField(),
+                )
+            ).order_by("attention_priority", "created_at", "id")
+        else:
+            sort = "newest"
+            queryset = queryset.order_by("-created_at", "id")
+
         if search_query:
             queryset = [lead for lead in queryset if lead_matches_search(lead, search_query)]
 
@@ -345,11 +364,29 @@ class LeadListView(CRMLoginRequiredMixin, ListView):
         context["manager_filter"] = self.request.GET.get("manager", "")
         context["source_filter"] = self.request.GET.get("source", "")
         context["attention_filter"] = self.request.GET.get("attention", "")
+        context["lead_sort"] = self.request.GET.get("sort", "newest")
+        if context["lead_sort"] not in {"newest", "oldest", "probability", "attention"}:
+            context["lead_sort"] = "newest"
         context["pipeline_stages"] = PipelineStage.objects.order_by("order", "name")
         context["lead_managers"] = User.objects.filter(assigned_leads__isnull=False).distinct().order_by("username")
         context["lead_sources"] = (
             Lead.objects.exclude(source="").values_list("source", flat=True).distinct().order_by("source")
         )
+        context["lead_selected_stage"] = PipelineStage.objects.filter(pk=context["stage_filter"]).first() if context["stage_filter"].isdigit() else None
+        context["lead_selected_manager"] = User.objects.filter(pk=context["manager_filter"]).first() if context["manager_filter"].isdigit() else None
+
+        all_leads = Lead.objects.all()
+        attention_deadline = timezone.now() - timezone.timedelta(hours=24)
+        average_probability = all_leads.aggregate(value=Avg("probability"))["value"] or 0
+        context["lead_metrics"] = {
+            "total": all_leads.count(),
+            "recent": all_leads.filter(created_at__gte=timezone.now() - timezone.timedelta(days=7)).count(),
+            "needs_response": all_leads.filter(
+                last_contact_at__isnull=True,
+                created_at__lt=attention_deadline,
+            ).count(),
+            "average_probability": round(average_probability),
+        }
         return context
 
 

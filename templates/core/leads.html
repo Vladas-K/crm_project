@@ -3,24 +3,53 @@
 {% block title %}Лиды | CRM{% endblock %}
 
 {% block content %}
-<div class="page-header">
+<div class="page-header lead-directory-header">
     <div>
+        <p class="lead-directory-header__eyebrow mb-2">Входящие обращения</p>
         <h1 class="h2 mb-1">Лиды</h1>
-        <p class="text-secondary mb-0">Входящие заявки, автоназначение менеджера и контроль SLA 24 часа.</p>
+        <p class="text-secondary mb-0">Контролируйте новые заявки, движение по воронке и первый ответ в течение 24 часов.</p>
     </div>
     {% if crm_permissions.can_manage_leads %}<a href="{% url 'core:lead_create' %}" class="btn btn-primary">Добавить лид</a>{% endif %}
 </div>
 
-<form method="get" class="premium-panel lead-filter-panel mb-4">
-    <div class="row g-3 align-items-end">
-        <div class="col-lg-5">
+<div class="lead-metrics mb-4" aria-label="Показатели лидов">
+    <div class="lead-metric">
+        <span>Всего лидов</span>
+        <strong>{{ lead_metrics.total }}</strong>
+    </div>
+    <div class="lead-metric">
+        <span>Новые за 7 дней</span>
+        <strong>{{ lead_metrics.recent }}</strong>
+    </div>
+    <a href="{% url 'core:leads' %}?attention=needs_response" class="lead-metric lead-metric--attention">
+        <span>Требуют ответа</span>
+        <strong>{{ lead_metrics.needs_response }}</strong>
+    </a>
+    <div class="lead-metric">
+        <span>Средняя вероятность</span>
+        <strong>{{ lead_metrics.average_probability }}%</strong>
+    </div>
+</div>
+
+<form method="get" class="lead-filter-panel mb-4">
+    <input type="hidden" name="attention" value="{{ attention_filter }}">
+    <div class="lead-filter-toolbar">
+        <span>Быстрый фильтр</span>
+        <div class="lead-filter-tabs" role="group" aria-label="Фильтр по срочности ответа">
+            <button type="submit" name="attention" value="" class="lead-filter-tab{% if not attention_filter %} is-active{% endif %}">Все лиды</button>
+            <button type="submit" name="attention" value="needs_response" class="lead-filter-tab{% if attention_filter == 'needs_response' %} is-active{% endif %}">Требуют ответа</button>
+        </div>
+    </div>
+
+    <div class="lead-filter-grid">
+        <div class="lead-filter-field lead-filter-field--search">
             <label for="lead-search" class="form-label">Поиск</label>
             <div class="crm-search-autocomplete" data-autocomplete-url="{% url 'core:lead_autocomplete' %}">
-                <input id="lead-search" type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Имя, телефон или email" autocomplete="off">
+                <input id="lead-search" type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Имя, телефон, email" autocomplete="off">
                 <div id="lead-suggestions" class="crm-suggestions" role="listbox" hidden></div>
             </div>
         </div>
-        <div class="col-md-4 col-lg-3">
+        <div class="lead-filter-field">
             <label for="lead-stage" class="form-label">Этап</label>
             <select id="lead-stage" name="stage" class="form-select">
                 <option value="">Все этапы</option>
@@ -29,7 +58,7 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="col-md-4 col-lg-3">
+        <div class="lead-filter-field">
             <label for="lead-manager" class="form-label">Ответственный</label>
             <select id="lead-manager" name="manager" class="form-select">
                 <option value="">Все менеджеры</option>
@@ -38,7 +67,7 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="col-md-4 col-lg-3">
+        <div class="lead-filter-field">
             <label for="lead-source" class="form-label">Источник</label>
             <select id="lead-source" name="source" class="form-select">
                 <option value="">Все источники</option>
@@ -47,75 +76,156 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="col-md-4 col-lg-1 d-flex gap-2">
-            <button type="submit" class="btn btn-primary flex-grow-1">Найти</button>
+        <div class="lead-filter-field">
+            <label for="lead-sort" class="form-label">Сортировка</label>
+            <select id="lead-sort" name="sort" class="form-select">
+                <option value="newest"{% if lead_sort == "newest" %} selected{% endif %}>Сначала новые</option>
+                <option value="oldest"{% if lead_sort == "oldest" %} selected{% endif %}>Сначала старые</option>
+                <option value="probability"{% if lead_sort == "probability" %} selected{% endif %}>По вероятности</option>
+                <option value="attention"{% if lead_sort == "attention" %} selected{% endif %}>Сначала срочные</option>
+            </select>
         </div>
+        <button type="submit" class="btn btn-primary lead-filter-submit">Показать</button>
     </div>
+
     {% if search_query or stage_filter or manager_filter or source_filter or attention_filter %}
-        <div class="mt-3">
-            <a href="{% url 'core:leads' %}" class="small text-decoration-none">Сбросить фильтры</a>
+        <div class="lead-active-filters" aria-label="Активные фильтры">
+            <span class="lead-active-filters__label">Выбрано:</span>
+            {% if search_query %}<span class="event-chip event-chip--soft">«{{ search_query }}»</span>{% endif %}
+            {% if lead_selected_stage %}<span class="event-chip event-chip--soft">{{ lead_selected_stage.name }}</span>{% endif %}
+            {% if lead_selected_manager %}<span class="event-chip event-chip--soft">{{ lead_selected_manager.get_username }}</span>{% endif %}
+            {% if source_filter %}<span class="event-chip event-chip--soft">{{ source_filter }}</span>{% endif %}
+            {% if attention_filter == "needs_response" %}<span class="event-chip event-chip--danger">Требуют ответа</span>{% endif %}
+            <a href="{% url 'core:leads' %}" class="lead-filter-reset">Сбросить всё</a>
         </div>
+        {% if attention_filter == "needs_response" %}<p class="lead-attention-note mb-0">Показаны лиды без ответа более 24 часов.</p>{% endif %}
     {% endif %}
 </form>
 
-{% if attention_filter == "needs_response" %}
-    <div class="alert alert-light border shadow-sm mb-4">Показаны лиды без ответа более 24 часов.</div>
-{% endif %}
-
-<div class="card border-0 shadow-sm">
-    <div class="table-responsive">
-        <table class="table align-middle mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>Имя</th>
-                    <th>Источник</th>
-                    <th>Формат</th>
-                    <th>Этап</th>
-                    <th>Вероятность</th>
-                    <th>Менеджер</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for lead in leads %}
-                    <tr>
-                        <td>
-                            <div class="fw-semibold">{{ lead.name }}</div>
-                            <div class="small text-secondary">{{ lead.phone|default:lead.email|default:"Контакт не указан" }}</div>
-                        </td>
-                        <td>{{ lead.source|default:"-" }}</td>
-                        <td>{{ lead.preliminary_event_format|default:"-" }}</td>
-                        <td>{{ lead.stage|default:"-" }}</td>
-                        <td>{{ lead.probability }}%</td>
-                        <td>
-                            {% if lead.manager %}{{ lead.manager.get_username }}{% else %}-{% endif %}
-                            {% if lead.needs_response %}<div class="small text-danger">Нет ответа более 24 часов</div>{% endif %}
-                        </td>
-                        <td class="text-end">
-                            <div class="d-flex justify-content-end gap-2">
-                                {% if crm_permissions.can_manage_leads %}<a href="{% url 'core:lead_update' lead.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>{% endif %}
-                                {% if crm_permissions.can_manage_system %}<a href="{% url 'core:lead_delete' lead.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>{% endif %}
-                            </div>
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr><td colspan="7" class="text-center text-secondary py-4">Лиды по заданным условиям не найдены.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="lead-directory-summary">
+    <div>
+        <h2>Список лидов</h2>
+        <p>Найдено: {{ leads|length }}</p>
     </div>
 </div>
+
+<section class="lead-directory" aria-label="Список лидов">
+    <div class="lead-directory__head" aria-hidden="true">
+        <span>Лид</span>
+        <span>Источник и формат</span>
+        <span>Этап</span>
+        <span>Вероятность</span>
+        <span>Менеджер</span>
+        <span>SLA</span>
+        <span></span>
+    </div>
+
+    <div class="lead-directory__list">
+        {% for lead in leads %}
+            <article class="lead-card{% if lead.needs_response %} lead-card--attention{% endif %}">
+                <div class="lead-card__identity">
+                    <span class="lead-card__mobile-label">Лид</span>
+                    {% if crm_permissions.can_manage_leads %}
+                        <a href="{% url 'core:lead_update' lead.pk %}" class="lead-card__name">{{ lead.name }}</a>
+                    {% else %}
+                        <strong class="lead-card__name">{{ lead.name }}</strong>
+                    {% endif %}
+                    <div class="lead-card__contacts">
+                        {% if lead.phone %}<a href="tel:{{ lead.phone }}">{{ lead.phone }}</a>{% endif %}
+                        {% if lead.email %}<a href="mailto:{{ lead.email }}">{{ lead.email }}</a>{% endif %}
+                        {% if not lead.phone and not lead.email %}<span>Контакт не указан</span>{% endif %}
+                    </div>
+                    <span class="lead-card__created">Создан {{ lead.created_at|date:"d.m.Y H:i" }}</span>
+                </div>
+
+                <div class="lead-card__context">
+                    <span class="lead-card__mobile-label">Источник и формат</span>
+                    <div class="lead-card__source">
+                        {% include "core/partials/lead_source_icon.html" with source=lead.source %}
+                        <span>{{ lead.source|default:"Источник не указан" }}</span>
+                    </div>
+                    <span class="lead-card__format">{{ lead.preliminary_event_format|default:"Формат не указан" }}</span>
+                </div>
+
+                <div class="lead-card__stage">
+                    <span class="lead-card__mobile-label">Этап</span>
+                    {% if lead.stage %}
+                        {% if lead.stage.is_lost %}
+                            <span class="event-chip event-chip--danger">{{ lead.stage }}</span>
+                        {% elif lead.probability >= 75 %}
+                            <span class="event-chip event-chip--success">{{ lead.stage }}</span>
+                        {% elif lead.probability >= 40 %}
+                            <span class="event-chip event-chip--warning">{{ lead.stage }}</span>
+                        {% else %}
+                            <span class="event-chip event-chip--soft">{{ lead.stage }}</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="lead-card__empty">Не указан</span>
+                    {% endif %}
+                </div>
+
+                <div class="lead-card__probability">
+                    <span class="lead-card__mobile-label">Вероятность</span>
+                    <strong>{{ lead.probability }}%</strong>
+                    <span class="lead-probability-bar" style="--lead-probability: {{ lead.probability }}%"><span></span></span>
+                </div>
+
+                <div class="lead-card__manager">
+                    <span class="lead-card__mobile-label">Менеджер</span>
+                    {% if lead.manager %}
+                        <strong>{{ lead.manager.get_full_name|default:lead.manager.get_username }}</strong>
+                        <span>@{{ lead.manager.get_username }}</span>
+                    {% else %}
+                        <span class="lead-card__empty">Не назначен</span>
+                    {% endif %}
+                </div>
+
+                <div class="lead-card__attention">
+                    <span class="lead-card__mobile-label">SLA</span>
+                    {% if lead.needs_response %}
+                        <span class="lead-attention-chip lead-attention-chip--danger">Требует ответа</span>
+                        <small>Более 24 часов</small>
+                    {% elif lead.last_contact_at %}
+                        <span class="lead-attention-chip lead-attention-chip--success">Ответ получен</span>
+                        <small>{{ lead.last_contact_at|date:"d.m.Y H:i" }}</small>
+                    {% else %}
+                        <span class="lead-attention-chip">В пределах SLA</span>
+                        <small>До 24 часов</small>
+                    {% endif %}
+                </div>
+
+                <div class="lead-card__actions">
+                    {% if crm_permissions.can_manage_leads or crm_permissions.can_manage_system %}
+                        <details class="lead-action-menu">
+                            <summary aria-label="Действия с лидом {{ lead.name }}">•••</summary>
+                            <div class="lead-action-menu__popover">
+                                {% if crm_permissions.can_manage_leads %}<a href="{% url 'core:lead_update' lead.pk %}">Изменить</a>{% endif %}
+                                {% if crm_permissions.can_manage_system %}<a href="{% url 'core:lead_delete' lead.pk %}" class="lead-action-menu__danger">Удалить</a>{% endif %}
+                            </div>
+                        </details>
+                    {% endif %}
+                </div>
+            </article>
+        {% empty %}
+            <div class="lead-directory-empty">
+                <strong>Лиды не найдены</strong>
+                <span>Попробуйте изменить условия поиска или сбросить фильтры.</span>
+                <a href="{% url 'core:leads' %}" class="btn btn-outline-secondary">Сбросить фильтры</a>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
 <script>
     (() => {
         const wrapper = document.querySelector(".crm-search-autocomplete");
-        if (!wrapper) return;
-
-        const input = wrapper.querySelector("#lead-search");
-        const suggestions = wrapper.querySelector("#lead-suggestions");
+        const input = wrapper?.querySelector("#lead-search");
+        const suggestions = wrapper?.querySelector("#lead-suggestions");
         let timer;
         let controller;
 
         const hideSuggestions = () => {
+            if (!suggestions) return;
             suggestions.hidden = true;
             suggestions.replaceChildren();
         };
@@ -129,10 +239,14 @@
 
             results.forEach((lead) => {
                 const option = document.createElement("button");
+                const name = document.createElement("strong");
+                const detail = document.createElement("span");
                 option.type = "button";
                 option.className = "crm-suggestions__item";
                 option.setAttribute("role", "option");
-                option.innerHTML = `<strong>${lead.name}</strong><span>${lead.phone || lead.email || "Контакт не указан"}</span>`;
+                name.textContent = lead.name;
+                detail.textContent = lead.phone || lead.email || "Контакт не указан";
+                option.append(name, detail);
                 option.addEventListener("click", () => {
                     input.value = lead.phone || lead.email || lead.name;
                     hideSuggestions();
@@ -143,34 +257,65 @@
             suggestions.hidden = false;
         };
 
-        input.addEventListener("input", () => {
-            clearTimeout(timer);
-            if (controller) controller.abort();
-            if (input.value.trim().length < 2) {
-                hideSuggestions();
-                return;
-            }
-
-            timer = setTimeout(async () => {
-                controller = new AbortController();
-                const url = new URL(wrapper.dataset.autocompleteUrl, window.location.origin);
-                url.searchParams.set("q", input.value.trim());
-                try {
-                    const response = await fetch(url, { signal: controller.signal });
-                    if (!response.ok) return hideSuggestions();
-                    const data = await response.json();
-                    renderSuggestions(data.results);
-                } catch (error) {
-                    if (error.name !== "AbortError") hideSuggestions();
+        if (wrapper && input && suggestions) {
+            input.addEventListener("input", () => {
+                clearTimeout(timer);
+                if (controller) controller.abort();
+                if (input.value.trim().length < 2) {
+                    hideSuggestions();
+                    return;
                 }
-            }, 250);
+
+                timer = setTimeout(async () => {
+                    controller = new AbortController();
+                    const url = new URL(wrapper.dataset.autocompleteUrl, window.location.origin);
+                    url.searchParams.set("q", input.value.trim());
+                    try {
+                        const response = await fetch(url, { signal: controller.signal });
+                        if (!response.ok) return hideSuggestions();
+                        const data = await response.json();
+                        renderSuggestions(data.results);
+                    } catch (error) {
+                        if (error.name !== "AbortError") hideSuggestions();
+                    }
+                }, 250);
+            });
+
+            input.addEventListener("keydown", (event) => {
+                if (event.key === "Escape") hideSuggestions();
+            });
+            document.addEventListener("click", (event) => {
+                if (!wrapper.contains(event.target)) hideSuggestions();
+            });
+        }
+
+        const actionMenus = document.querySelectorAll(".lead-action-menu");
+        actionMenus.forEach((menu) => {
+            let closeTimer;
+
+            menu.addEventListener("mouseenter", () => clearTimeout(closeTimer));
+            menu.addEventListener("mouseleave", () => {
+                closeTimer = setTimeout(() => menu.removeAttribute("open"), 180);
+            });
+            menu.addEventListener("toggle", () => {
+                if (!menu.open) return;
+                actionMenus.forEach((otherMenu) => {
+                    if (otherMenu !== menu) otherMenu.removeAttribute("open");
+                });
+            });
         });
 
-        input.addEventListener("keydown", (event) => {
-            if (event.key === "Escape") hideSuggestions();
-        });
         document.addEventListener("click", (event) => {
-            if (!wrapper.contains(event.target)) hideSuggestions();
+            actionMenus.forEach((menu) => {
+                if (!menu.contains(event.target)) menu.removeAttribute("open");
+            });
+        });
+        document.addEventListener("keydown", (event) => {
+            if (event.key !== "Escape") return;
+            const openMenu = document.querySelector(".lead-action-menu[open]");
+            if (!openMenu) return;
+            openMenu.removeAttribute("open");
+            openMenu.querySelector("summary")?.focus();
         });
     })();
 </script>

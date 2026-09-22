@@ -89,6 +89,48 @@ def test_leads_filter_by_source(client, django_user_model):
 
 
 @pytest.mark.django_db
+def test_leads_sort_by_probability_and_show_operational_metrics(client, django_user_model):
+    """Список сортирует лиды и передаёт показатели для сводки страницы."""
+
+    user = django_user_model.objects.create_user(username="lead_sort_user", password="TestPass123!")
+    client.force_login(user)
+    low_probability = Lead.objects.create(name="Низкая вероятность", probability=15)
+    high_probability = Lead.objects.create(name="Высокая вероятность", probability=80)
+    Lead.objects.filter(pk=low_probability.pk).update(
+        created_at=timezone.now() - timezone.timedelta(hours=25)
+    )
+
+    response = client.get(reverse("core:leads"), {"sort": "probability"})
+
+    assert response.status_code == 200
+    assert list(response.context["leads"]) == [high_probability, low_probability]
+    assert response.context["lead_sort"] == "probability"
+    assert response.context["lead_metrics"] == {
+        "total": 2,
+        "recent": 2,
+        "needs_response": 1,
+        "average_probability": 48,
+    }
+
+
+@pytest.mark.django_db
+def test_leads_attention_sort_places_overdue_first(client, django_user_model):
+    """Сортировка по вниманию поднимает просроченные обращения наверх."""
+
+    user = django_user_model.objects.create_user(username="lead_attention_sort", password="TestPass123!")
+    client.force_login(user)
+    recent_lead = Lead.objects.create(name="Свежий лид")
+    overdue_lead = Lead.objects.create(name="Просроченный лид")
+    Lead.objects.filter(pk=overdue_lead.pk).update(
+        created_at=timezone.now() - timezone.timedelta(hours=25)
+    )
+
+    response = client.get(reverse("core:leads"), {"sort": "attention"})
+
+    assert list(response.context["leads"]) == [overdue_lead, recent_lead]
+
+
+@pytest.mark.django_db
 def test_lead_autocomplete_returns_matching_contact_data(client, django_user_model):
     """Autocomplete возвращает лиды, совпадающие по email или телефону."""
     user = django_user_model.objects.create_user(username="autocomplete_user", password="TestPass123!")
