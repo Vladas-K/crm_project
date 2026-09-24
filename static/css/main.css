@@ -2157,6 +2157,10 @@ a.lead-profile-contact:focus {
     color: #bf5af2;
 }
 
+.vendor-contact-icon--facebook {
+    color: #1877f2;
+}
+
 .vendor-contact-icon--vk {
     border: 2px solid currentColor;
     border-radius: 0.75rem;

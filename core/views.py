@@ -100,6 +100,7 @@ def vendor_matches_search(vendor, query):
             vendor.whatsapp,
             vendor.max_messenger,
             vendor.instagram,
+            vendor.facebook,
             vendor.vk,
             vendor.social_links,
             vendor.service_area,

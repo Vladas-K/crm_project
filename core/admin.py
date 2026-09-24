@@ -99,6 +99,7 @@ class LeadAdmin(admin.ModelAdmin):
         "whatsapp",
         "max_messenger",
         "instagram",
+        "facebook",
         "vk",
     )
 
@@ -130,6 +131,7 @@ class VendorAdmin(admin.ModelAdmin):
         "whatsapp",
         "max_messenger",
         "instagram",
+        "facebook",
         "vk",
     )
 

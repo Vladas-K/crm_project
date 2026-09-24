@@ -20,7 +20,7 @@ def test_lead_form_uses_explicit_online_contact_fields():
     form = LeadForm()
 
     assert "messenger" not in form.fields
-    assert {"telegram", "whatsapp", "max_messenger", "instagram", "vk"}.issubset(form.fields)
+    assert {"telegram", "whatsapp", "max_messenger", "instagram", "facebook", "vk"}.issubset(form.fields)
     assert form.fields["phone"].widget.attrs["data-russian-phone"] == "true"
     assert form.fields["whatsapp"].widget.attrs["data-russian-phone"] == "true"
 
@@ -71,6 +71,7 @@ def test_vendor_form_contains_structured_contact_fields():
         "whatsapp",
         "max_messenger",
         "instagram",
+        "facebook",
         "vk",
         "social_links",
         "service_area",

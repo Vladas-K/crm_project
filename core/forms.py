@@ -59,6 +59,7 @@ class LeadForm(BootstrapModelForm):
             "whatsapp",
             "max_messenger",
             "instagram",
+            "facebook",
             "vk",
             "source",
             "preliminary_event_format",
@@ -151,6 +152,7 @@ class VendorForm(BootstrapModelForm):
             "whatsapp",
             "max_messenger",
             "instagram",
+            "facebook",
             "vk",
             "social_links",
             "service_area",
@@ -178,6 +180,7 @@ class VendorForm(BootstrapModelForm):
         self.fields["whatsapp"].help_text = "Номер телефона или полная ссылка"
         self.fields["max_messenger"].help_text = "Контакт или полная ссылка"
         self.fields["instagram"].help_text = "Имя пользователя или полная ссылка"
+        self.fields["facebook"].help_text = "Имя пользователя или полная ссылка"
         self.fields["vk"].help_text = "Имя пользователя или полная ссылка"
         self.fields["social_links"].label = "Другие ссылки и портфолио"
         self.fields["social_links"].help_text = "По одной полной ссылке в строке"

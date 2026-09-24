@@ -172,6 +172,7 @@ class Lead(ContactMixin):
     whatsapp = models.CharField("WhatsApp", max_length=150, blank=True, help_text="Номер телефона или полная ссылка")
     max_messenger = models.CharField("MAX", max_length=150, blank=True, help_text="Контакт или полная ссылка")
     instagram = models.CharField("Instagram", max_length=150, blank=True, help_text="Username или полная ссылка")
+    facebook = models.CharField("Facebook", max_length=150, blank=True, help_text="Username или полная ссылка")
     vk = models.CharField("ВКонтакте", max_length=150, blank=True, help_text="Username или полная ссылка")
     source = models.CharField("Источник", max_length=120, blank=True)
     preliminary_event_format = models.ForeignKey(
@@ -268,6 +269,12 @@ class Lead(ContactMixin):
         return social_profile_url(self.instagram, "instagram.com")
 
     @property
+    def facebook_url(self) -> str:
+        """Возвращает ссылку на профиль Facebook."""
+
+        return social_profile_url(self.facebook, "facebook.com")
+
+    @property
     def vk_url(self) -> str:
         """Возвращает ссылку на профиль ВКонтакте."""
 
@@ -360,6 +367,7 @@ class Vendor(models.Model):
         WHATSAPP = "whatsapp", "WhatsApp"
         MAX = "max", "MAX"
         INSTAGRAM = "instagram", "Instagram"
+        FACEBOOK = "facebook", "Facebook"
         VK = "vk", "ВКонтакте"
         OTHER = "other", "Другой"
 
@@ -390,6 +398,7 @@ class Vendor(models.Model):
     whatsapp = models.CharField("WhatsApp", max_length=150, blank=True, help_text="Номер телефона или полная ссылка")
     max_messenger = models.CharField("MAX", max_length=150, blank=True, help_text="Контакт или полная ссылка")
     instagram = models.CharField("Instagram", max_length=150, blank=True, help_text="Username или полная ссылка")
+    facebook = models.CharField("Facebook", max_length=150, blank=True, help_text="Username или полная ссылка")
     vk = models.CharField("ВКонтакте", max_length=150, blank=True, help_text="Username или полная ссылка")
     social_links = models.TextField(
         "Соцсети и портфолио",
@@ -440,6 +449,7 @@ class Vendor(models.Model):
             or self.telegram
             or self.max_messenger
             or self.instagram
+            or self.facebook
             or self.vk
             or self.contact_person
         )
@@ -481,6 +491,12 @@ class Vendor(models.Model):
         """Возвращает ссылку на профиль Instagram."""
 
         return social_profile_url(self.instagram, "instagram.com")
+
+    @property
+    def facebook_url(self) -> str:
+        """Возвращает ссылку на профиль Facebook."""
+
+        return social_profile_url(self.facebook, "facebook.com")
 
     @property
     def vk_url(self) -> str:

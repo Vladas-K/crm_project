@@ -134,6 +134,15 @@
                         <strong>{{ lead.instagram }}</strong>
                     </a>
                 {% endif %}
+                {% if lead.facebook %}
+                    <a href="{{ lead.facebook_url }}" target="_blank" rel="noopener noreferrer" class="lead-profile-contact">
+                        <span class="lead-profile-contact__label">
+                            {% include "core/partials/vendor_contact_icon.html" with kind="facebook" %}
+                            <span>Facebook</span>
+                        </span>
+                        <strong>{{ lead.facebook }}</strong>
+                    </a>
+                {% endif %}
                 {% if lead.vk %}
                     <a href="{{ lead.vk_url }}" target="_blank" rel="noopener noreferrer" class="lead-profile-contact">
                         <span class="lead-profile-contact__label">
@@ -143,7 +152,7 @@
                         <strong>{{ lead.vk }}</strong>
                     </a>
                 {% endif %}
-                {% if not lead.phone and not lead.email and not lead.telegram and not lead.whatsapp and not lead.max_messenger and not lead.instagram and not lead.vk %}
+                {% if not lead.phone and not lead.email and not lead.telegram and not lead.whatsapp and not lead.max_messenger and not lead.instagram and not lead.facebook and not lead.vk %}
                     <p class="text-secondary mb-0">Контактные данные пока не указаны.</p>
                 {% endif %}
             </div>
