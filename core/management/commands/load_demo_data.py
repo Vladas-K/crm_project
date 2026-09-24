@@ -48,22 +48,39 @@ class Command(BaseCommand):
 
     def create_users(self):
         user_specs = [
-            ("sales_anna", "sales_anna@example.com", "SalesAnna123!", CRMRole.SALES_MANAGER, True, True, False, False),
-            ("sales_igor", "sales_igor@example.com", "SalesIgor123!", CRMRole.SALES_MANAGER, True, True, False, False),
-            ("pm_elena", "pm_elena@example.com", "ProjectElena123!", CRMRole.PROJECT_MANAGER, True, True, True, False),
-            ("finance_max", "finance_max@example.com", "FinanceMax123!", CRMRole.FINANCE, True, False, True, False),
-            ("admin_kate", "admin_kate@example.com", "AdminKate123!", CRMRole.ADMIN, True, True, True, True),
+            (
+                "sales_anna", "Анна", "Соколова", "sales_anna@example.com", "SalesAnna123!",
+                CRMRole.SALES_MANAGER, True, True, False, False,
+            ),
+            (
+                "sales_igor", "Игорь", "Орлов", "sales_igor@example.com", "SalesIgor123!",
+                CRMRole.SALES_MANAGER, True, True, False, False,
+            ),
+            (
+                "pm_elena", "Елена", "Смирнова", "pm_elena@example.com", "ProjectElena123!",
+                CRMRole.PROJECT_MANAGER, True, True, True, False,
+            ),
+            (
+                "finance_max", "Максим", "Волков", "finance_max@example.com", "FinanceMax123!",
+                CRMRole.FINANCE, True, False, True, False,
+            ),
+            (
+                "admin_kate", "Екатерина", "Лебедева", "admin_kate@example.com", "AdminKate123!",
+                CRMRole.ADMIN, True, True, True, True,
+            ),
         ]
         users = {}
-        for username, email, password, role, finance, clients, analytics, system in user_specs:
+        for username, first_name, last_name, email, password, role, finance, clients, analytics, system in user_specs:
             user, created = User.objects.get_or_create(
                 username=username,
                 defaults={"email": email},
             )
             if created:
-                user.email = email
                 user.set_password(password)
-                user.save()
+            user.email = email
+            user.first_name = first_name
+            user.last_name = last_name
+            user.save()
             TeamMemberProfile.objects.update_or_create(
                 user=user,
                 defaults={

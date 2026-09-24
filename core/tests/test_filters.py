@@ -114,6 +114,33 @@ def test_leads_sort_by_probability_and_show_operational_metrics(client, django_u
 
 
 @pytest.mark.django_db
+def test_lead_list_shows_only_phone_and_prefers_manager_full_name(client, django_user_model):
+    """Каталог скрывает email и не дублирует username вместо имени менеджера."""
+
+    viewer = django_user_model.objects.create_user(username="lead_catalog_viewer")
+    manager = django_user_model.objects.create_user(
+        username="sales_named", first_name="Анна", last_name="Соколова"
+    )
+    Lead.objects.create(
+        name="Лид с контактами",
+        phone="+7 999 000-00-00",
+        email="lead@example.com",
+        manager=manager,
+    )
+    client.force_login(viewer)
+
+    response = client.get(reverse("core:leads"))
+    html = response.content.decode()
+
+    assert response.status_code == 200
+    assert 'href="tel:+7 999 000-00-00"' in html
+    assert 'href="mailto:lead@example.com"' not in html
+    assert "Анна Соколова" in html
+    assert "@sales_named" in html
+    assert ">Реакция<" in html
+
+
+@pytest.mark.django_db
 def test_leads_attention_sort_places_overdue_first(client, django_user_model):
     """Сортировка по вниманию поднимает просроченные обращения наверх."""
 

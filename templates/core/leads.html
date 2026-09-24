@@ -116,7 +116,7 @@
         <span>Этап</span>
         <span>Вероятность</span>
         <span>Менеджер</span>
-        <span>SLA</span>
+        <span>Реакция</span>
         <span></span>
     </div>
 
@@ -128,8 +128,7 @@
                     <a href="{% url 'core:lead_detail' lead.pk %}" class="lead-card__name">{{ lead.name }}</a>
                     <div class="lead-card__contacts">
                         {% if lead.phone %}<a href="tel:{{ lead.phone }}">{{ lead.phone }}</a>{% endif %}
-                        {% if lead.email %}<a href="mailto:{{ lead.email }}">{{ lead.email }}</a>{% endif %}
-                        {% if not lead.phone and not lead.email %}<span>Контакт не указан</span>{% endif %}
+                        {% if not lead.phone %}<span>Телефон не указан</span>{% endif %}
                     </div>
                     <span class="lead-card__created">Создан {{ lead.created_at|date:"d.m.Y H:i" }}</span>
                 </div>
@@ -140,7 +139,7 @@
                         {% include "core/partials/lead_source_icon.html" with source=lead.source compact=True %}
                         <span>{{ lead.source|default:"Источник не указан" }}</span>
                     </div>
-                    <span class="lead-card__format">{{ lead.preliminary_event_format|default:"Формат не указан" }}</span>
+                    <span class="lead-card__format{% if not lead.preliminary_event_format %} lead-card__format--empty{% endif %}">{{ lead.preliminary_event_format|default:"Формат не указан" }}</span>
                 </div>
 
                 <div class="lead-card__stage">
@@ -169,15 +168,19 @@
                 <div class="lead-card__manager">
                     <span class="lead-card__mobile-label">Менеджер</span>
                     {% if lead.manager %}
-                        <strong>{{ lead.manager.get_full_name|default:lead.manager.get_username }}</strong>
-                        <span>@{{ lead.manager.get_username }}</span>
+                        {% if lead.manager.get_full_name %}
+                            <strong>{{ lead.manager.get_full_name }}</strong>
+                            <span>@{{ lead.manager.get_username }}</span>
+                        {% else %}
+                            <strong>@{{ lead.manager.get_username }}</strong>
+                        {% endif %}
                     {% else %}
                         <span class="lead-card__empty">Не назначен</span>
                     {% endif %}
                 </div>
 
                 <div class="lead-card__attention">
-                    <span class="lead-card__mobile-label">SLA</span>
+                    <span class="lead-card__mobile-label">Реакция</span>
                     {% if lead.needs_response %}
                         <span class="lead-attention-chip lead-attention-chip--danger">Требует ответа</span>
                         <small>Более 24 часов</small>
@@ -193,7 +196,7 @@
                 <div class="lead-card__actions">
                     {% if crm_permissions.can_manage_leads or crm_permissions.can_manage_system %}
                         <details class="lead-action-menu">
-                            <summary aria-label="Действия с лидом {{ lead.name }}">•••</summary>
+                            <summary aria-label="Действия с лидом {{ lead.name }}"><span aria-hidden="true">•••</span></summary>
                             <div class="lead-action-menu__popover">
                                 <a href="{% url 'core:lead_detail' lead.pk %}">Открыть профиль</a>
                                 {% if crm_permissions.can_manage_leads %}<a href="{% url 'core:lead_update' lead.pk %}">Изменить</a>{% endif %}
