@@ -137,7 +137,7 @@
                 <div class="lead-card__context">
                     <span class="lead-card__mobile-label">Источник и формат</span>
                     <div class="lead-card__source">
-                        {% include "core/partials/lead_source_icon.html" with source=lead.source %}
+                        {% include "core/partials/lead_source_icon.html" with source=lead.source compact=True %}
                         <span>{{ lead.source|default:"Источник не указан" }}</span>
                     </div>
                     <span class="lead-card__format">{{ lead.preliminary_event_format|default:"Формат не указан" }}</span>

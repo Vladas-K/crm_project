@@ -56,8 +56,9 @@ def test_lead_detail_shows_contact_pipeline_and_sla(client, django_user_model, c
     assert "Instagram" in html
     assert "Нужна площадка на 80 гостей" in html
     assert "Ответ получен" in html
+    assert "contact-icon--compact" not in html
     for icon_name in ("phone", "email", "telegram", "whatsapp", "max", "instagram", "facebook", "vk"):
-        assert f"vendor-contact-icon--{icon_name}" in html
+        assert f"contact-icon--{icon_name}" in html
     assert reverse("core:lead_update", kwargs={"pk": lead.pk}) not in html
 
 
@@ -88,6 +89,7 @@ def test_lead_list_links_to_detail_page(client, django_user_model, crm_objects):
 
     assert response.status_code == 200
     assert response.content.decode().count(f'href="{detail_url}"') >= 2
+    assert "contact-icon--compact" in response.content.decode()
 
 
 @pytest.mark.django_db

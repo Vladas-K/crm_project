@@ -80,7 +80,7 @@
                     {% if vendor.phone %}
                         <a href="tel:{{ vendor.phone }}" class="vendor-contact-list__item">
                             <span class="vendor-contact-list__label">
-                                {% include "core/partials/vendor_contact_icon.html" with kind="phone" %}
+                                {% include "core/partials/contact_icon.html" with kind="phone" %}
                                 <span class="vendor-contact-list__label-text">Телефон</span>
                             </span>
                             <strong>{{ vendor.phone }}</strong>
@@ -89,7 +89,7 @@
                     {% if vendor.email %}
                         <a href="mailto:{{ vendor.email }}" class="vendor-contact-list__item">
                             <span class="vendor-contact-list__label">
-                                {% include "core/partials/vendor_contact_icon.html" with kind="email" %}
+                                {% include "core/partials/contact_icon.html" with kind="email" %}
                                 <span class="vendor-contact-list__label-text">Email</span>
                             </span>
                             <strong>{{ vendor.email }}</strong>
@@ -98,7 +98,7 @@
                     {% if vendor.telegram %}
                         <a href="{{ vendor.telegram_url }}" target="_blank" rel="noopener noreferrer" class="vendor-contact-list__item">
                             <span class="vendor-contact-list__label">
-                                {% include "core/partials/vendor_contact_icon.html" with kind="telegram" %}
+                                {% include "core/partials/contact_icon.html" with kind="telegram" %}
                                 <span class="vendor-contact-list__label-text">Telegram</span>
                             </span>
                             <strong>{{ vendor.telegram }}</strong>
@@ -108,7 +108,7 @@
                         {% if vendor.whatsapp_url %}
                             <a href="{{ vendor.whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="vendor-contact-list__item">
                                 <span class="vendor-contact-list__label">
-                                    {% include "core/partials/vendor_contact_icon.html" with kind="whatsapp" %}
+                                    {% include "core/partials/contact_icon.html" with kind="whatsapp" %}
                                     <span class="vendor-contact-list__label-text">WhatsApp</span>
                                 </span>
                                 <strong>{{ vendor.whatsapp }}</strong>
@@ -116,7 +116,7 @@
                         {% else %}
                             <div class="vendor-contact-list__item">
                                 <span class="vendor-contact-list__label">
-                                    {% include "core/partials/vendor_contact_icon.html" with kind="whatsapp" %}
+                                    {% include "core/partials/contact_icon.html" with kind="whatsapp" %}
                                     <span class="vendor-contact-list__label-text">WhatsApp</span>
                                 </span>
                                 <strong>{{ vendor.whatsapp }}</strong>
@@ -127,7 +127,7 @@
                         {% if vendor.max_messenger_url %}
                             <a href="{{ vendor.max_messenger_url }}" target="_blank" rel="noopener noreferrer" class="vendor-contact-list__item">
                                 <span class="vendor-contact-list__label">
-                                    {% include "core/partials/vendor_contact_icon.html" with kind="max" %}
+                                    {% include "core/partials/contact_icon.html" with kind="max" %}
                                     <span class="vendor-contact-list__label-text">MAX</span>
                                 </span>
                                 <strong>{{ vendor.max_messenger }}</strong>
@@ -135,7 +135,7 @@
                         {% else %}
                             <div class="vendor-contact-list__item">
                                 <span class="vendor-contact-list__label">
-                                    {% include "core/partials/vendor_contact_icon.html" with kind="max" %}
+                                    {% include "core/partials/contact_icon.html" with kind="max" %}
                                     <span class="vendor-contact-list__label-text">MAX</span>
                                 </span>
                                 <strong>{{ vendor.max_messenger }}</strong>
@@ -145,7 +145,7 @@
                     {% if vendor.instagram %}
                         <a href="{{ vendor.instagram_url }}" target="_blank" rel="noopener noreferrer" class="vendor-contact-list__item">
                             <span class="vendor-contact-list__label">
-                                {% include "core/partials/vendor_contact_icon.html" with kind="instagram" %}
+                                {% include "core/partials/contact_icon.html" with kind="instagram" %}
                                 <span class="vendor-contact-list__label-text">Instagram</span>
                             </span>
                             <strong>{{ vendor.instagram }}</strong>
@@ -154,7 +154,7 @@
                     {% if vendor.facebook %}
                         <a href="{{ vendor.facebook_url }}" target="_blank" rel="noopener noreferrer" class="vendor-contact-list__item">
                             <span class="vendor-contact-list__label">
-                                {% include "core/partials/vendor_contact_icon.html" with kind="facebook" %}
+                                {% include "core/partials/contact_icon.html" with kind="facebook" %}
                                 <span class="vendor-contact-list__label-text">Facebook</span>
                             </span>
                             <strong>{{ vendor.facebook }}</strong>
@@ -163,7 +163,7 @@
                     {% if vendor.vk %}
                         <a href="{{ vendor.vk_url }}" target="_blank" rel="noopener noreferrer" class="vendor-contact-list__item">
                             <span class="vendor-contact-list__label">
-                                {% include "core/partials/vendor_contact_icon.html" with kind="vk" %}
+                                {% include "core/partials/contact_icon.html" with kind="vk" %}
                                 <span class="vendor-contact-list__label-text">ВКонтакте</span>
                             </span>
                             <strong>{{ vendor.vk }}</strong>
@@ -172,7 +172,7 @@
                     {% if vendor.website %}
                         <a href="{{ vendor.website }}" target="_blank" rel="noopener noreferrer" class="vendor-contact-list__item">
                             <span class="vendor-contact-list__label">
-                                {% include "core/partials/vendor_contact_icon.html" with kind="website" %}
+                                {% include "core/partials/contact_icon.html" with kind="website" %}
                                 <span class="vendor-contact-list__label-text">Сайт</span>
                             </span>
                             <strong>Открыть сайт</strong>

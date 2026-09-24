@@ -1223,38 +1223,6 @@ a.lead-card__name:focus {
     font-weight: 600;
 }
 
-.lead-source-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.75rem;
-    height: 1.75rem;
-    flex: 0 0 1.75rem;
-}
-
-.lead-source-icon svg {
-    width: 1.55rem;
-    height: 1.55rem;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.65;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-.lead-source-icon__fill {
-    fill: currentColor;
-    stroke: none;
-}
-
-.lead-source-icon--instagram { color: #bf5af2; }
-.lead-source-icon--telegram { color: #0a84ff; }
-.lead-source-icon--whatsapp { color: #20a95b; }
-.lead-source-icon--website { color: #5e5ce6; }
-.lead-source-icon--referral { color: #007aff; }
-.lead-source-icon--advertising { color: #ff9f0a; }
-.lead-source-icon--default { color: #6e6e73; }
-
 .lead-card__stage .event-chip {
     padding: 0.34rem 0.62rem;
     font-size: 0.73rem;
@@ -1533,15 +1501,10 @@ a.lead-profile-contact:focus {
     font-size: 0.8rem;
 }
 
-.lead-profile-contact .vendor-contact-icon {
+.lead-profile-contact .contact-icon {
     width: 2.5rem;
     height: 2.5rem;
     flex-basis: 2.5rem;
-}
-
-.lead-profile-contact .vendor-contact-icon svg {
-    width: 2.25rem;
-    height: 2.25rem;
 }
 
 .lead-profile-contact strong {
@@ -1584,17 +1547,6 @@ a.lead-profile-contact:focus {
     display: flex;
     align-items: center;
     gap: 0.65rem;
-}
-
-.lead-profile-source .lead-source-icon {
-    width: 2.35rem;
-    height: 2.35rem;
-    flex-basis: 2.35rem;
-}
-
-.lead-profile-source .lead-source-icon svg {
-    width: 2.1rem;
-    height: 2.1rem;
 }
 
 .lead-profile-status {
@@ -2101,7 +2053,7 @@ a.lead-profile-contact:focus {
     font-size: 0.8rem;
 }
 
-.vendor-contact-icon {
+.contact-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -2110,7 +2062,8 @@ a.lead-profile-contact:focus {
     flex: 0 0 2.5rem;
 }
 
-.vendor-contact-icon svg {
+.contact-icon svg {
+    display: block;
     width: 2.25rem;
     height: 2.25rem;
     fill: none;
@@ -2120,55 +2073,94 @@ a.lead-profile-contact:focus {
     stroke-linejoin: round;
 }
 
-.vendor-contact-icon svg .vendor-contact-icon__fill {
+.contact-icon svg .contact-icon__fill {
     fill: currentColor;
     stroke: none;
 }
 
-.vendor-contact-icon__wordmark {
-    font-size: 0.7rem;
+.contact-icon svg .contact-icon__brand-background {
+    fill: currentColor;
+    stroke: none;
+}
+
+.contact-icon svg .contact-icon__brand-foreground {
+    fill: #fff;
+    stroke: none;
+}
+
+.contact-icon__wordmark {
+    font-size: 0.65rem;
     font-weight: 800;
     letter-spacing: -0.035em;
 }
 
-.vendor-contact-icon--phone {
+.contact-icon__wordmark-frame {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid currentColor;
+    border-radius: 0.65rem;
+}
+
+.contact-icon--compact {
+    width: 1.75rem;
+    height: 1.75rem;
+    flex-basis: 1.75rem;
+}
+
+.contact-icon--compact svg {
+    width: 1.55rem;
+    height: 1.55rem;
+}
+
+.contact-icon--phone {
     color: #007aff;
 }
 
-.vendor-contact-icon--email {
+.contact-icon--email {
     color: #ff375f;
 }
 
-.vendor-contact-icon--telegram {
+.contact-icon--telegram {
     color: #0a84ff;
 }
 
-.vendor-contact-icon--whatsapp {
-    color: #20a95b;
+.contact-icon--whatsapp {
+    color: #25d366;
 }
 
-.vendor-contact-icon--max {
-    border: 2px solid currentColor;
-    border-radius: 0.75rem;
+.contact-icon--max {
     color: #5856d6;
 }
 
-.vendor-contact-icon--instagram {
+.contact-icon--instagram {
     color: #bf5af2;
 }
 
-.vendor-contact-icon--facebook {
+.contact-icon--facebook {
     color: #1877f2;
 }
 
-.vendor-contact-icon--vk {
-    border: 2px solid currentColor;
-    border-radius: 0.75rem;
+.contact-icon--vk {
     color: #0077ff;
 }
 
-.vendor-contact-icon--website {
+.contact-icon--website {
     color: #5e5ce6;
+}
+
+.contact-icon--referral {
+    color: #007aff;
+}
+
+.contact-icon--advertising {
+    color: #ff9f0a;
+}
+
+.contact-icon--default {
+    color: #6e6e73;
 }
 
 .vendor-contact-list__item strong {

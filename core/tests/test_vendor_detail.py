@@ -72,7 +72,7 @@ def test_vendor_detail_shows_profile_and_event_history(client, django_user_model
     assert 'href="https://example.com/stage-pro"' in html
     assert 'href="https://vk.com/stage_pro"' in html
     for icon_name in ("phone", "email", "telegram", "whatsapp", "max", "instagram", "facebook", "vk", "website"):
-        assert f"vendor-contact-icon--{icon_name}" in html
+        assert f"contact-icon--{icon_name}" in html
     assert "Москва и область" in html
     assert "Предпочтительный способ связи" in html
     assert "manager@stage-pro.test" in html

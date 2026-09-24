@@ -75,7 +75,7 @@
                 {% if lead.phone %}
                     <a href="tel:{{ lead.phone }}" class="lead-profile-contact">
                         <span class="lead-profile-contact__label">
-                            {% include "core/partials/vendor_contact_icon.html" with kind="phone" %}
+                            {% include "core/partials/contact_icon.html" with kind="phone" %}
                             <span>Телефон</span>
                         </span>
                         <strong>{{ lead.phone }}</strong>
@@ -84,7 +84,7 @@
                 {% if lead.email %}
                     <a href="mailto:{{ lead.email }}" class="lead-profile-contact">
                         <span class="lead-profile-contact__label">
-                            {% include "core/partials/vendor_contact_icon.html" with kind="email" %}
+                            {% include "core/partials/contact_icon.html" with kind="email" %}
                             <span>Email</span>
                         </span>
                         <strong>{{ lead.email }}</strong>
@@ -93,7 +93,7 @@
                 {% if lead.telegram %}
                     <a href="{{ lead.telegram_url }}" target="_blank" rel="noopener noreferrer" class="lead-profile-contact">
                         <span class="lead-profile-contact__label">
-                            {% include "core/partials/vendor_contact_icon.html" with kind="telegram" %}
+                            {% include "core/partials/contact_icon.html" with kind="telegram" %}
                             <span>Telegram</span>
                         </span>
                         <strong>{{ lead.telegram }}</strong>
@@ -106,7 +106,7 @@
                         <div class="lead-profile-contact">
                     {% endif %}
                         <span class="lead-profile-contact__label">
-                            {% include "core/partials/vendor_contact_icon.html" with kind="whatsapp" %}
+                            {% include "core/partials/contact_icon.html" with kind="whatsapp" %}
                             <span>WhatsApp</span>
                         </span>
                         <strong>{{ lead.whatsapp }}</strong>
@@ -119,7 +119,7 @@
                         <div class="lead-profile-contact">
                     {% endif %}
                         <span class="lead-profile-contact__label">
-                            {% include "core/partials/vendor_contact_icon.html" with kind="max" %}
+                            {% include "core/partials/contact_icon.html" with kind="max" %}
                             <span>MAX</span>
                         </span>
                         <strong>{{ lead.max_messenger }}</strong>
@@ -128,7 +128,7 @@
                 {% if lead.instagram %}
                     <a href="{{ lead.instagram_url }}" target="_blank" rel="noopener noreferrer" class="lead-profile-contact">
                         <span class="lead-profile-contact__label">
-                            {% include "core/partials/vendor_contact_icon.html" with kind="instagram" %}
+                            {% include "core/partials/contact_icon.html" with kind="instagram" %}
                             <span>Instagram</span>
                         </span>
                         <strong>{{ lead.instagram }}</strong>
@@ -137,7 +137,7 @@
                 {% if lead.facebook %}
                     <a href="{{ lead.facebook_url }}" target="_blank" rel="noopener noreferrer" class="lead-profile-contact">
                         <span class="lead-profile-contact__label">
-                            {% include "core/partials/vendor_contact_icon.html" with kind="facebook" %}
+                            {% include "core/partials/contact_icon.html" with kind="facebook" %}
                             <span>Facebook</span>
                         </span>
                         <strong>{{ lead.facebook }}</strong>
@@ -146,7 +146,7 @@
                 {% if lead.vk %}
                     <a href="{{ lead.vk_url }}" target="_blank" rel="noopener noreferrer" class="lead-profile-contact">
                         <span class="lead-profile-contact__label">
-                            {% include "core/partials/vendor_contact_icon.html" with kind="vk" %}
+                            {% include "core/partials/contact_icon.html" with kind="vk" %}
                             <span>ВКонтакте</span>
                         </span>
                         <strong>{{ lead.vk }}</strong>
