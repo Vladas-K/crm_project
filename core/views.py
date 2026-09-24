@@ -1212,7 +1212,7 @@ class LeadCreateView(LeadManagementMixin, CRUDContextMixin, SuccessMessageMixin,
 
     model = Lead
     form_class = LeadForm
-    template_name = "core/object_form.html"
+    template_name = "core/lead_form.html"
     page_title = "Новый лид"
     success_message = "Лид создан."
     success_url = reverse_lazy("core:leads")
@@ -1224,7 +1224,7 @@ class LeadUpdateView(LeadManagementMixin, CRUDContextMixin, SuccessMessageMixin,
 
     model = Lead
     form_class = LeadForm
-    template_name = "core/object_form.html"
+    template_name = "core/lead_form.html"
     page_title = "Редактирование лида"
     success_message = "Лид обновлён."
     def get_success_url(self):

@@ -104,3 +104,10 @@ def test_lead_update_returns_to_detail_page(client, django_user_model, crm_objec
 
     assert response.status_code == 200
     assert response.context["cancel_url"] == reverse("core:lead_detail", kwargs={"pk": lead.pk})
+    assert response.template_name == ["core/lead_form.html"]
+    html = response.content.decode()
+    assert "Основная информация" in html
+    assert "Контактные данные" in html
+    assert "Запрос клиента" in html
+    assert "Работа с лидом" in html
+    assert "Дополнительные контакты" in html

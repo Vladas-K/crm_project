@@ -79,11 +79,45 @@ class LeadForm(BootstrapModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["manager"].queryset = User.objects.order_by("username")
+        stages = list(PipelineStage.objects.order_by("order", "name"))
+        self.fields["stage"].queryset = PipelineStage.objects.filter(pk__in=[stage.pk for stage in stages]).order_by(
+            "order", "name"
+        )
+        self.fields["stage"].widget.attrs.update(
+            {
+                "data-lost-stage-ids": json.dumps([str(stage.pk) for stage in stages if stage.is_lost]),
+                "data-stage-probabilities": json.dumps(
+                    {str(stage.pk): stage.probability for stage in stages}
+                ),
+            }
+        )
         self.fields["phone"].widget.attrs.update(
-            {"autocomplete": "tel", "data-russian-phone": "true", "inputmode": "tel"}
+            {
+                "autocomplete": "tel",
+                "data-russian-phone": "true",
+                "inputmode": "tel",
+                "placeholder": "+7 999 000-00-00",
+            }
+        )
+        self.fields["email"].widget.attrs.update(
+            {"autocomplete": "email", "placeholder": "name@example.com"}
         )
         self.fields["whatsapp"].widget.attrs.update(
-            {"autocomplete": "tel", "data-russian-phone": "true", "inputmode": "tel"}
+            {
+                "autocomplete": "tel",
+                "data-russian-phone": "true",
+                "inputmode": "tel",
+                "placeholder": "+7 999 000-00-00",
+            }
+        )
+        self.fields["name"].widget.attrs.update(
+            {"autocomplete": "name", "placeholder": "Имя или название компании"}
+        )
+        self.fields["source"].widget.attrs.update(
+            {"list": "lead-source-suggestions", "placeholder": "Например, рекомендация или сайт"}
+        )
+        self.fields["probability"].widget.attrs.update(
+            {"min": 0, "max": 100, "step": 1, "inputmode": "numeric"}
         )
 
     def clean_phone(self):

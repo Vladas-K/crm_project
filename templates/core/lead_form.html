@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | CRM{% endblock %}
+
+{% block content %}
+<div class="lead-form-shell">
+    <header class="lead-form-header">
+        <div>
+            <p class="lead-form-header__eyebrow mb-2">Воронка продаж</p>
+            <h1 class="lead-form-header__title">{{ page_title }}</h1>
+            <p class="lead-form-header__subtitle">Добавьте контакты, контекст обращения и данные для дальнейшей работы.</p>
+        </div>
+    </header>
+
+    <form id="lead-form" method="post" class="lead-form" novalidate>
+        {% csrf_token %}
+
+        {% for error in form.non_field_errors %}
+            <div class="alert alert-danger mb-0">{{ error }}</div>
+        {% endfor %}
+
+        <div class="lead-form-actions">
+            <div>
+                <strong>{{ page_title }}</strong>
+                <span>Поля со звёздочкой обязательны</span>
+            </div>
+            <div class="lead-form-actions__buttons">
+                <a href="{{ cancel_url }}" class="btn btn-outline-secondary">Отмена</a>
+                <button type="submit" class="btn btn-primary">{{ submit_label }}</button>
+            </div>
+        </div>
+
+        <section class="lead-form-section">
+            <div class="lead-form-section__header">
+                <div><span class="lead-form-section__number">01</span><h2>Основная информация</h2></div>
+                <p>Кто обратился и откуда пришла заявка.</p>
+            </div>
+            <div class="lead-form-grid">
+                {% include "core/includes/lead_form_field.html" with field=form.name %}
+                {% include "core/includes/lead_form_field.html" with field=form.source %}
+                <datalist id="lead-source-suggestions">
+                    <option value="Рекомендация"></option>
+                    <option value="Сайт"></option>
+                    <option value="Instagram"></option>
+                    <option value="Telegram"></option>
+                    <option value="Реклама"></option>
+                </datalist>
+            </div>
+        </section>
+
+        <section class="lead-form-section">
+            <div class="lead-form-section__header">
+                <div><span class="lead-form-section__number">02</span><h2>Контактные данные</h2></div>
+                <p>Основные каналы для первого ответа и дальнейшей связи.</p>
+            </div>
+            <div class="lead-form-grid">
+                {% include "core/includes/lead_form_field.html" with field=form.phone %}
+                {% include "core/includes/lead_form_field.html" with field=form.email %}
+                {% include "core/includes/lead_form_field.html" with field=form.telegram %}
+                <div class="lead-form-field">
+                    <div class="lead-form-field__label-row">
+                        <label class="lead-form-field__label" for="{{ form.whatsapp.id_for_label }}">{{ form.whatsapp.label }}</label>
+                        <button type="button" class="lead-form-copy-link" data-copy-phone-to-whatsapp>Использовать основной телефон</button>
+                    </div>
+                    {{ form.whatsapp }}
+                    {% if form.whatsapp.help_text %}<div class="lead-form-field__help">{{ form.whatsapp.help_text }}</div>{% endif %}
+                    {% for error in form.whatsapp.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </div>
+            </div>
+
+            <details class="lead-form-more"{% if form.max_messenger.value or form.instagram.value or form.facebook.value or form.vk.value %} open{% endif %}>
+                <summary>Дополнительные контакты</summary>
+                <p>MAX и социальные сети можно заполнить при наличии.</p>
+                <div class="lead-form-grid">
+                    {% include "core/includes/lead_form_field.html" with field=form.max_messenger %}
+                    {% include "core/includes/lead_form_field.html" with field=form.instagram %}
+                    {% include "core/includes/lead_form_field.html" with field=form.facebook %}
+                    {% include "core/includes/lead_form_field.html" with field=form.vk %}
+                </div>
+            </details>
+        </section>
+
+        <section class="lead-form-section">
+            <div class="lead-form-section__header">
+                <div><span class="lead-form-section__number">03</span><h2>Запрос клиента</h2></div>
+                <p>Предварительный формат и важный контекст входящей заявки.</p>
+            </div>
+            <div class="lead-form-grid">
+                {% include "core/includes/lead_form_field.html" with field=form.preliminary_event_format %}
+                {% include "core/includes/lead_form_field.html" with field=form.comment field_class="lead-form-field--wide" %}
+            </div>
+        </section>
+
+        <section class="lead-form-section">
+            <div class="lead-form-section__header">
+                <div><span class="lead-form-section__number">04</span><h2>Работа с лидом</h2></div>
+                <p>Этап воронки, вероятность сделки и ответственный сотрудник.</p>
+            </div>
+            <div class="lead-form-grid lead-form-grid--workflow">
+                {% include "core/includes/lead_form_field.html" with field=form.stage %}
+                {% include "core/includes/lead_form_field.html" with field=form.probability help_text="От 0 до 100%. При смене этапа подставляется его стандартное значение." %}
+                {% include "core/includes/lead_form_field.html" with field=form.manager help_text="Если менеджер не выбран, CRM назначит сотрудника с наименьшей нагрузкой." %}
+                {% if form.instance.pk %}
+                    {% include "core/includes/lead_form_field.html" with field=form.last_contact_at help_text="Дата последней зафиксированной коммуникации с лидом." %}
+                {% endif %}
+            </div>
+
+            <div class="lead-form-loss" data-loss-reason-container>
+                {% include "core/includes/lead_form_field.html" with field=form.loss_reason help_text="Обязательно только для проигранного этапа." %}
+            </div>
+        </section>
+    </form>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const phoneInput = document.getElementById("{{ form.phone.id_for_label }}");
+        const whatsappInput = document.getElementById("{{ form.whatsapp.id_for_label }}");
+        const stageInput = document.getElementById("{{ form.stage.id_for_label }}");
+        const probabilityInput = document.getElementById("{{ form.probability.id_for_label }}");
+        const lossContainer = document.querySelector("[data-loss-reason-container]");
+        const lossInput = document.getElementById("{{ form.loss_reason.id_for_label }}");
+
+        document.querySelectorAll("[data-russian-phone]").forEach((input) => {
+            input.addEventListener("input", () => {
+                const value = input.value.trimStart();
+                if (value.startsWith("8")) input.value = `+7${value.slice(1)}`;
+            });
+        });
+
+        document.querySelector("[data-copy-phone-to-whatsapp]")?.addEventListener("click", () => {
+            if (!phoneInput || !whatsappInput) return;
+            whatsappInput.value = phoneInput.value;
+            whatsappInput.focus();
+        });
+
+        if (stageInput && probabilityInput && lossContainer && lossInput) {
+            const lostStageIds = JSON.parse(stageInput.dataset.lostStageIds || "[]");
+            const stageProbabilities = JSON.parse(stageInput.dataset.stageProbabilities || "{}");
+
+            const updateLossReason = () => {
+                const isLost = lostStageIds.includes(stageInput.value);
+                lossContainer.hidden = !isLost;
+                lossInput.required = isLost;
+            };
+
+            stageInput.addEventListener("change", () => {
+                if (Object.hasOwn(stageProbabilities, stageInput.value)) {
+                    probabilityInput.value = stageProbabilities[stageInput.value];
+                }
+                updateLossReason();
+            });
+            updateLossReason();
+        }
+    });
+</script>
+{% endblock %}

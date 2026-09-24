@@ -1,7 +1,9 @@
+import json
+
 import pytest
 
 from core.forms import EventExpenseForm, EventForm, EventVendorForm, LeadForm, VendorForm
-from core.models import VendorRole
+from core.models import PipelineStage, VendorRole
 
 
 def test_event_form_preserves_event_date_in_date_input(crm_objects):
@@ -14,6 +16,7 @@ def test_event_form_preserves_event_date_in_date_input(crm_objects):
     assert f'value="{event.date:%d.%m.%Y}"' not in rendered_date
 
 
+@pytest.mark.django_db
 def test_lead_form_uses_explicit_online_contact_fields():
     """Форма лида показывает известные сервисы вместо общего мессенджера."""
 
@@ -23,6 +26,26 @@ def test_lead_form_uses_explicit_online_contact_fields():
     assert {"telegram", "whatsapp", "max_messenger", "instagram", "facebook", "vk"}.issubset(form.fields)
     assert form.fields["phone"].widget.attrs["data-russian-phone"] == "true"
     assert form.fields["whatsapp"].widget.attrs["data-russian-phone"] == "true"
+
+
+@pytest.mark.django_db
+def test_lead_form_exposes_stage_metadata_for_dependent_fields():
+    """Форма передаёт интерфейсу проигранные этапы и стандартные вероятности."""
+
+    regular_stage = PipelineStage.objects.create(
+        name="Квалификация формы", code="form_qualification", order=1, probability=25
+    )
+    lost_stage = PipelineStage.objects.create(
+        name="Отказ формы", code="form_lost", order=2, probability=0, is_lost=True
+    )
+
+    form = LeadForm()
+    lost_ids = json.loads(form.fields["stage"].widget.attrs["data-lost-stage-ids"])
+    probabilities = json.loads(form.fields["stage"].widget.attrs["data-stage-probabilities"])
+
+    assert str(lost_stage.pk) in lost_ids
+    assert str(regular_stage.pk) not in lost_ids
+    assert probabilities[str(regular_stage.pk)] == 25
 
 
 def test_expense_form_uses_linked_vendor_assignment(crm_objects):
