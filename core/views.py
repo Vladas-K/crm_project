@@ -390,6 +390,19 @@ class LeadListView(CRMLoginRequiredMixin, ListView):
         return context
 
 
+class LeadDetailView(CRMLoginRequiredMixin, DetailView):
+    """Показывает контактные данные, этап и состояние SLA отдельного лида."""
+
+    model = Lead
+    template_name = "core/lead_detail.html"
+    context_object_name = "lead"
+    queryset = Lead.objects.select_related(
+        "stage",
+        "manager",
+        "preliminary_event_format",
+    )
+
+
 class LeadAutocompleteView(CRMLoginRequiredMixin, View):
     """Возвращает короткий список совпадений для подсказок в поиске лидов."""
 
@@ -1213,8 +1226,15 @@ class LeadUpdateView(LeadManagementMixin, CRUDContextMixin, SuccessMessageMixin,
     template_name = "core/object_form.html"
     page_title = "Редактирование лида"
     success_message = "Лид обновлён."
-    success_url = reverse_lazy("core:leads")
-    cancel_url = reverse_lazy("core:leads")
+    def get_success_url(self):
+        """После сохранения возвращает пользователя в карточку лида."""
+
+        return reverse("core:lead_detail", kwargs={"pk": self.object.pk})
+
+    def get_cancel_url(self):
+        """Отмена редактирования возвращает пользователя в карточку лида."""
+
+        return reverse("core:lead_detail", kwargs={"pk": self.object.pk})
 
 
 class LeadDeleteView(SystemAccessMixin, DeleteView):

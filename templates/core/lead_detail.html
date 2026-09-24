@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}{{ lead.name }} | CRM{% endblock %}
+
+{% block content %}
+<div class="lead-profile-header mb-4">
+    <div class="lead-profile-header__main">
+        <p class="lead-profile-header__eyebrow mb-2">Карточка лида</p>
+        <h1 class="lead-profile-header__title mb-2">{{ lead.name }}</h1>
+        <div class="lead-profile-header__meta">
+            {% if lead.stage %}
+                {% if lead.stage.is_lost %}
+                    <span class="event-chip event-chip--danger">{{ lead.stage }}</span>
+                {% elif lead.probability >= 75 %}
+                    <span class="event-chip event-chip--success">{{ lead.stage }}</span>
+                {% elif lead.probability >= 40 %}
+                    <span class="event-chip event-chip--warning">{{ lead.stage }}</span>
+                {% else %}
+                    <span class="event-chip event-chip--soft">{{ lead.stage }}</span>
+                {% endif %}
+            {% else %}
+                <span class="event-chip event-chip--soft">Этап не указан</span>
+            {% endif %}
+            {% if lead.needs_response %}
+                <span class="lead-attention-chip lead-attention-chip--danger">Требует ответа</span>
+            {% elif lead.last_contact_at %}
+                <span class="lead-attention-chip lead-attention-chip--success">Ответ получен</span>
+            {% else %}
+                <span class="lead-attention-chip">В пределах SLA</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="event-actions lead-profile-header__actions">
+        <a href="{% url 'core:leads' %}" class="btn btn-outline-secondary">К списку</a>
+        {% if crm_permissions.can_manage_leads %}
+            <a href="{% url 'core:lead_update' lead.pk %}" class="btn btn-primary">Редактировать</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="lead-profile-metrics mb-4">
+    <div class="metric-card metric-card--large">
+        <span>Вероятность сделки</span>
+        <strong>{{ lead.probability }}%</strong>
+        <span class="lead-probability-bar lead-profile-probability" style="--lead-probability: {{ lead.probability }}%"><span></span></span>
+    </div>
+    <div class="metric-card metric-card--large">
+        <span>Создан</span>
+        <strong>{{ lead.created_at|date:"d.m.Y" }}</strong>
+        <small>{{ lead.created_at|date:"H:i" }}</small>
+    </div>
+    <div class="metric-card metric-card--large">
+        <span>Последний контакт</span>
+        {% if lead.last_contact_at %}
+            <strong>{{ lead.last_contact_at|date:"d.m.Y" }}</strong>
+            <small>{{ lead.last_contact_at|date:"H:i" }}</small>
+        {% else %}
+            <strong>Не было</strong>
+            <small>Дедлайн: {{ lead.follow_up_deadline|date:"d.m.Y H:i" }}</small>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-7">
+        <section class="premium-panel h-100">
+            <div class="premium-panel__header">
+                <div>
+                    <h2 class="premium-panel__title">Контакты и обращение</h2>
+                    <p class="premium-panel__subtitle">Данные для связи и контекст входящей заявки.</p>
+                </div>
+            </div>
+
+            <div class="lead-profile-contact-grid">
+                {% if lead.phone %}
+                    <a href="tel:{{ lead.phone }}" class="lead-profile-contact">
+                        <span class="lead-profile-contact__label">
+                            {% include "core/partials/vendor_contact_icon.html" with kind="phone" %}
+                            <span>Телефон</span>
+                        </span>
+                        <strong>{{ lead.phone }}</strong>
+                    </a>
+                {% endif %}
+                {% if lead.email %}
+                    <a href="mailto:{{ lead.email }}" class="lead-profile-contact">
+                        <span class="lead-profile-contact__label">
+                            {% include "core/partials/vendor_contact_icon.html" with kind="email" %}
+                            <span>Email</span>
+                        </span>
+                        <strong>{{ lead.email }}</strong>
+                    </a>
+                {% endif %}
+                {% if lead.messenger %}
+                    <div class="lead-profile-contact">
+                        <span class="lead-profile-contact__label">
+                            {% include "core/partials/vendor_contact_icon.html" with kind="messenger" %}
+                            <span>Мессенджер</span>
+                        </span>
+                        <strong>{{ lead.messenger }}</strong>
+                    </div>
+                {% endif %}
+                {% if not lead.phone and not lead.email and not lead.messenger %}
+                    <p class="text-secondary mb-0">Контактные данные пока не указаны.</p>
+                {% endif %}
+            </div>
+
+            <div class="lead-profile-info mt-4">
+                <div class="lead-profile-info__item">
+                    <span>Источник</span>
+                    <div class="lead-profile-source">
+                        {% include "core/partials/lead_source_icon.html" with source=lead.source %}
+                        <strong>{{ lead.source|default:"Не указан" }}</strong>
+                    </div>
+                </div>
+                <div class="lead-profile-info__item">
+                    <span>Предварительный формат</span>
+                    <p>{{ lead.preliminary_event_format|default:"Не указан" }}</p>
+                </div>
+                <div class="lead-profile-info__item">
+                    <span>Комментарий</span>
+                    <p>{{ lead.comment|default:"Комментария пока нет"|linebreaksbr }}</p>
+                </div>
+                {% if lead.loss_reason %}
+                    <div class="lead-profile-info__item lead-profile-info__item--danger">
+                        <span>Причина отказа</span>
+                        <p>{{ lead.loss_reason|linebreaksbr }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+
+    <div class="col-xl-5">
+        <section class="premium-panel h-100">
+            <div class="premium-panel__header">
+                <div>
+                    <h2 class="premium-panel__title">Ответственный и SLA</h2>
+                    <p class="premium-panel__subtitle">Текущий владелец лида и контроль первого ответа.</p>
+                </div>
+            </div>
+            <div class="lead-profile-info">
+                <div class="lead-profile-info__item">
+                    <span>Менеджер</span>
+                    {% if lead.manager %}
+                        <p><strong>{{ lead.manager.get_full_name|default:lead.manager.get_username }}</strong></p>
+                        <small>@{{ lead.manager.get_username }}</small>
+                    {% else %}
+                        <p class="text-secondary">Не назначен</p>
+                    {% endif %}
+                </div>
+                <div class="lead-profile-info__item">
+                    <span>Статус первого ответа</span>
+                    {% if lead.needs_response %}
+                        <p class="lead-profile-status lead-profile-status--danger">Срок ответа превышен</p>
+                        <small>Лид ожидает контакта более 24 часов.</small>
+                    {% elif lead.last_contact_at %}
+                        <p class="lead-profile-status lead-profile-status--success">Контакт состоялся</p>
+                        <small>{{ lead.last_contact_at|date:"d.m.Y H:i" }}</small>
+                    {% else %}
+                        <p class="lead-profile-status">В пределах SLA</p>
+                        <small>Ответ требуется до {{ lead.follow_up_deadline|date:"d.m.Y H:i" }}.</small>
+                    {% endif %}
+                </div>
+                <div class="lead-profile-info__item">
+                    <span>Текущий этап</span>
+                    <p>{{ lead.stage|default:"Не указан" }}</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

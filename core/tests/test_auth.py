@@ -46,6 +46,7 @@ def test_detail_and_form_views_require_login(client, crm_objects):
     )
     urls = [
         reverse("core:lead_create"),
+        reverse("core:lead_detail", kwargs={"pk": crm_objects["lead"].pk}),
         reverse("core:lead_update", kwargs={"pk": crm_objects["lead"].pk}),
         reverse("core:lead_delete", kwargs={"pk": crm_objects["lead"].pk}),
         reverse("core:pipeline_create"),

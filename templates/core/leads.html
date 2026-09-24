@@ -125,11 +125,7 @@
             <article class="lead-card{% if lead.needs_response %} lead-card--attention{% endif %}">
                 <div class="lead-card__identity">
                     <span class="lead-card__mobile-label">Лид</span>
-                    {% if crm_permissions.can_manage_leads %}
-                        <a href="{% url 'core:lead_update' lead.pk %}" class="lead-card__name">{{ lead.name }}</a>
-                    {% else %}
-                        <strong class="lead-card__name">{{ lead.name }}</strong>
-                    {% endif %}
+                    <a href="{% url 'core:lead_detail' lead.pk %}" class="lead-card__name">{{ lead.name }}</a>
                     <div class="lead-card__contacts">
                         {% if lead.phone %}<a href="tel:{{ lead.phone }}">{{ lead.phone }}</a>{% endif %}
                         {% if lead.email %}<a href="mailto:{{ lead.email }}">{{ lead.email }}</a>{% endif %}
@@ -199,6 +195,7 @@
                         <details class="lead-action-menu">
                             <summary aria-label="Действия с лидом {{ lead.name }}">•••</summary>
                             <div class="lead-action-menu__popover">
+                                <a href="{% url 'core:lead_detail' lead.pk %}">Открыть профиль</a>
                                 {% if crm_permissions.can_manage_leads %}<a href="{% url 'core:lead_update' lead.pk %}">Изменить</a>{% endif %}
                                 {% if crm_permissions.can_manage_system %}<a href="{% url 'core:lead_delete' lead.pk %}" class="lead-action-menu__danger">Удалить</a>{% endif %}
                             </div>
