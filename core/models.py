@@ -63,7 +63,6 @@ class ContactMixin(models.Model):
 
     phone = models.CharField("Телефон", max_length=30, blank=True)
     email = models.EmailField("Email", blank=True)
-    messenger = models.CharField("Мессенджер", max_length=100, blank=True)
 
     class Meta:
         abstract = True
@@ -169,6 +168,11 @@ class Lead(ContactMixin):
     """Потенциальный клиент в воронке продаж до конвертации в клиента и мероприятие."""
 
     name = models.CharField("Имя", max_length=255)
+    telegram = models.CharField("Telegram", max_length=150, blank=True, help_text="Username или полная ссылка")
+    whatsapp = models.CharField("WhatsApp", max_length=150, blank=True, help_text="Номер телефона или полная ссылка")
+    max_messenger = models.CharField("MAX", max_length=150, blank=True, help_text="Контакт или полная ссылка")
+    instagram = models.CharField("Instagram", max_length=150, blank=True, help_text="Username или полная ссылка")
+    vk = models.CharField("ВКонтакте", max_length=150, blank=True, help_text="Username или полная ссылка")
     source = models.CharField("Источник", max_length=120, blank=True)
     preliminary_event_format = models.ForeignKey(
         EventFormat,
@@ -227,6 +231,48 @@ class Lead(ContactMixin):
         deadline = self.follow_up_deadline
         return bool(deadline and timezone.now() > deadline and not self.last_contact_at)
 
+    @property
+    def telegram_url(self) -> str:
+        """Возвращает ссылку Telegram для username или готового URL."""
+
+        value = self.telegram.strip()
+        if not value:
+            return ""
+        if value.startswith(("http://", "https://")):
+            return value
+        return f"https://t.me/{value.lstrip('@')}"
+
+    @property
+    def whatsapp_url(self) -> str:
+        """Возвращает ссылку WhatsApp для номера телефона или готового URL."""
+
+        value = self.whatsapp.strip()
+        if not value:
+            return ""
+        if value.startswith(("http://", "https://")):
+            return value
+        digits = "".join(character for character in normalize_russian_phone(value) if character.isdigit())
+        return f"https://wa.me/{digits}" if digits else ""
+
+    @property
+    def max_messenger_url(self) -> str:
+        """Возвращает ссылку MAX, если указан полный URL."""
+
+        value = self.max_messenger.strip()
+        return value if value.startswith(("http://", "https://")) else ""
+
+    @property
+    def instagram_url(self) -> str:
+        """Возвращает ссылку на профиль Instagram."""
+
+        return social_profile_url(self.instagram, "instagram.com")
+
+    @property
+    def vk_url(self) -> str:
+        """Возвращает ссылку на профиль ВКонтакте."""
+
+        return social_profile_url(self.vk, "vk.com")
+
     def save(self, *args, **kwargs):
         """Назначает sales manager и подтягивает вероятность из этапа перед сохранением."""
 
@@ -245,6 +291,8 @@ class Lead(ContactMixin):
 
 class Client(ContactMixin):
     """Квалифицированный клиент CRM, связанный с лидами и историей мероприятий."""
+
+    messenger = models.CharField("Мессенджер", max_length=100, blank=True)
 
     class ClientType(models.TextChoices):
         B2B = "b2b", "B2B"

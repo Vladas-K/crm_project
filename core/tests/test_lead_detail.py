@@ -26,7 +26,11 @@ def test_lead_detail_shows_contact_pipeline_and_sla(client, django_user_model, c
     lead = crm_objects["lead"]
     lead.phone = "+7 999 100-20-30"
     lead.email = "lead@example.com"
-    lead.messenger = "@lead_contact"
+    lead.telegram = "@lead_contact"
+    lead.whatsapp = "8 (999) 100-20-30"
+    lead.max_messenger = "https://max.ru/lead-contact"
+    lead.instagram = "@lead_contact"
+    lead.vk = "lead_contact"
     lead.source = "Instagram"
     lead.comment = "Нужна площадка на 80 гостей"
     lead.last_contact_at = timezone.now()
@@ -42,10 +46,15 @@ def test_lead_detail_shows_contact_pipeline_and_sla(client, django_user_model, c
     assert 'href="tel:+7 999 100-20-30"' in html
     assert 'href="mailto:lead@example.com"' in html
     assert "@lead_contact" in html
+    assert 'href="https://t.me/lead_contact"' in html
+    assert 'href="https://wa.me/79991002030"' in html
+    assert 'href="https://max.ru/lead-contact"' in html
+    assert 'href="https://instagram.com/lead_contact"' in html
+    assert 'href="https://vk.com/lead_contact"' in html
     assert "Instagram" in html
     assert "Нужна площадка на 80 гостей" in html
     assert "Ответ получен" in html
-    for icon_name in ("phone", "email", "messenger"):
+    for icon_name in ("phone", "email", "telegram", "whatsapp", "max", "instagram", "vk"):
         assert f"vendor-contact-icon--{icon_name}" in html
     assert reverse("core:lead_update", kwargs={"pk": lead.pk}) not in html
 

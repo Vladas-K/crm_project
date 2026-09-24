@@ -55,7 +55,11 @@ class LeadForm(BootstrapModelForm):
             "name",
             "phone",
             "email",
-            "messenger",
+            "telegram",
+            "whatsapp",
+            "max_messenger",
+            "instagram",
+            "vk",
             "source",
             "preliminary_event_format",
             "comment",
@@ -74,6 +78,25 @@ class LeadForm(BootstrapModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["manager"].queryset = User.objects.order_by("username")
+        self.fields["phone"].widget.attrs.update(
+            {"autocomplete": "tel", "data-russian-phone": "true", "inputmode": "tel"}
+        )
+        self.fields["whatsapp"].widget.attrs.update(
+            {"autocomplete": "tel", "data-russian-phone": "true", "inputmode": "tel"}
+        )
+
+    def clean_phone(self):
+        """Нормализует основной российский номер лида."""
+
+        return normalize_russian_phone(self.cleaned_data.get("phone", ""))
+
+    def clean_whatsapp(self):
+        """Нормализует номер WhatsApp, не изменяя готовую ссылку."""
+
+        value = self.cleaned_data.get("whatsapp", "")
+        if value.startswith(("http://", "https://")):
+            return value
+        return normalize_russian_phone(value)
 
 
 class PipelineStageForm(BootstrapModelForm):

@@ -1,6 +1,6 @@
 import pytest
 
-from core.forms import EventExpenseForm, EventForm, EventVendorForm, VendorForm
+from core.forms import EventExpenseForm, EventForm, EventVendorForm, LeadForm, VendorForm
 from core.models import VendorRole
 
 
@@ -12,6 +12,17 @@ def test_event_form_preserves_event_date_in_date_input(crm_objects):
 
     assert f'value="{event.date:%Y-%m-%d}"' in rendered_date
     assert f'value="{event.date:%d.%m.%Y}"' not in rendered_date
+
+
+def test_lead_form_uses_explicit_online_contact_fields():
+    """Форма лида показывает известные сервисы вместо общего мессенджера."""
+
+    form = LeadForm()
+
+    assert "messenger" not in form.fields
+    assert {"telegram", "whatsapp", "max_messenger", "instagram", "vk"}.issubset(form.fields)
+    assert form.fields["phone"].widget.attrs["data-russian-phone"] == "true"
+    assert form.fields["whatsapp"].widget.attrs["data-russian-phone"] == "true"
 
 
 def test_expense_form_uses_linked_vendor_assignment(crm_objects):

@@ -91,7 +91,16 @@ class PipelineStageAdmin(admin.ModelAdmin):
 class LeadAdmin(admin.ModelAdmin):
     list_display = ("name", "source", "stage", "probability", "manager", "created_at")
     list_filter = ("stage", "source")
-    search_fields = ("name", "phone", "email", "messenger")
+    search_fields = (
+        "name",
+        "phone",
+        "email",
+        "telegram",
+        "whatsapp",
+        "max_messenger",
+        "instagram",
+        "vk",
+    )
 
 
 @admin.register(Client)

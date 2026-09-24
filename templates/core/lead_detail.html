@@ -90,16 +90,60 @@
                         <strong>{{ lead.email }}</strong>
                     </a>
                 {% endif %}
-                {% if lead.messenger %}
-                    <div class="lead-profile-contact">
+                {% if lead.telegram %}
+                    <a href="{{ lead.telegram_url }}" target="_blank" rel="noopener noreferrer" class="lead-profile-contact">
                         <span class="lead-profile-contact__label">
-                            {% include "core/partials/vendor_contact_icon.html" with kind="messenger" %}
-                            <span>Мессенджер</span>
+                            {% include "core/partials/vendor_contact_icon.html" with kind="telegram" %}
+                            <span>Telegram</span>
                         </span>
-                        <strong>{{ lead.messenger }}</strong>
-                    </div>
+                        <strong>{{ lead.telegram }}</strong>
+                    </a>
                 {% endif %}
-                {% if not lead.phone and not lead.email and not lead.messenger %}
+                {% if lead.whatsapp %}
+                    {% if lead.whatsapp_url %}
+                        <a href="{{ lead.whatsapp_url }}" target="_blank" rel="noopener noreferrer" class="lead-profile-contact">
+                    {% else %}
+                        <div class="lead-profile-contact">
+                    {% endif %}
+                        <span class="lead-profile-contact__label">
+                            {% include "core/partials/vendor_contact_icon.html" with kind="whatsapp" %}
+                            <span>WhatsApp</span>
+                        </span>
+                        <strong>{{ lead.whatsapp }}</strong>
+                    {% if lead.whatsapp_url %}</a>{% else %}</div>{% endif %}
+                {% endif %}
+                {% if lead.max_messenger %}
+                    {% if lead.max_messenger_url %}
+                        <a href="{{ lead.max_messenger_url }}" target="_blank" rel="noopener noreferrer" class="lead-profile-contact">
+                    {% else %}
+                        <div class="lead-profile-contact">
+                    {% endif %}
+                        <span class="lead-profile-contact__label">
+                            {% include "core/partials/vendor_contact_icon.html" with kind="max" %}
+                            <span>MAX</span>
+                        </span>
+                        <strong>{{ lead.max_messenger }}</strong>
+                    {% if lead.max_messenger_url %}</a>{% else %}</div>{% endif %}
+                {% endif %}
+                {% if lead.instagram %}
+                    <a href="{{ lead.instagram_url }}" target="_blank" rel="noopener noreferrer" class="lead-profile-contact">
+                        <span class="lead-profile-contact__label">
+                            {% include "core/partials/vendor_contact_icon.html" with kind="instagram" %}
+                            <span>Instagram</span>
+                        </span>
+                        <strong>{{ lead.instagram }}</strong>
+                    </a>
+                {% endif %}
+                {% if lead.vk %}
+                    <a href="{{ lead.vk_url }}" target="_blank" rel="noopener noreferrer" class="lead-profile-contact">
+                        <span class="lead-profile-contact__label">
+                            {% include "core/partials/vendor_contact_icon.html" with kind="vk" %}
+                            <span>ВКонтакте</span>
+                        </span>
+                        <strong>{{ lead.vk }}</strong>
+                    </a>
+                {% endif %}
+                {% if not lead.phone and not lead.email and not lead.telegram and not lead.whatsapp and not lead.max_messenger and not lead.instagram and not lead.vk %}
                     <p class="text-secondary mb-0">Контактные данные пока не указаны.</p>
                 {% endif %}
             </div>

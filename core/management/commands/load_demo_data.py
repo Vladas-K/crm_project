@@ -338,13 +338,13 @@ class Command(BaseCommand):
                 None,
             ),
         ]
-        for name, phone, email, messenger, source, event_format, comment, stage_code, manager, last_contact in specs:
+        for name, phone, email, telegram, source, event_format, comment, stage_code, manager, last_contact in specs:
             lead, _ = Lead.objects.update_or_create(
                 name=name,
                 defaults={
                     "phone": phone,
                     "email": email,
-                    "messenger": messenger,
+                    "telegram": telegram,
                     "source": source,
                     "preliminary_event_format": event_format,
                     "comment": comment,
@@ -385,7 +385,7 @@ class Command(BaseCommand):
                     "client_type": client_type,
                     "phone": lead.phone,
                     "email": lead.email,
-                    "messenger": lead.messenger,
+                    "messenger": lead.telegram,
                     "contacts": f"{lead.phone}, {lead.email}",
                     "segment": segment,
                     "ltv": ltv,
