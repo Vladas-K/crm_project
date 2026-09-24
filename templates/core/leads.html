@@ -290,6 +290,24 @@
         }
 
         const actionMenus = document.querySelectorAll(".lead-action-menu");
+        const positionActionMenu = (menu) => {
+            menu.classList.remove("lead-action-menu--drop-up");
+            const popover = menu.querySelector(".lead-action-menu__popover");
+            if (!popover) return;
+            popover.style.transform = "";
+
+            const popoverRect = popover.getBoundingClientRect();
+            const menuRect = menu.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - menuRect.bottom;
+            const spaceAbove = menuRect.top;
+            if (popoverRect.height > spaceBelow - 12 && spaceAbove > popoverRect.height + 12) {
+                menu.classList.add("lead-action-menu--drop-up");
+            } else if (popoverRect.bottom > window.innerHeight - 12) {
+                const overflow = popoverRect.bottom - window.innerHeight + 12;
+                popover.style.transform = `translateY(-${overflow}px)`;
+            }
+        };
+
         actionMenus.forEach((menu) => {
             let closeTimer;
 
@@ -298,11 +316,22 @@
                 closeTimer = setTimeout(() => menu.removeAttribute("open"), 180);
             });
             menu.addEventListener("toggle", () => {
-                if (!menu.open) return;
+                if (!menu.open) {
+                    menu.classList.remove("lead-action-menu--drop-up");
+                    const popover = menu.querySelector(".lead-action-menu__popover");
+                    if (popover) popover.style.transform = "";
+                    return;
+                }
                 actionMenus.forEach((otherMenu) => {
                     if (otherMenu !== menu) otherMenu.removeAttribute("open");
                 });
+                positionActionMenu(menu);
             });
+        });
+
+        window.addEventListener("resize", () => {
+            const openMenu = document.querySelector(".lead-action-menu[open]");
+            if (openMenu) positionActionMenu(openMenu);
         });
 
         document.addEventListener("click", (event) => {
