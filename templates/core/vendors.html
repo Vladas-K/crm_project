@@ -152,12 +152,12 @@
 
                 <div class="vendor-card__actions">
                     {% if crm_permissions.can_manage_system %}
-                        <details class="vendor-action-menu">
-                            <summary aria-label="Действия с подрядчиком {{ vendor.name }}">•••</summary>
-                            <div class="vendor-action-menu__popover">
+                        <details class="record-action-menu">
+                            <summary aria-label="Действия с подрядчиком {{ vendor.name }}"><span aria-hidden="true">•••</span></summary>
+                            <div class="record-action-menu__popover">
                                 <a href="{% url 'core:vendor_detail' vendor.pk %}">Открыть профиль</a>
                                 <a href="{% url 'core:vendor_update' vendor.pk %}">Изменить</a>
-                                <a href="{% url 'core:vendor_delete' vendor.pk %}" class="vendor-action-menu__danger">Удалить</a>
+                                <a href="{% url 'core:vendor_delete' vendor.pk %}" class="record-action-menu__danger">Удалить</a>
                             </div>
                         </details>
                     {% else %}
@@ -247,51 +247,8 @@
             if (!wrapper.contains(event.target)) hideSuggestions();
         });
 
-        const actionMenus = document.querySelectorAll(".vendor-action-menu");
-        const supportsMenuHover = window.matchMedia("(hover: hover) and (pointer: fine)");
-        actionMenus.forEach((menu) => {
-            let openTimer;
-            let closeTimer;
-
-            menu.addEventListener("mouseenter", () => {
-                clearTimeout(closeTimer);
-                if (!supportsMenuHover.matches || menu.open) return;
-                openTimer = setTimeout(() => menu.setAttribute("open", ""), 140);
-            });
-            menu.addEventListener("mouseleave", () => {
-                clearTimeout(openTimer);
-                closeTimer = setTimeout(() => {
-                    menu.removeAttribute("open");
-                    menu.querySelector("summary")?.blur();
-                }, 220);
-            });
-            menu.addEventListener("toggle", () => {
-                if (!menu.open) return;
-                actionMenus.forEach((otherMenu) => {
-                    if (otherMenu !== menu) {
-                        otherMenu.removeAttribute("open");
-                        otherMenu.querySelector("summary")?.blur();
-                    }
-                });
-            });
-        });
-
-        document.addEventListener("click", (event) => {
-            actionMenus.forEach((menu) => {
-                if (!menu.contains(event.target)) {
-                    menu.removeAttribute("open");
-                    menu.querySelector("summary")?.blur();
-                }
-            });
-        });
-        document.addEventListener("keydown", (event) => {
-            if (event.key !== "Escape") return;
-            const openMenu = document.querySelector(".vendor-action-menu[open]");
-            if (!openMenu) return;
-            openMenu.removeAttribute("open");
-            openMenu.querySelector("summary")?.focus();
-        });
     })();
 </script>
+{% include "core/partials/record_action_menus.html" %}
 {% include "core/partials/clickable_profile_cards.html" %}
 {% endblock %}

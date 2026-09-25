@@ -118,6 +118,11 @@ def test_lead_list_shows_only_phone_and_prefers_manager_full_name(client, django
     """Каталог скрывает email и не дублирует username вместо имени менеджера."""
 
     viewer = django_user_model.objects.create_user(username="lead_catalog_viewer")
+    TeamMemberProfile.objects.create(
+        user=viewer,
+        role=CRMRole.PROJECT_MANAGER,
+        can_manage_leads=True,
+    )
     manager = django_user_model.objects.create_user(
         username="sales_named", first_name="Анна", last_name="Соколова"
     )
@@ -137,6 +142,7 @@ def test_lead_list_shows_only_phone_and_prefers_manager_full_name(client, django
     assert 'href="mailto:lead@example.com"' not in html
     detail_url = reverse("core:lead_detail", kwargs={"pk": lead.pk})
     assert f'data-profile-url="{detail_url}"' in html
+    assert 'class="record-action-menu"' in html
     assert "Анна Соколова" in html
     assert "@sales_named" in html
     assert ">Реакция<" in html

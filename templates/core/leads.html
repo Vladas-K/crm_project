@@ -195,12 +195,12 @@
 
                 <div class="lead-card__actions">
                     {% if crm_permissions.can_manage_leads or crm_permissions.can_manage_system %}
-                        <details class="lead-action-menu">
+                        <details class="record-action-menu">
                             <summary aria-label="Действия с лидом {{ lead.name }}"><span aria-hidden="true">•••</span></summary>
-                            <div class="lead-action-menu__popover">
+                            <div class="record-action-menu__popover">
                                 <a href="{% url 'core:lead_detail' lead.pk %}">Открыть профиль</a>
                                 {% if crm_permissions.can_manage_leads %}<a href="{% url 'core:lead_update' lead.pk %}">Изменить</a>{% endif %}
-                                {% if crm_permissions.can_manage_system %}<a href="{% url 'core:lead_delete' lead.pk %}" class="lead-action-menu__danger">Удалить</a>{% endif %}
+                                {% if crm_permissions.can_manage_system %}<a href="{% url 'core:lead_delete' lead.pk %}" class="record-action-menu__danger">Удалить</a>{% endif %}
                             </div>
                         </details>
                     {% endif %}
@@ -289,80 +289,8 @@
             });
         }
 
-        const actionMenus = document.querySelectorAll(".lead-action-menu");
-        const supportsMenuHover = window.matchMedia("(hover: hover) and (pointer: fine)");
-        const positionActionMenu = (menu) => {
-            menu.classList.remove("lead-action-menu--drop-up");
-            const popover = menu.querySelector(".lead-action-menu__popover");
-            if (!popover) return;
-            popover.style.transform = "";
-
-            const popoverRect = popover.getBoundingClientRect();
-            const menuRect = menu.getBoundingClientRect();
-            const spaceBelow = window.innerHeight - menuRect.bottom;
-            const spaceAbove = menuRect.top;
-            if (popoverRect.height > spaceBelow - 12 && spaceAbove > popoverRect.height + 12) {
-                menu.classList.add("lead-action-menu--drop-up");
-            } else if (popoverRect.bottom > window.innerHeight - 12) {
-                const overflow = popoverRect.bottom - window.innerHeight + 12;
-                popover.style.transform = `translateY(-${overflow}px)`;
-            }
-        };
-
-        actionMenus.forEach((menu) => {
-            let openTimer;
-            let closeTimer;
-
-            menu.addEventListener("mouseenter", () => {
-                clearTimeout(closeTimer);
-                if (!supportsMenuHover.matches || menu.open) return;
-                openTimer = setTimeout(() => menu.setAttribute("open", ""), 140);
-            });
-            menu.addEventListener("mouseleave", () => {
-                clearTimeout(openTimer);
-                closeTimer = setTimeout(() => {
-                    menu.removeAttribute("open");
-                    menu.querySelector("summary")?.blur();
-                }, 220);
-            });
-            menu.addEventListener("toggle", () => {
-                if (!menu.open) {
-                    menu.classList.remove("lead-action-menu--drop-up");
-                    const popover = menu.querySelector(".lead-action-menu__popover");
-                    if (popover) popover.style.transform = "";
-                    return;
-                }
-                actionMenus.forEach((otherMenu) => {
-                    if (otherMenu !== menu) {
-                        otherMenu.removeAttribute("open");
-                        otherMenu.querySelector("summary")?.blur();
-                    }
-                });
-                positionActionMenu(menu);
-            });
-        });
-
-        window.addEventListener("resize", () => {
-            const openMenu = document.querySelector(".lead-action-menu[open]");
-            if (openMenu) positionActionMenu(openMenu);
-        });
-
-        document.addEventListener("click", (event) => {
-            actionMenus.forEach((menu) => {
-                if (!menu.contains(event.target)) {
-                    menu.removeAttribute("open");
-                    menu.querySelector("summary")?.blur();
-                }
-            });
-        });
-        document.addEventListener("keydown", (event) => {
-            if (event.key !== "Escape") return;
-            const openMenu = document.querySelector(".lead-action-menu[open]");
-            if (!openMenu) return;
-            openMenu.removeAttribute("open");
-            openMenu.querySelector("summary")?.focus();
-        });
     })();
 </script>
+{% include "core/partials/record_action_menus.html" %}
 {% include "core/partials/clickable_profile_cards.html" %}
 {% endblock %}

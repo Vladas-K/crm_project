@@ -217,6 +217,7 @@ def test_vendor_list_renders_catalog_cards_and_compact_actions(client, django_us
     assert response.status_code == 200
     assert "vendor-card" in html
     assert f'data-profile-url="{reverse("core:vendor_detail", kwargs={"pk": vendor.pk})}"' in html
+    assert 'class="record-action-menu"' in html
     assert "Анна Белова" in html
     assert "Москва и область" in html
     assert "Открыть профиль" in html
