@@ -1,21 +1,21 @@
 <script>
     (() => {
-        const actionMenus = document.querySelectorAll(".record-action-menu");
+        const actionMenus = document.querySelectorAll(".item-action-menu");
         const supportsMenuHover = window.matchMedia("(hover: hover) and (pointer: fine)");
 
         const closeMenu = (menu, { restoreFocus = false } = {}) => {
             menu.removeAttribute("open");
-            menu.classList.remove("record-action-menu--drop-up");
+            menu.classList.remove("item-action-menu--drop-up");
             const summary = menu.querySelector("summary");
-            const popover = menu.querySelector(".record-action-menu__popover");
+            const popover = menu.querySelector(".item-action-menu__popover");
             if (popover) popover.style.transform = "";
             if (restoreFocus) summary?.focus();
             else summary?.blur();
         };
 
         const positionMenu = (menu) => {
-            menu.classList.remove("record-action-menu--drop-up");
-            const popover = menu.querySelector(".record-action-menu__popover");
+            menu.classList.remove("item-action-menu--drop-up");
+            const popover = menu.querySelector(".item-action-menu__popover");
             if (!popover) return;
             popover.style.transform = "";
 
@@ -24,7 +24,7 @@
             const spaceBelow = window.innerHeight - menuRect.bottom;
             const spaceAbove = menuRect.top;
             if (popoverRect.height > spaceBelow - 12 && spaceAbove > popoverRect.height + 12) {
-                menu.classList.add("record-action-menu--drop-up");
+                menu.classList.add("item-action-menu--drop-up");
             } else if (popoverRect.bottom > window.innerHeight - 12) {
                 const overflow = popoverRect.bottom - window.innerHeight + 12;
                 popover.style.transform = `translateY(-${overflow}px)`;
@@ -50,8 +50,8 @@
 
             menu.addEventListener("toggle", () => {
                 if (!menu.open) {
-                    menu.classList.remove("record-action-menu--drop-up");
-                    const popover = menu.querySelector(".record-action-menu__popover");
+                    menu.classList.remove("item-action-menu--drop-up");
+                    const popover = menu.querySelector(".item-action-menu__popover");
                     if (popover) popover.style.transform = "";
                     return;
                 }
@@ -63,7 +63,7 @@
         });
 
         window.addEventListener("resize", () => {
-            const openMenu = document.querySelector(".record-action-menu[open]");
+            const openMenu = document.querySelector(".item-action-menu[open]");
             if (openMenu) positionMenu(openMenu);
         });
 
@@ -75,7 +75,7 @@
 
         document.addEventListener("keydown", (event) => {
             if (event.key !== "Escape") return;
-            const openMenu = document.querySelector(".record-action-menu[open]");
+            const openMenu = document.querySelector(".item-action-menu[open]");
             if (openMenu) closeMenu(openMenu, { restoreFocus: true });
         });
     })();

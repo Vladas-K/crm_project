@@ -195,12 +195,12 @@
 
                 <div class="lead-card__actions">
                     {% if crm_permissions.can_manage_leads or crm_permissions.can_manage_system %}
-                        <details class="record-action-menu">
+                        <details class="item-action-menu">
                             <summary aria-label="Действия с лидом {{ lead.name }}"><span aria-hidden="true">•••</span></summary>
-                            <div class="record-action-menu__popover">
+                            <div class="item-action-menu__popover">
                                 <a href="{% url 'core:lead_detail' lead.pk %}">Открыть профиль</a>
                                 {% if crm_permissions.can_manage_leads %}<a href="{% url 'core:lead_update' lead.pk %}">Изменить</a>{% endif %}
-                                {% if crm_permissions.can_manage_system %}<a href="{% url 'core:lead_delete' lead.pk %}" class="record-action-menu__danger">Удалить</a>{% endif %}
+                                {% if crm_permissions.can_manage_system %}<a href="{% url 'core:lead_delete' lead.pk %}" class="item-action-menu__danger">Удалить</a>{% endif %}
                             </div>
                         </details>
                     {% endif %}
@@ -291,6 +291,6 @@
 
     })();
 </script>
-{% include "core/partials/record_action_menus.html" %}
+{% include "core/partials/item_action_menus.html" %}
 {% include "core/partials/clickable_profile_cards.html" %}
 {% endblock %}

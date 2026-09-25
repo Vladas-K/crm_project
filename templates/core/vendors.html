@@ -152,12 +152,12 @@
 
                 <div class="vendor-card__actions">
                     {% if crm_permissions.can_manage_system %}
-                        <details class="record-action-menu">
+                        <details class="item-action-menu">
                             <summary aria-label="Действия с подрядчиком {{ vendor.name }}"><span aria-hidden="true">•••</span></summary>
-                            <div class="record-action-menu__popover">
+                            <div class="item-action-menu__popover">
                                 <a href="{% url 'core:vendor_detail' vendor.pk %}">Открыть профиль</a>
                                 <a href="{% url 'core:vendor_update' vendor.pk %}">Изменить</a>
-                                <a href="{% url 'core:vendor_delete' vendor.pk %}" class="record-action-menu__danger">Удалить</a>
+                                <a href="{% url 'core:vendor_delete' vendor.pk %}" class="item-action-menu__danger">Удалить</a>
                             </div>
                         </details>
                     {% else %}
@@ -249,6 +249,6 @@
 
     })();
 </script>
-{% include "core/partials/record_action_menus.html" %}
+{% include "core/partials/item_action_menus.html" %}
 {% include "core/partials/clickable_profile_cards.html" %}
 {% endblock %}

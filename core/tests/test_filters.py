@@ -142,7 +142,7 @@ def test_lead_list_shows_only_phone_and_prefers_manager_full_name(client, django
     assert 'href="mailto:lead@example.com"' not in html
     detail_url = reverse("core:lead_detail", kwargs={"pk": lead.pk})
     assert f'data-profile-url="{detail_url}"' in html
-    assert 'class="record-action-menu"' in html
+    assert 'class="item-action-menu"' in html
     assert "Анна Соколова" in html
     assert "@sales_named" in html
     assert ">Реакция<" in html
