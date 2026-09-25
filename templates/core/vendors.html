@@ -248,24 +248,40 @@
         });
 
         const actionMenus = document.querySelectorAll(".vendor-action-menu");
+        const supportsMenuHover = window.matchMedia("(hover: hover) and (pointer: fine)");
         actionMenus.forEach((menu) => {
+            let openTimer;
             let closeTimer;
 
-            menu.addEventListener("mouseenter", () => clearTimeout(closeTimer));
+            menu.addEventListener("mouseenter", () => {
+                clearTimeout(closeTimer);
+                if (!supportsMenuHover.matches || menu.open) return;
+                openTimer = setTimeout(() => menu.setAttribute("open", ""), 140);
+            });
             menu.addEventListener("mouseleave", () => {
-                closeTimer = setTimeout(() => menu.removeAttribute("open"), 180);
+                clearTimeout(openTimer);
+                closeTimer = setTimeout(() => {
+                    menu.removeAttribute("open");
+                    menu.querySelector("summary")?.blur();
+                }, 220);
             });
             menu.addEventListener("toggle", () => {
                 if (!menu.open) return;
                 actionMenus.forEach((otherMenu) => {
-                    if (otherMenu !== menu) otherMenu.removeAttribute("open");
+                    if (otherMenu !== menu) {
+                        otherMenu.removeAttribute("open");
+                        otherMenu.querySelector("summary")?.blur();
+                    }
                 });
             });
         });
 
         document.addEventListener("click", (event) => {
             actionMenus.forEach((menu) => {
-                if (!menu.contains(event.target)) menu.removeAttribute("open");
+                if (!menu.contains(event.target)) {
+                    menu.removeAttribute("open");
+                    menu.querySelector("summary")?.blur();
+                }
             });
         });
         document.addEventListener("keydown", (event) => {

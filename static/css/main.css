@@ -1609,7 +1609,8 @@ a.lead-card__name:focus {
 }
 
 .lead-action-menu summary:hover,
-.lead-action-menu summary:focus {
+.lead-action-menu summary:focus-visible,
+.lead-action-menu[open] summary {
     border-color: rgba(31, 111, 235, 0.25);
     color: var(--crm-accent);
     background: var(--crm-accent-soft);
@@ -2163,9 +2164,10 @@ a.lead-profile-contact:focus {
 }
 
 .vendor-action-menu summary:hover,
-.vendor-action-menu summary:focus,
+.vendor-action-menu summary:focus-visible,
+.vendor-action-menu[open] summary,
 .vendor-card__open:hover,
-.vendor-card__open:focus {
+.vendor-card__open:focus-visible {
     border-color: rgba(31, 111, 235, 0.25);
     color: var(--crm-accent);
     background: var(--crm-accent-soft);
