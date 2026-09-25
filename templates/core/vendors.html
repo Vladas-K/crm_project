@@ -91,7 +91,7 @@
 
     <div class="vendor-directory__list">
         {% for vendor in vendors %}
-            <article class="vendor-card">
+            <article class="vendor-card" data-profile-url="{% url 'core:vendor_detail' vendor.pk %}" tabindex="0" aria-label="Открыть профиль подрядчика {{ vendor.name }}">
                 <div class="vendor-card__identity">
                     <span class="vendor-card__mobile-label">Подрядчик</span>
                     <a href="{% url 'core:vendor_detail' vendor.pk %}" class="vendor-card__name">{{ vendor.name }}</a>
@@ -277,4 +277,5 @@
         });
     })();
 </script>
+{% include "core/partials/clickable_profile_cards.html" %}
 {% endblock %}

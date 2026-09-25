@@ -122,7 +122,7 @@
 
     <div class="lead-directory__list">
         {% for lead in leads %}
-            <article class="lead-card{% if lead.needs_response %} lead-card--attention{% endif %}">
+            <article class="lead-card{% if lead.needs_response %} lead-card--attention{% endif %}" data-profile-url="{% url 'core:lead_detail' lead.pk %}" tabindex="0" aria-label="Открыть профиль лида {{ lead.name }}">
                 <div class="lead-card__identity">
                     <span class="lead-card__mobile-label">Лид</span>
                     <a href="{% url 'core:lead_detail' lead.pk %}" class="lead-card__name">{{ lead.name }}</a>
@@ -348,4 +348,5 @@
         });
     })();
 </script>
+{% include "core/partials/clickable_profile_cards.html" %}
 {% endblock %}
