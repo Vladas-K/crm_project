@@ -15,8 +15,8 @@
 
 <div class="lead-metrics mb-4" aria-label="Показатели всей клиентской базы">
     <div class="lead-metric"><span>Всего клиентов</span><strong>{{ client_metrics.total }}</strong></div>
-    <div class="lead-metric"><span>Компании · B2B</span><strong>{{ client_metrics.companies }}</strong></div>
-    <div class="lead-metric"><span>Частные лица · B2C</span><strong>{{ client_metrics.individuals }}</strong></div>
+    <div class="lead-metric"><span>Компании</span><strong>{{ client_metrics.companies }}</strong></div>
+    <div class="lead-metric"><span>Частные лица</span><strong>{{ client_metrics.individuals }}</strong></div>
     <div class="lead-metric"><span>VIP-клиенты</span><strong>{{ client_metrics.vip }}</strong></div>
 </div>
 
@@ -26,8 +26,8 @@
         <span>Тип клиента</span>
         <div class="lead-filter-tabs" role="group" aria-label="Фильтр по типу клиента">
             <button type="submit" name="client_type" value="" class="lead-filter-tab{% if not client_type_filter %} is-active{% endif %}" aria-pressed="{% if not client_type_filter %}true{% else %}false{% endif %}">Все клиенты</button>
-            <button type="submit" name="client_type" value="b2b" class="lead-filter-tab{% if client_type_filter == 'b2b' %} is-active{% endif %}" aria-pressed="{% if client_type_filter == 'b2b' %}true{% else %}false{% endif %}">Компании · B2B</button>
-            <button type="submit" name="client_type" value="b2c" class="lead-filter-tab{% if client_type_filter == 'b2c' %} is-active{% endif %}" aria-pressed="{% if client_type_filter == 'b2c' %}true{% else %}false{% endif %}">Частные лица · B2C</button>
+            <button type="submit" name="client_type" value="b2b" class="lead-filter-tab{% if client_type_filter == 'b2b' %} is-active{% endif %}" aria-pressed="{% if client_type_filter == 'b2b' %}true{% else %}false{% endif %}">Компании</button>
+            <button type="submit" name="client_type" value="b2c" class="lead-filter-tab{% if client_type_filter == 'b2c' %} is-active{% endif %}" aria-pressed="{% if client_type_filter == 'b2c' %}true{% else %}false{% endif %}">Частные лица</button>
         </div>
     </div>
     <div class="lead-filter-grid client-filter-grid">
@@ -106,8 +106,7 @@
                 </div>
                 <div class="lead-card__context">
                     <span class="lead-card__mobile-label">Тип и сегмент</span>
-                    <strong>{% if item.client_type == 'b2b' %}Компания{% else %}Частное лицо{% endif %}</strong>
-                    <span class="lead-card__empty">{{ item.get_client_type_display }}</span>
+                    <strong>{{ item.get_client_type_display }}</strong>
                     <span class="event-chip {% if item.segment == 'vip' %}event-chip--warning{% else %}event-chip--soft{% endif %} align-self-start">{{ item.get_segment_display }}</span>
                 </div>
                 <div class="lead-card__manager">

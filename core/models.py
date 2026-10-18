@@ -312,8 +312,8 @@ class Client(ContactMixin):
     vk = models.CharField("ВКонтакте", max_length=150, blank=True)
 
     class ClientType(models.TextChoices):
-        B2B = "b2b", "B2B"
-        B2C = "b2c", "B2C"
+        B2B = "b2b", "Компания"
+        B2C = "b2c", "Частное лицо"
 
     class Segment(models.TextChoices):
         VIP = "vip", "VIP"

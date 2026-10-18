@@ -6,7 +6,7 @@
         <p class="lead-profile-header__eyebrow mb-2">Карточка клиента</p>
         <h1 class="lead-profile-header__title mb-2">{{ crm_client.name }}</h1>
         <div class="lead-profile-header__meta">
-            <span class="event-chip event-chip--soft">{% if crm_client.client_type == 'b2b' %}Компания · B2B{% else %}Частное лицо · B2C{% endif %}</span>
+            <span class="event-chip event-chip--soft">{{ crm_client.get_client_type_display }}</span>
             <span class="event-chip {% if crm_client.segment == 'vip' %}event-chip--warning{% else %}event-chip--soft{% endif %}">{{ crm_client.get_segment_display }}</span>
         </div>
     </div>
