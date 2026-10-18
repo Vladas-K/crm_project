@@ -49,6 +49,8 @@ from .models import (
     TeamMemberProfile,
     Vendor,
     VendorRole,
+    normalize_russian_phone,
+    social_profile_url,
 )
 
 User = get_user_model()
@@ -68,11 +70,57 @@ def client_matches_search(client, query):
     """Проверяет совпадение запроса без учёта регистра в данных клиента."""
 
     normalized_query = query.casefold()
-    return any(
+    text_match = any(
         normalized_query in (value or "").casefold()
         for value in (client.name, client.phone, client.email, client.contacts, client.telegram, client.whatsapp,
-                      client.max_messenger, client.instagram, client.facebook, client.vk)
+                      client.max_messenger, client.instagram, client.facebook, client.vk, client.messenger)
     )
+    if text_match:
+        return True
+    # Сравниваем телефон независимо от оформления, сохраняя поиск имён на кириллице.
+    if not all(character.isdigit() or character in "+()- ." for character in query):
+        return False
+    phone_query = client_phone_digits(query)
+    return len(phone_query) >= 3 and any(
+        phone_query in client_phone_digits(value) for value in (client.phone, client.whatsapp)
+    )
+
+
+def client_phone_digits(value):
+    digits = "".join(character for character in value if character.isdigit())
+    return f"7{digits[1:]}" if len(digits) == 11 and digits.startswith("8") else digits
+
+
+def client_contact_items(client):
+    """Готовит структурированные контакты для списка и профиля клиента."""
+
+    items = []
+    for field, label, kind in (
+        ("phone", "Телефон", "phone"), ("email", "Email", "email"),
+        ("telegram", "Telegram", "telegram"), ("whatsapp", "WhatsApp", "whatsapp"),
+        ("max_messenger", "MAX", "max"), ("instagram", "Instagram", "instagram"),
+        ("facebook", "Facebook", "facebook"), ("vk", "ВКонтакте", "vk"),
+    ):
+        value = getattr(client, field).strip()
+        if not value:
+            continue
+        url = ""
+        if field == "phone":
+            url = f"tel:{value}"
+        elif field == "email":
+            url = f"mailto:{value}"
+        elif value.startswith(("http://", "https://")):
+            url = value
+        elif field == "telegram":
+            url = social_profile_url(value, "t.me")
+        elif field == "whatsapp":
+            digits = "".join(character for character in normalize_russian_phone(value) if character.isdigit())
+            url = f"https://wa.me/{digits}" if digits else ""
+        elif field in {"instagram", "facebook", "vk"}:
+            url = social_profile_url(value, f"{field}.com")
+        items.append({"kind": kind, "label": label, "value": value, "url": url,
+                      "external": field not in {"phone", "email"}})
+    return items
 
 
 def event_matches_search(event, query):
@@ -464,71 +512,114 @@ class PipelineView(CRMLoginRequiredMixin, TemplateView):
 
 
 class ClientListView(ClientAccessMixin, ListView):
-    """Отображает список клиентов с поиском и фильтрами."""
+    """Показывает каталог клиентов с фильтрами и постраничной навигацией."""
 
     model = Client
     template_name = "core/clients.html"
     context_object_name = "clients"
+    paginate_by = 20
+    sort_options = {
+        "name": ("name", "pk"),
+        "newest": ("-created_at", "-pk"),
+        "oldest": ("created_at", "pk"),
+        "events": ("-events_count", "name", "pk"),
+    }
 
     def get_queryset(self):
-        """Фильтрует клиентов по контактам, типу и ответственному менеджеру."""
-
-        queryset = Client.objects.select_related("lead", "lead__manager")
-        search_query = self.request.GET.get("q", "").strip()
-        client_type = self.request.GET.get("client_type", "")
-        manager_filter = self.request.GET.get("manager", "")
-
-        if client_type in {choice[0] for choice in Client.ClientType.choices}:
-            queryset = queryset.filter(client_type=client_type)
-        if manager_filter.isdigit():
-            queryset = queryset.filter(lead__manager_id=manager_filter)
-        if search_query:
-            queryset = [client for client in queryset if client_matches_search(client, search_query)]
-
+        queryset = Client.objects.select_related("lead", "lead__manager").annotate(events_count=Count("events"))
+        self.search_query = self.request.GET.get("q", "").strip()
+        self.client_type = self.request.GET.get("client_type", "")
+        self.segment = self.request.GET.get("segment", "")
+        self.manager_filter = self.request.GET.get("manager", "")
+        self.sort = self.request.GET.get("sort", "name")
+        if self.client_type not in dict(Client.ClientType.choices):
+            self.client_type = ""
+        if self.segment not in dict(Client.Segment.choices):
+            self.segment = ""
+        if self.sort not in self.sort_options:
+            self.sort = "name"
+        if self.client_type:
+            queryset = queryset.filter(client_type=self.client_type)
+        if self.segment:
+            queryset = queryset.filter(segment=self.segment)
+        if self.manager_filter == "unassigned":
+            queryset = queryset.filter(lead__manager__isnull=True)
+        elif self.manager_filter.isdigit():
+            queryset = queryset.filter(lead__manager_id=self.manager_filter)
+        else:
+            self.manager_filter = ""
+        queryset = queryset.order_by(*self.sort_options[self.sort])
+        if self.search_query:
+            # Python casefold сохраняет корректный поиск кириллицы в локальной SQLite.
+            return [item for item in queryset.iterator() if client_matches_search(item, self.search_query)]
         return queryset
 
     def get_context_data(self, **kwargs):
-        """Передаёт в шаблон значения фильтров и доступные варианты выбора."""
-
         context = super().get_context_data(**kwargs)
-        context["search_query"] = self.request.GET.get("q", "")
-        context["client_type_filter"] = self.request.GET.get("client_type", "")
-        context["client_manager_filter"] = self.request.GET.get("manager", "")
-        context["client_types"] = Client.ClientType.choices
-        context["client_managers"] = User.objects.filter(assigned_leads__client__isnull=False).distinct().order_by(
-            "username"
-        )
+        for item in context["clients"]:
+            item.contact_items = client_contact_items(item)
+        managers = User.objects.filter(assigned_leads__client__isnull=False).distinct().order_by("username")
+        selected_manager = next((item for item in managers if str(item.pk) == self.manager_filter), None)
+        context.update({
+            "search_query": self.search_query,
+            "client_type_filter": self.client_type,
+            "client_segment_filter": self.segment,
+            "client_manager_filter": self.manager_filter,
+            "client_sort": self.sort,
+            "client_types": Client.ClientType.choices,
+            "client_segments": Client.Segment.choices,
+            "client_managers": managers,
+            "selected_type": dict(Client.ClientType.choices).get(self.client_type),
+            "selected_segment": dict(Client.Segment.choices).get(self.segment),
+            "selected_manager": selected_manager,
+            "has_filters": bool(self.search_query or self.client_type or self.segment or self.manager_filter),
+            "client_metrics": Client.objects.aggregate(
+                total=Count("pk"),
+                companies=Count("pk", filter=Q(client_type=Client.ClientType.B2B)),
+                individuals=Count("pk", filter=Q(client_type=Client.ClientType.B2C)),
+                vip=Count("pk", filter=Q(segment=Client.Segment.VIP)),
+            ),
+        })
+        params = self.request.GET.copy()
+        params.pop("page", None)
+        context["pagination_query"] = params.urlencode()
+        return context
+
+
+class ClientDetailView(ClientAccessMixin, DetailView):
+    """Карточка клиента, доступная сотрудникам с правом просмотра клиентов."""
+
+    model = Client
+    template_name = "core/client_detail.html"
+    context_object_name = "crm_client"
+
+    def get_queryset(self):
+        return Client.objects.select_related("lead", "lead__manager")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["contact_items"] = client_contact_items(self.object)
+        context["client_events"] = self.object.events.select_related("event_format").order_by("-date", "-pk")
+        context["events_count"] = context["client_events"].count()
         return context
 
 
 class ClientAutocompleteView(ClientAccessMixin, View):
-    """Возвращает совпадения для подсказок в поиске клиентов."""
+    """Возвращает до восьми совпадений с прямыми ссылками на карточки."""
 
     def get(self, request):
-        """Ищет клиентов по имени и контактным данным после двух символов."""
-
         query = request.GET.get("q", "").strip()
-        if len(query) < 2:
-            return JsonResponse({"results": []})
-
-        clients = [
-            client
-            for client in Client.objects.order_by("name", "id")
-            if client_matches_search(client, query)
-        ][:8]
-        return JsonResponse(
-            {
-                "results": [
-                    {
-                        "id": client.pk,
-                        "name": client.name,
-                        "phone": client.phone,
-                        "email": client.email,
-                    }
-                    for client in clients
-                ]
-            }
-        )
+        matches = (
+            item for item in Client.objects.order_by("name", "pk").iterator()
+            if client_matches_search(item, query)
+        ) if len(query) >= 2 else ()
+        response = JsonResponse({"results": [
+            {"id": item.pk, "name": item.name, "phone": item.phone, "email": item.email,
+             "url": reverse("core:client_detail", kwargs={"pk": item.pk})}
+            for item in islice(matches, 8)
+        ]})
+        response["Cache-Control"] = "no-store"
+        return response
 
 
 class EventListView(CRMLoginRequiredMixin, ListView):
@@ -1345,6 +1436,9 @@ class ClientCreateView(ClientManagementMixin, ClientFormContextMixin, CRUDContex
     success_url = reverse_lazy("core:clients")
     cancel_url = reverse_lazy("core:clients")
 
+    def get_success_url(self):
+        return reverse("core:client_detail", kwargs={"pk": self.object.pk})
+
 
 class ClientUpdateView(ClientManagementMixin, ClientFormContextMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует карточку клиента."""
@@ -1356,6 +1450,14 @@ class ClientUpdateView(ClientManagementMixin, ClientFormContextMixin, CRUDContex
     success_message = "Клиент обновлён."
     success_url = reverse_lazy("core:clients")
     cancel_url = reverse_lazy("core:clients")
+
+    def get_success_url(self):
+        return reverse("core:client_detail", kwargs={"pk": self.object.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["cancel_url"] = self.get_success_url()
+        return context
 
 
 class ClientDeleteView(SystemAccessMixin, DeleteView):

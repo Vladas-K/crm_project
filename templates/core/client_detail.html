@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ crm_client.name }} | CRM{% endblock %}
+{% block content %}
+<div class="lead-profile-header mb-4">
+    <div class="lead-profile-header__main">
+        <p class="lead-profile-header__eyebrow mb-2">Карточка клиента</p>
+        <h1 class="lead-profile-header__title mb-2">{{ crm_client.name }}</h1>
+        <div class="lead-profile-header__meta">
+            <span class="event-chip event-chip--soft">{% if crm_client.client_type == 'b2b' %}Компания · B2B{% else %}Частное лицо · B2C{% endif %}</span>
+            <span class="event-chip {% if crm_client.segment == 'vip' %}event-chip--warning{% else %}event-chip--soft{% endif %}">{{ crm_client.get_segment_display }}</span>
+        </div>
+    </div>
+    <div class="event-actions lead-profile-header__actions">
+        <a href="{% url 'core:clients' %}" class="btn btn-outline-secondary">К списку</a>
+        {% if crm_permissions.can_manage_clients %}<a href="{% url 'core:client_update' crm_client.pk %}" class="btn btn-primary">Редактировать</a>{% endif %}
+    </div>
+</div>
+<div class="lead-profile-metrics client-profile-metrics mb-4">
+    <div class="metric-card metric-card--large"><span>Мероприятия</span><strong>{{ events_count }}</strong></div>
+    <div class="metric-card metric-card--large"><span>Клиент с</span><strong>{{ crm_client.created_at|date:'d.m.Y' }}</strong></div>
+    {% if crm_permissions.can_view_finance %}<div class="metric-card metric-card--large"><span>LTV · сохранено</span><strong>{{ crm_client.ltv|floatformat:'2g' }} ₽</strong><small>Автоматический расчёт пока не выполняется.</small></div>{% endif %}
+</div>
+<div class="row g-4">
+    <div class="col-xl-7">
+        <section class="premium-panel h-100">
+            <div class="premium-panel__header"><div><h2 class="premium-panel__title">Контакты</h2><p class="premium-panel__subtitle">Выберите удобный способ связи.</p></div></div>
+            <div class="lead-profile-contact-grid">
+                {% for contact in contact_items %}
+                    {% if contact.url %}<a href="{{ contact.url }}"{% if contact.external %} target="_blank" rel="noopener noreferrer"{% endif %} class="lead-profile-contact">{% else %}<div class="lead-profile-contact">{% endif %}
+                        <span class="lead-profile-contact__label">{% include 'core/partials/contact_icon.html' with kind=contact.kind %}<span>{{ contact.label }}</span></span>
+                        <strong>{{ contact.value }}</strong>
+                    {% if contact.url %}</a>{% else %}</div>{% endif %}
+                {% empty %}<p class="text-secondary mb-0">Контактные данные пока не указаны.</p>{% endfor %}
+            </div>
+            {% if crm_client.contacts or crm_client.messenger %}
+                <div class="lead-profile-info mt-4">
+                    {% if crm_client.contacts %}<div class="lead-profile-info__item"><span>Дополнительные сведения о контактах</span><p>{{ crm_client.contacts|linebreaksbr }}</p></div>{% endif %}
+                    {% if crm_client.messenger %}<div class="lead-profile-info__item"><span>Контакт из прежней карточки</span><p>{{ crm_client.messenger|linebreaksbr }}</p></div>{% endif %}
+                </div>
+            {% endif %}
+        </section>
+    </div>
+    <div class="col-xl-5">
+        <section class="premium-panel h-100">
+            <div class="premium-panel__header"><div><h2 class="premium-panel__title">Контекст клиента</h2><p class="premium-panel__subtitle">Предпочтения и связь с исходным обращением.</p></div></div>
+            <div class="lead-profile-info">
+                <div class="lead-profile-info__item"><span>Предпочтения</span><p>{{ crm_client.preferences|default:'Пока не указаны'|linebreaksbr }}</p></div>
+                <div class="lead-profile-info__item"><span>Исходный лид</span>{% if crm_client.lead %}<a href="{% url 'core:lead_detail' crm_client.lead.pk %}">{{ crm_client.lead.name }}</a>{% else %}<p>Клиент создан с нуля</p>{% endif %}</div>
+                <div class="lead-profile-info__item"><span>Менеджер исходного лида</span><p>{% if crm_client.lead.manager %}{{ crm_client.lead.manager.get_full_name|default:crm_client.lead.manager.get_username }}{% else %}Не назначен{% endif %}</p></div>
+            </div>
+        </section>
+    </div>
+</div>
+<section class="premium-panel mt-4">
+    <div class="premium-panel__header"><div><h2 class="premium-panel__title">История мероприятий</h2><p class="premium-panel__subtitle">Все связанные мероприятия, включая запланированные.</p></div></div>
+    {% for event in client_events %}
+        <div class="client-form-event"><div><a href="{% url 'core:event_detail' event.pk %}">{{ event.title }}</a><div class="text-secondary small">{{ event.event_format|default:'Формат не указан' }}{% if event.city %} · {{ event.city }}{% endif %}</div></div><span>{{ event.date|date:'d.m.Y' }} · {{ event.get_status_display }}</span></div>
+    {% empty %}<p class="text-secondary mb-0">Связанных мероприятий пока нет.</p>{% endfor %}
+    {% if crm_client.event_history %}<details class="lead-form-more mt-3"><summary>Прежние заметки о мероприятиях</summary><p>{{ crm_client.event_history|linebreaksbr }}</p></details>{% endif %}
+</section>
+{% endblock %}

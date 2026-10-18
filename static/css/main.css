@@ -3410,3 +3410,44 @@ a.lead-profile-contact:focus {
     .client-form-shell .lead-form-section__header { align-items: flex-start; flex-direction: column; gap: 0.6rem; }
     .client-form-shell .lead-form-section__header p { text-align: left; }
 }
+
+/* Client directory reuses the lead directory's header, filters and row components. */
+.client-filter-grid {
+    grid-template-columns: minmax(13rem, 1.5fr) repeat(3, minmax(9rem, 1fr)) auto;
+}
+.client-directory .lead-directory__head,
+.client-directory .client-card {
+    grid-template-columns: minmax(14rem, 1.7fr) minmax(8rem, 0.85fr) minmax(8rem, 1fr) minmax(7rem, 0.7fr) 2.5rem;
+}
+.client-directory--finance .lead-directory__head,
+.client-directory--finance .client-card {
+    grid-template-columns: minmax(13rem, 1.6fr) minmax(8rem, 0.85fr) minmax(8rem, 1fr) minmax(6rem, 0.65fr) minmax(9rem, 0.9fr) 2.5rem;
+}
+.client-card__contacts { flex-direction: column; align-items: flex-start; }
+.client-card__contacts a { max-width: 100%; overflow-wrap: anywhere; }
+.client-card__channels { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.client-card__channels:empty { display: none; }
+.client-card__channels a { border-radius: 0.4rem; }
+.client-card__channels a:hover { background: var(--crm-accent-soft); }
+.client-card__channels a:focus-visible { outline: 2px solid var(--crm-accent); outline-offset: 2px; }
+.client-card__money { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.client-directory-note { margin: 1rem 0; color: var(--crm-muted); font-size: 0.8rem; }
+.client-profile-metrics { grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
+.client-profile-metrics strong { overflow-wrap: anywhere; }
+.client-pagination { display: flex; justify-content: center; align-items: center; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap; }
+.client-pagination > span { color: var(--crm-muted); font-size: 0.85rem; }
+[data-client-search] .crm-suggestions__item { text-decoration: none; }
+[data-client-search] .crm-suggestions__item[aria-selected="true"] { background: var(--crm-accent-soft); }
+
+@media (max-width: 1399.98px) {
+    .client-filter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .client-directory .client-card,
+    .client-directory--finance .client-card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .client-directory .lead-directory__head { display: none; }
+}
+@media (max-width: 767.98px) {
+    .client-filter-grid,
+    .client-directory .client-card,
+    .client-directory--finance .client-card { grid-template-columns: 1fr; }
+    .client-pagination .btn { padding: 0.5rem 0.8rem; }
+}

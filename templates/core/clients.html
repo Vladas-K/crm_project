@@ -1,156 +1,154 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Клиенты | CRM{% endblock %}
 
 {% block content %}
-<div class="page-header">
+<div class="page-header lead-directory-header">
     <div>
+        <p class="lead-directory-header__eyebrow mb-2">Клиентская база</p>
         <h1 class="h2 mb-1">Клиенты</h1>
-        <p class="text-secondary mb-0">B2B/B2C база после квалификации лидов.</p>
+        <p class="text-secondary mb-0">Контакты, предпочтения и история мероприятий компаний и частных клиентов.</p>
     </div>
     {% if crm_permissions.can_manage_clients %}<a href="{% url 'core:client_create' %}" class="btn btn-primary">Добавить клиента</a>{% endif %}
 </div>
 
-<form method="get" class="premium-panel lead-filter-panel mb-4">
-    <div class="row g-3 align-items-end">
-        <div class="col-lg-5">
-            <label for="client-search" class="form-label">Поиск</label>
-            <div class="crm-search-autocomplete" data-autocomplete-url="{% url 'core:client_autocomplete' %}">
-                <input id="client-search" type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Имя, телефон, email или контакты" autocomplete="off">
-                <div id="client-suggestions" class="crm-suggestions" role="listbox" hidden></div>
-            </div>
-        </div>
-        <div class="col-md-4 col-lg-3">
-            <label for="client-type" class="form-label">Тип клиента</label>
-            <select id="client-type" name="client_type" class="form-select">
-                <option value="">Все типы</option>
-                {% for value, label in client_types %}
-                    <option value="{{ value }}"{% if client_type_filter == value %} selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-md-4 col-lg-3">
-            <label for="client-manager" class="form-label">Ответственный</label>
-            <select id="client-manager" name="manager" class="form-select">
-                <option value="">Все менеджеры</option>
-                {% for manager in client_managers %}
-                    <option value="{{ manager.pk }}"{% if client_manager_filter == manager.pk|stringformat:"s" %} selected{% endif %}>{{ manager.get_username }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-md-4 col-lg-1 d-flex gap-2">
-            <button type="submit" class="btn btn-primary flex-grow-1">Найти</button>
+<div class="lead-metrics mb-4" aria-label="Показатели всей клиентской базы">
+    <div class="lead-metric"><span>Всего клиентов</span><strong>{{ client_metrics.total }}</strong></div>
+    <div class="lead-metric"><span>Компании · B2B</span><strong>{{ client_metrics.companies }}</strong></div>
+    <div class="lead-metric"><span>Частные лица · B2C</span><strong>{{ client_metrics.individuals }}</strong></div>
+    <div class="lead-metric"><span>VIP-клиенты</span><strong>{{ client_metrics.vip }}</strong></div>
+</div>
+
+<form method="get" class="lead-filter-panel mb-4">
+    <input type="hidden" name="client_type" value="{{ client_type_filter }}">
+    <div class="lead-filter-toolbar">
+        <span>Тип клиента</span>
+        <div class="lead-filter-tabs" role="group" aria-label="Фильтр по типу клиента">
+            <button type="submit" name="client_type" value="" class="lead-filter-tab{% if not client_type_filter %} is-active{% endif %}" aria-pressed="{% if not client_type_filter %}true{% else %}false{% endif %}">Все клиенты</button>
+            <button type="submit" name="client_type" value="b2b" class="lead-filter-tab{% if client_type_filter == 'b2b' %} is-active{% endif %}" aria-pressed="{% if client_type_filter == 'b2b' %}true{% else %}false{% endif %}">Компании · B2B</button>
+            <button type="submit" name="client_type" value="b2c" class="lead-filter-tab{% if client_type_filter == 'b2c' %} is-active{% endif %}" aria-pressed="{% if client_type_filter == 'b2c' %}true{% else %}false{% endif %}">Частные лица · B2C</button>
         </div>
     </div>
-    {% if search_query or client_type_filter or client_manager_filter %}
-        <div class="mt-3">
-            <a href="{% url 'core:clients' %}" class="small text-decoration-none">Сбросить фильтры</a>
+    <div class="lead-filter-grid client-filter-grid">
+        <div class="lead-filter-field">
+            <label for="client-search" class="form-label">Поиск</label>
+            <div class="crm-search-autocomplete" data-client-search data-autocomplete-url="{% url 'core:client_autocomplete' %}">
+                <input id="client-search" type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Имя, компания или контакт" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="client-suggestions">
+                <div id="client-suggestions" class="crm-suggestions" role="listbox" aria-label="Найденные клиенты" hidden></div>
+                <span class="visually-hidden" data-search-status role="status" aria-live="polite"></span>
+            </div>
+        </div>
+        <div class="lead-filter-field">
+            <label for="client-manager" class="form-label">Менеджер лида</label>
+            <select id="client-manager" name="manager" class="form-select">
+                <option value="">Все менеджеры</option>
+                <option value="unassigned"{% if client_manager_filter == 'unassigned' %} selected{% endif %}>Без менеджера лида</option>
+                {% for manager in client_managers %}<option value="{{ manager.pk }}"{% if client_manager_filter == manager.pk|stringformat:'s' %} selected{% endif %}>{{ manager.get_full_name|default:manager.get_username }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="lead-filter-field">
+            <label for="client-segment" class="form-label">Сегмент</label>
+            <select id="client-segment" name="segment" class="form-select">
+                <option value="">Все сегменты</option>
+                {% for value, label in client_segments %}<option value="{{ value }}"{% if client_segment_filter == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="lead-filter-field">
+            <label for="client-sort" class="form-label">Сортировка</label>
+            <select id="client-sort" name="sort" class="form-select">
+                <option value="name"{% if client_sort == 'name' %} selected{% endif %}>По имени</option>
+                <option value="newest"{% if client_sort == 'newest' %} selected{% endif %}>Сначала новые</option>
+                <option value="oldest"{% if client_sort == 'oldest' %} selected{% endif %}>Сначала старые</option>
+                <option value="events"{% if client_sort == 'events' %} selected{% endif %}>По числу мероприятий</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary lead-filter-submit">Показать</button>
+    </div>
+    {% if has_filters %}
+        <div class="lead-active-filters" aria-label="Активные фильтры">
+            <span class="lead-active-filters__label">Выбрано:</span>
+            {% if search_query %}<span class="event-chip event-chip--soft">«{{ search_query }}»</span>{% endif %}
+            {% if selected_type %}<span class="event-chip event-chip--soft">{{ selected_type }}</span>{% endif %}
+            {% if selected_segment %}<span class="event-chip event-chip--soft">{{ selected_segment }}</span>{% endif %}
+            {% if selected_manager %}<span class="event-chip event-chip--soft">{{ selected_manager.get_full_name|default:selected_manager.get_username }}</span>{% endif %}
+            {% if client_manager_filter == 'unassigned' %}<span class="event-chip event-chip--soft">Без менеджера лида</span>{% endif %}
+            <a href="{% url 'core:clients' %}" class="lead-filter-reset">Сбросить всё</a>
         </div>
     {% endif %}
 </form>
 
-<div class="card border-0 shadow-sm">
-    <div class="table-responsive">
-        <table class="table align-middle mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>Клиент</th>
-                    <th>Тип</th>
-                    <th>Сегмент</th>
-                    {% if crm_permissions.can_view_finance %}<th>LTV</th>{% endif %}
-                    <th>Контакты</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for client in clients %}
-                    <tr>
-                        <td class="fw-semibold">{{ client.name }}</td>
-                        <td>{{ client.get_client_type_display }}</td>
-                        <td>{{ client.get_segment_display }}</td>
-                        {% if crm_permissions.can_view_finance %}<td>{{ client.ltv }} ₽</td>{% endif %}
-                        <td>{{ client.contacts|default:client.phone|default:client.email|default:client.telegram|default:client.whatsapp|default:"-" }}</td>
-                        <td class="text-end">
-                            <div class="d-flex justify-content-end gap-2">
-                                {% if crm_permissions.can_manage_clients %}<a href="{% url 'core:client_update' client.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>{% endif %}
-                                {% if crm_permissions.can_manage_system %}<a href="{% url 'core:client_delete' client.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>{% endif %}
-                            </div>
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr><td colspan="{% if crm_permissions.can_view_finance %}6{% else %}5{% endif %}" class="text-center text-secondary py-4">Клиенты по заданным условиям не найдены.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+<div class="lead-directory-summary">
+    <h2>Список клиентов</h2>
+    <p>Найдено: {{ paginator.count }}{% if is_paginated %} · Показаны {{ page_obj.start_index }}–{{ page_obj.end_index }}{% endif %}</p>
 </div>
-<script>
-    (() => {
-        const wrapper = document.querySelector(".crm-search-autocomplete");
-        if (!wrapper) return;
-
-        const input = wrapper.querySelector("input");
-        const suggestions = wrapper.querySelector(".crm-suggestions");
-        let timer;
-        let controller;
-
-        const hideSuggestions = () => {
-            suggestions.hidden = true;
-            suggestions.replaceChildren();
-        };
-
-        const renderSuggestions = (results) => {
-            suggestions.replaceChildren();
-            if (!results.length) {
-                hideSuggestions();
-                return;
-            }
-
-            results.forEach((client) => {
-                const option = document.createElement("button");
-                option.type = "button";
-                option.className = "crm-suggestions__item";
-                option.setAttribute("role", "option");
-                option.innerHTML = `<strong>${client.name}</strong><span>${client.phone || client.email || "Контакт не указан"}</span>`;
-                option.addEventListener("click", () => {
-                    input.value = client.phone || client.email || client.name;
-                    hideSuggestions();
-                    input.form.requestSubmit();
-                });
-                suggestions.append(option);
-            });
-            suggestions.hidden = false;
-        };
-
-        input.addEventListener("input", () => {
-            clearTimeout(timer);
-            if (controller) controller.abort();
-            if (input.value.trim().length < 2) {
-                hideSuggestions();
-                return;
-            }
-
-            timer = setTimeout(async () => {
-                controller = new AbortController();
-                const url = new URL(wrapper.dataset.autocompleteUrl, window.location.origin);
-                url.searchParams.set("q", input.value.trim());
-                try {
-                    const response = await fetch(url, { signal: controller.signal });
-                    if (!response.ok) return hideSuggestions();
-                    const data = await response.json();
-                    renderSuggestions(data.results);
-                } catch (error) {
-                    if (error.name !== "AbortError") hideSuggestions();
-                }
-            }, 250);
-        });
-
-        input.addEventListener("keydown", (event) => {
-            if (event.key === "Escape") hideSuggestions();
-        });
-        document.addEventListener("click", (event) => {
-            if (!wrapper.contains(event.target)) hideSuggestions();
-        });
-    })();
-</script>
+<section class="lead-directory client-directory{% if crm_permissions.can_view_finance %} client-directory--finance{% endif %}" aria-label="Список клиентов">
+    <div class="lead-directory__head" aria-hidden="true">
+        <span>Клиент и контакты</span><span>Тип и сегмент</span><span>Менеджер лида</span><span>Мероприятия</span>{% if crm_permissions.can_view_finance %}<span>LTV · сохранено</span>{% endif %}<span></span>
+    </div>
+    <div class="lead-directory__list">
+        {% for item in clients %}
+            <article class="lead-card client-card" data-profile-url="{% url 'core:client_detail' item.pk %}" tabindex="0" aria-label="Открыть карточку клиента {{ item.name }}">
+                <div class="lead-card__identity">
+                    <span class="lead-card__mobile-label">Клиент</span>
+                    <a href="{% url 'core:client_detail' item.pk %}" class="lead-card__name">{{ item.name }}</a>
+                    <div class="lead-card__contacts client-card__contacts">
+                        {% if item.phone %}<a href="tel:{{ item.phone }}">{{ item.phone }}</a>{% endif %}
+                        {% if item.email %}<a href="mailto:{{ item.email }}">{{ item.email }}</a>{% endif %}
+                        {% if not item.phone and not item.email %}<span>Телефон и email не указаны</span>{% endif %}
+                    </div>
+                    <div class="client-card__channels">
+                        {% for contact in item.contact_items %}{% if contact.external %}
+                            {% if contact.url %}<a href="{{ contact.url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ contact.label }}: {{ contact.value }}" title="{{ contact.label }}: {{ contact.value }}">{% include 'core/partials/contact_icon.html' with kind=contact.kind compact=True %}</a>{% else %}<span title="{{ contact.label }}: {{ contact.value }}" aria-label="{{ contact.label }}: {{ contact.value }}">{% include 'core/partials/contact_icon.html' with kind=contact.kind compact=True %}</span>{% endif %}
+                        {% endif %}{% endfor %}
+                    </div>
+                    <span class="lead-card__created">Создан {{ item.created_at|date:'d.m.Y' }}</span>
+                </div>
+                <div class="lead-card__context">
+                    <span class="lead-card__mobile-label">Тип и сегмент</span>
+                    <strong>{% if item.client_type == 'b2b' %}Компания{% else %}Частное лицо{% endif %}</strong>
+                    <span class="lead-card__empty">{{ item.get_client_type_display }}</span>
+                    <span class="event-chip {% if item.segment == 'vip' %}event-chip--warning{% else %}event-chip--soft{% endif %} align-self-start">{{ item.get_segment_display }}</span>
+                </div>
+                <div class="lead-card__manager">
+                    <span class="lead-card__mobile-label">Менеджер лида</span>
+                    {% if item.lead.manager %}<strong>{{ item.lead.manager.get_full_name|default:item.lead.manager.get_username }}</strong>{% else %}<span class="lead-card__empty">Не назначен</span>{% endif %}
+                </div>
+                <div class="lead-card__context">
+                    <span class="lead-card__mobile-label">Мероприятия</span>
+                    <strong>{{ item.events_count }}</strong><span class="lead-card__empty">в истории клиента</span>
+                </div>
+                {% if crm_permissions.can_view_finance %}<div class="lead-card__context"><span class="lead-card__mobile-label">LTV · сохранено</span><strong class="client-card__money">{{ item.ltv|floatformat:'2g' }} ₽</strong></div>{% endif %}
+                <div class="lead-card__actions">
+                    {% if crm_permissions.can_manage_clients or crm_permissions.can_manage_system %}
+                        <details class="item-action-menu">
+                            <summary aria-label="Действия с клиентом {{ item.name }}"><span aria-hidden="true">•••</span></summary>
+                            <div class="item-action-menu__popover">
+                                <a href="{% url 'core:client_detail' item.pk %}">Открыть карточку</a>
+                                {% if crm_permissions.can_manage_clients %}<a href="{% url 'core:client_update' item.pk %}">Изменить</a>{% endif %}
+                                {% if crm_permissions.can_manage_system %}<a href="{% url 'core:client_delete' item.pk %}" class="item-action-menu__danger">Удалить</a>{% endif %}
+                            </div>
+                        </details>
+                    {% endif %}
+                </div>
+            </article>
+        {% empty %}
+            <div class="lead-directory-empty">
+                {% if has_filters %}<strong>Клиенты не найдены</strong><span>Попробуйте изменить условия поиска или сбросить фильтры.</span><a href="{% url 'core:clients' %}" class="btn btn-outline-secondary">Сбросить фильтры</a>
+                {% else %}<strong>Клиентов пока нет</strong><span>Добавьте клиента с нуля или перенесите данные из лида.</span>{% if crm_permissions.can_manage_clients %}<a href="{% url 'core:client_create' %}" class="btn btn-primary">Добавить клиента</a>{% endif %}{% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% if crm_permissions.can_view_finance %}<p class="client-directory-note">LTV — ранее сохранённое значение. Автоматический расчёт по мероприятиям пока не выполняется.</p>{% endif %}
+{% if is_paginated %}
+    <nav class="client-pagination" aria-label="Страницы списка клиентов">
+        {% if page_obj.has_previous %}<a class="btn btn-outline-secondary" href="?{{ pagination_query }}&amp;page={{ page_obj.previous_page_number }}">Назад</a>{% endif %}
+        <span>Страница {{ page_obj.number }} из {{ paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a class="btn btn-outline-secondary" href="?{{ pagination_query }}&amp;page={{ page_obj.next_page_number }}">Далее</a>{% endif %}
+    </nav>
+{% endif %}
+<script src="{% static 'js/client_directory.js' %}" defer></script>
+{% include 'core/partials/item_action_menus.html' %}
+{% include 'core/partials/clickable_profile_cards.html' %}
 {% endblock %}

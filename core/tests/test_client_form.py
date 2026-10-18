@@ -190,4 +190,4 @@ def test_client_ltv_list_visibility_requires_finance(client, operator):
     profile.save()
     response = client.get(url)
     assert "LTV" in response.content.decode()
-    assert "87654" in response.content.decode()
+    assert "87\xa0654,32" in response.content.decode()
