@@ -1450,8 +1450,9 @@ class PipelineStageCreateView(SystemAccessMixin, CRUDContextMixin, SuccessMessag
 
     model = PipelineStage
     form_class = PipelineStageForm
-    template_name = "core/object_form.html"
+    template_name = "core/pipeline_stage_form.html"
     page_title = "Новый этап воронки"
+    submit_label = "Создать этап"
     success_message = "Этап воронки создан."
     success_url = reverse_lazy("core:pipeline")
     cancel_url = reverse_lazy("core:pipeline")
@@ -1462,8 +1463,9 @@ class PipelineStageUpdateView(SystemAccessMixin, CRUDContextMixin, SuccessMessag
 
     model = PipelineStage
     form_class = PipelineStageForm
-    template_name = "core/object_form.html"
+    template_name = "core/pipeline_stage_form.html"
     page_title = "Редактирование этапа"
+    submit_label = "Сохранить изменения"
     success_message = "Этап воронки обновлён."
     success_url = reverse_lazy("core:pipeline")
     cancel_url = reverse_lazy("core:pipeline")

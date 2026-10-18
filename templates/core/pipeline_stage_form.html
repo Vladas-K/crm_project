@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | CRM{% endblock %}
+
+{% block content %}
+<div class="pipeline-stage-form">
+    <a href="{{ cancel_url }}" class="pipeline-stage-form__back"><span aria-hidden="true">←</span> Воронка продаж</a>
+    <div class="page-header workspace-page-header">
+        <div>
+            <h1>{{ page_title }}</h1>
+            <p>Настройте название, положение и вероятность сделки на этом этапе.</p>
+        </div>
+    </div>
+    <div class="premium-panel pipeline-stage-form__panel">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% if form.errors %}
+                <div class="alert alert-danger" role="alert">
+                    Проверьте отмеченные поля.
+                    {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+                </div>
+            {% endif %}
+            {% include 'core/includes/lead_form_field.html' with field=form.name %}
+            <div class="pipeline-stage-form__grid">
+                {% include 'core/includes/lead_form_field.html' with field=form.order %}
+                {% include 'core/includes/lead_form_field.html' with field=form.probability %}
+            </div>
+            <div class="pipeline-stage-form__option">
+                {{ form.is_lost }}
+                <div>
+                    <label for="{{ form.is_lost.id_for_label }}" class="pipeline-stage-form__option-label">{{ form.is_lost.label }}</label>
+                    <div id="{{ form.is_lost.auto_id }}_helptext" class="lead-form-field__help">{{ form.is_lost.help_text }}</div>
+                    {% if form.is_lost.errors %}<div id="{{ form.is_lost.auto_id }}_error">{% for error in form.is_lost.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}</div>{% endif %}
+                </div>
+            </div>
+            <details class="lead-form-more"{% if form.code.errors %} open{% endif %}>
+                <summary>Дополнительные настройки</summary>
+                <p>Код заполняется автоматически. Здесь можно указать свой вариант.</p>
+                {% include 'core/includes/lead_form_field.html' with field=form.code %}
+            </details>
+            <div class="pipeline-stage-form__actions">
+                <button type="submit" class="btn btn-primary">{{ submit_label }}</button>
+                <a href="{{ cancel_url }}" class="btn btn-outline-secondary">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

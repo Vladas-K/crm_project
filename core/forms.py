@@ -1,8 +1,9 @@
 import json
+from uuid import uuid4
 
 from django import forms
 from django.contrib.auth import get_user_model
-from django.db.models import Q
+from django.db.models import Max, Q
 
 from .models import (
     Client,
@@ -165,9 +166,41 @@ class LeadStageForm(BootstrapModelForm):
 
 
 class PipelineStageForm(BootstrapModelForm):
+    """Настройки этапа с автоматическим кодом и позицией в конце воронки."""
+
     class Meta:
         model = PipelineStage
         fields = ["name", "code", "order", "probability", "is_lost"]
+        labels = {
+            "name": "Название этапа",
+            "code": "Технический код",
+            "order": "Позиция в воронке",
+            "probability": "Вероятность сделки (%)",
+            "is_lost": "Этап отказа",
+        }
+        help_texts = {
+            "code": "Латинские буквы, цифры, дефис или подчёркивание. Если оставить поле пустым, CRM создаст код автоматически; при редактировании сохранит текущий.",
+            "order": "Меньший номер располагается раньше. При создании предложена позиция в конце воронки.",
+            "probability": "От 0 до 100%. Подставляется лиду при переходе на этот этап.",
+            "is_lost": "При переводе лида потребуется причина отказа.",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.original_code = self.instance.code
+        self.fields["code"].required = False
+        self.fields["code"].widget.attrs.pop("required", None)
+        self.fields["code"].widget.attrs.update({"placeholder": "Заполнится автоматически", "autocomplete": "off", "spellcheck": "false"})
+        self.fields["name"].widget.attrs.update({"placeholder": "Например, КП отправлено", "autocomplete": "off"})
+        self.fields["order"].widget.attrs.update({"min": 0, "step": 1, "inputmode": "numeric"})
+        self.fields["probability"].widget.attrs.update({"min": 0, "max": 100, "step": 1, "inputmode": "numeric"})
+        if not self.instance.pk and "order" not in (kwargs.get("initial") or {}):
+            last_order = PipelineStage.objects.aggregate(last_order=Max("order"))["last_order"]
+            self.initial["order"] = (last_order if last_order is not None else 0) + 1
+
+    def clean_code(self):
+        # Код не зависит от переименования этапа; уникальность проверяет ModelForm.
+        return self.cleaned_data.get("code") or self.original_code or f"stage-{uuid4().hex}"
 
 
 class ClientForm(BootstrapModelForm):
