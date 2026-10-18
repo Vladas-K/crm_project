@@ -300,6 +300,12 @@ class Client(ContactMixin):
     """Квалифицированный клиент CRM, связанный с лидами и историей мероприятий."""
 
     messenger = models.CharField("Мессенджер", max_length=100, blank=True)
+    telegram = models.CharField("Telegram", max_length=150, blank=True)
+    whatsapp = models.CharField("WhatsApp", max_length=150, blank=True)
+    max_messenger = models.CharField("MAX", max_length=150, blank=True)
+    instagram = models.CharField("Instagram", max_length=150, blank=True)
+    facebook = models.CharField("Facebook", max_length=150, blank=True)
+    vk = models.CharField("ВКонтакте", max_length=150, blank=True)
 
     class ClientType(models.TextChoices):
         B2B = "b2b", "B2B"

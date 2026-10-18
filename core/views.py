@@ -1,10 +1,12 @@
+from itertools import islice
+
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.db.models import Avg, Case, Count, IntegerField, Sum, Value, When
+from django.db.models import Avg, Case, Count, IntegerField, Q, Sum, Value, When
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.http import urlencode
@@ -68,7 +70,8 @@ def client_matches_search(client, query):
     normalized_query = query.casefold()
     return any(
         normalized_query in (value or "").casefold()
-        for value in (client.name, client.phone, client.email, client.contacts)
+        for value in (client.name, client.phone, client.email, client.contacts, client.telegram, client.whatsapp,
+                      client.max_messenger, client.instagram, client.facebook, client.vk)
     )
 
 
@@ -1288,24 +1291,67 @@ class PipelineStageDeleteView(SystemAccessMixin, DeleteView):
     success_url = reverse_lazy("core:pipeline")
 
 
-class ClientCreateView(ClientManagementMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+class ClientFormContextMixin:
+    """Подготавливает создание из лида и фактическую историю мероприятий клиента."""
+
+    def get_initial(self):
+        initial = super().get_initial()
+        if not getattr(self, "object", None) and self.request.GET.get("lead", "").isdigit():
+            initial["lead"] = self.request.GET["lead"]
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        obj = getattr(self, "object", None)
+        context["client_events"] = obj.events.order_by("-date", "-pk") if obj else []
+        return context
+
+
+class ClientLeadDataView(ClientManagementMixin, View):
+    """Ищет доступные лиды и отдаёт контакты выбранного лида для формы клиента."""
+
+    def get(self, request):
+        eligible = Q(client__isnull=True)
+        client_id = request.GET.get("client_id", "")
+        if client_id.isdigit():
+            eligible |= Q(client__pk=client_id)
+        leads = Lead.objects.filter(eligible).order_by("name", "pk")
+        lead_id = request.GET.get("lead_id")
+        if lead_id is not None:
+            if not lead_id.isdigit():
+                return JsonResponse({"error": "Некорректный лид"}, status=400)
+            lead = get_object_or_404(leads, pk=lead_id)
+            response = JsonResponse({"fields": {field: getattr(lead, field) for field in ClientForm.lead_contact_fields}})
+        else:
+            query = request.GET.get("q", "").strip()
+            matches = (lead for lead in leads if lead_matches_search(lead, query))
+            response = JsonResponse({"results": [
+                {"id": lead.pk, "name": lead.name, "contact": lead.phone or lead.email}
+                for lead in islice(matches, 8)
+            ]})
+        response["Cache-Control"] = "no-store"
+        return response
+
+
+class ClientCreateView(ClientManagementMixin, ClientFormContextMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Создает нового клиента."""
 
     model = Client
     form_class = ClientForm
-    template_name = "core/object_form.html"
+    template_name = "core/client_form.html"
     page_title = "Новый клиент"
+    submit_label = "Создать клиента"
     success_message = "Клиент создан."
     success_url = reverse_lazy("core:clients")
     cancel_url = reverse_lazy("core:clients")
 
 
-class ClientUpdateView(ClientManagementMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class ClientUpdateView(ClientManagementMixin, ClientFormContextMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует карточку клиента."""
 
     model = Client
     form_class = ClientForm
-    template_name = "core/object_form.html"
+    template_name = "core/client_form.html"
     page_title = "Редактирование клиента"
     success_message = "Клиент обновлён."
     success_url = reverse_lazy("core:clients")

@@ -4,9 +4,9 @@
     </label>
     {{ field }}
     {% if help_text %}
-        <div class="lead-form-field__help">{{ help_text }}</div>
+        <div id="{{ field.auto_id }}_helptext" class="lead-form-field__help">{{ help_text }}</div>
     {% elif field.help_text %}
-        <div class="lead-form-field__help">{{ field.help_text }}</div>
+        <div id="{{ field.auto_id }}_helptext" class="lead-form-field__help">{{ field.help_text }}</div>
     {% endif %}
-    {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+    {% if field.errors %}<div id="{{ field.auto_id }}_error">{% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}</div>{% endif %}
 </div>

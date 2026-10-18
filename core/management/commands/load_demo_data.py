@@ -407,6 +407,7 @@ class Command(BaseCommand):
                     "phone": lead.phone,
                     "email": lead.email,
                     "messenger": lead.telegram,
+                    "telegram": lead.telegram,
                     "contacts": f"{lead.phone}, {lead.email}",
                     "segment": segment,
                     "ltv": ltv,

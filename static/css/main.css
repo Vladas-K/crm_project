@@ -3,6 +3,7 @@
     --crm-accent-soft: #e8f0ff;
     --crm-text: #1f2937;
     --crm-muted: #6b7280;
+    --crm-border: rgba(15, 23, 42, 0.1);
     --crm-blue: #1f6feb;
     --crm-green: #0f9f6e;
     --crm-amber: #d97706;
@@ -3385,4 +3386,27 @@ a.lead-profile-contact:focus {
         flex-direction: column;
         gap: 0.2rem;
     }
+}
+
+/* Client create/edit form: shares the established structured form layout. */
+.crm-nav__link[aria-current="page"] {
+    background: var(--crm-accent-soft);
+    color: var(--crm-accent);
+    font-weight: 600;
+}
+.client-form-mode-group { margin: 0 0 1.5rem; }
+.client-form-mode-group legend { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.75rem; }
+.client-form-mode-options { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.client-form-mode { display: flex; align-items: center; gap: 0.65rem; padding: 0.85rem 1.25rem; border: 1px solid var(--crm-border); border-radius: 1rem; cursor: pointer; }
+.client-form-mode:has(input:checked) { border-color: var(--crm-accent); box-shadow: inset 0 0 0 1px var(--crm-accent); background: var(--crm-accent-soft); }
+.client-form-mode input { accent-color: var(--crm-accent); }
+.client-form-lead { margin-bottom: 1.5rem; padding: 1.25rem; border: 1px solid var(--crm-border); border-radius: 1rem; background: #f8f9fb; }
+.client-form-lead[hidden] { display: none; }
+.client-form-event { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; padding: 0.85rem 0; border-bottom: 1px solid var(--crm-border); }
+.client-form-event span { color: var(--crm-muted); font-size: 0.85rem; }
+@media (max-width: 767.98px) {
+    .client-form-mode { flex: 1; justify-content: center; }
+    .client-form-lead { padding: 1rem; }
+    .client-form-shell .lead-form-section__header { align-items: flex-start; flex-direction: column; gap: 0.6rem; }
+    .client-form-shell .lead-form-section__header p { text-align: left; }
 }

@@ -2,6 +2,7 @@ import json
 
 from django import forms
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 
 from .models import (
     Client,
@@ -141,6 +142,12 @@ class PipelineStageForm(BootstrapModelForm):
 
 
 class ClientForm(BootstrapModelForm):
+    creation_mode = forms.ChoiceField(
+        label="Как создать клиента", choices=[("manual", "С нуля"), ("lead", "Из лида")],
+        widget=forms.RadioSelect, initial="manual", required=False,
+    )
+    lead_contact_fields = ("name", "phone", "email", "telegram", "whatsapp", "max_messenger", "instagram", "facebook", "vk")
+
     class Meta:
         model = Client
         fields = [
@@ -149,18 +156,79 @@ class ClientForm(BootstrapModelForm):
             "name",
             "phone",
             "email",
-            "messenger",
+            "telegram",
+            "whatsapp",
+            "max_messenger",
+            "instagram",
+            "facebook",
+            "vk",
             "contacts",
             "segment",
-            "ltv",
             "preferences",
-            "event_history",
         ]
         widgets = {
             "contacts": forms.Textarea(attrs={"rows": 3}),
             "preferences": forms.Textarea(attrs={"rows": 3}),
-            "event_history": forms.Textarea(attrs={"rows": 4}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        eligible = Q(client__isnull=True)
+        self.imported_lead_id = self.data.get("lead_contacts_loaded", "") if self.is_bound else ""
+        if self.instance.pk:
+            eligible |= Q(client__pk=self.instance.pk)
+            self.fields.pop("creation_mode")
+        self.fields["lead"].queryset = Lead.objects.filter(eligible).order_by("name", "pk")
+        self.fields["lead"].empty_label = "Выберите исходный лид"
+        if "creation_mode" in self.fields:
+            self.fields["creation_mode"].widget.attrs.pop("class", None)
+        self.fields["client_type"].label = "Тип клиента"
+        self.fields["client_type"].choices = [("b2c", "Частное лицо"), ("b2b", "Компания")]
+        self.fields["contacts"].label = "Дополнительные сведения о контактах"
+        self.fields["contacts"].help_text = "Например, контактное лицо компании и удобное время для связи."
+        self.fields["name"].label = "Имя клиента"
+        self.fields["name"].widget.attrs["autocomplete"] = "name"
+        self.fields["email"].widget.attrs.update(autocomplete="email", placeholder="name@example.com")
+        for field in ("phone", "whatsapp"):
+            self.fields[field].widget.attrs.update({"data-russian-phone": "true", "placeholder": "+7 999 000-00-00"})
+        self.fields["phone"].widget.attrs.update(autocomplete="tel", inputmode="tel")
+        self.fields["telegram"].widget.attrs["placeholder"] = "@username или ссылка"
+        self.fields["max_messenger"].help_text = "Контакт или полная ссылка"
+        # Копируем только пустые значения при создании. Введённые пользователем данные имеют приоритет.
+        if not self.instance.pk:
+            source = self.data if self.is_bound else self.initial
+            lead_id = source.get("lead", "")
+            mode = source.get("creation_mode") or ("lead" if lead_id else "manual")
+            self.initial["creation_mode"] = mode
+            if self.is_bound:
+                self.data = self.data.copy()
+                if mode == "manual":
+                    self.data["lead"] = ""
+            if mode == "lead" and str(lead_id).isdigit():
+                lead = self.fields["lead"].queryset.filter(pk=lead_id).first()
+                if lead:
+                    target = self.data if self.is_bound else self.initial
+                    if not self.is_bound or str(self.imported_lead_id) != str(lead_id):
+                        for field in self.lead_contact_fields:
+                            if not str(target.get(field, "")).strip():
+                                target[field] = getattr(lead, field)
+                    self.imported_lead_id = str(lead_id)
+        client_type = self.data.get("client_type") if self.is_bound else self.initial.get("client_type", self.instance.client_type)
+        if client_type == Client.ClientType.B2B:
+            self.fields["name"].label = "Название компании"
+            self.fields["name"].widget.attrs["autocomplete"] = "organization"
+
+    def clean(self):
+        data = super().clean()
+        if not self.instance.pk and data.get("creation_mode") == "lead" and not data.get("lead"):
+            self.add_error("lead", "Выберите доступный лид для создания клиента.")
+        return data
+
+    def clean_phone(self):
+        return normalize_russian_phone(self.cleaned_data.get("phone", ""))
+
+    def clean_whatsapp(self):
+        return normalize_russian_phone(self.cleaned_data.get("whatsapp", ""))
 
 
 class EventFormatForm(BootstrapModelForm):

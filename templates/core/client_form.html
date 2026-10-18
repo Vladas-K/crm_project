@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }} | CRM{% endblock %}
+
+{% block content %}
+<div class="lead-form-shell client-form-shell">
+    <header class="lead-form-header">
+        <div>
+            <p class="lead-form-header__eyebrow mb-2">Клиенты</p>
+            <h1 class="lead-form-header__title">{{ page_title }}</h1>
+            <p class="lead-form-header__subtitle">Укажите основные данные и удобные способы связи с клиентом.</p>
+        </div>
+    </header>
+
+    <form method="post" id="client-form" class="lead-form" novalidate
+          data-lead-url="{% url 'core:client_lead_data' %}" data-client-id="{{ form.instance.pk|default:'' }}">
+        {% csrf_token %}
+        <input type="hidden" name="lead_contacts_loaded" value="{{ form.imported_lead_id }}">
+        {% if form.errors %}
+            <div class="alert alert-danger" role="alert">
+                Проверьте отмеченные поля. Введённые данные сохранены в форме.
+                {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+            </div>
+        {% endif %}
+        <div class="lead-form-actions">
+            <div><strong>{{ page_title }}</strong><span>Поля со звёздочкой обязательны</span></div>
+            <div class="lead-form-actions__buttons">
+                <a href="{{ cancel_url }}" class="btn btn-outline-secondary">Отмена</a>
+                <button type="submit" class="btn btn-primary">{{ submit_label }}</button>
+            </div>
+        </div>
+
+        <section class="lead-form-section">
+            <div class="lead-form-section__header">
+                <div><span class="lead-form-section__number">01</span><h2>Основная информация</h2></div>
+                <p>Частное лицо или компания, с которыми вы работаете.</p>
+            </div>
+            {% if form.creation_mode %}
+                <fieldset class="client-form-mode-group">
+                    <legend>{{ form.creation_mode.label }}</legend>
+                    <div class="client-form-mode-options">
+                        {% for radio in form.creation_mode %}
+                            <label class="client-form-mode">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
+                        {% endfor %}
+                    </div>
+                    {% for error in form.creation_mode.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                </fieldset>
+            {% endif %}
+            <div class="client-form-lead" data-lead-section>
+                <label for="client-lead-search" class="lead-form-field__label">Поиск лида</label>
+                <input type="search" id="client-lead-search" class="form-control" placeholder="Имя, телефон или email" autocomplete="off" aria-describedby="client-lead-status">
+                <div class="mt-3">{% include "core/includes/lead_form_field.html" with field=form.lead %}</div>
+                <p id="client-lead-status" class="lead-form-field__help" role="status">Контакты выбранного лида заполнят пустые поля. Введённые вами данные сохранятся.</p>
+            </div>
+            <div class="lead-form-grid">
+                {% include "core/includes/lead_form_field.html" with field=form.client_type %}
+                {% include "core/includes/lead_form_field.html" with field=form.name %}
+            </div>
+        </section>
+
+        <section class="lead-form-section">
+            <div class="lead-form-section__header">
+                <div><span class="lead-form-section__number">02</span><h2>Контакты</h2></div>
+                <p>Заполните известные каналы связи. Остальное можно добавить позже.</p>
+            </div>
+            <div class="lead-form-grid">
+                {% include "core/includes/lead_form_field.html" with field=form.phone %}
+                {% include "core/includes/lead_form_field.html" with field=form.email %}
+                {% include "core/includes/lead_form_field.html" with field=form.telegram %}
+                {% include "core/includes/lead_form_field.html" with field=form.whatsapp %}
+            </div>
+            <details class="lead-form-more"{% if form.max_messenger.value or form.instagram.value or form.facebook.value or form.vk.value or form.max_messenger.errors or form.instagram.errors or form.facebook.errors or form.vk.errors %} open{% endif %}>
+                <summary>Дополнительные каналы связи</summary>
+                <div class="lead-form-grid mt-3">
+                    {% include "core/includes/lead_form_field.html" with field=form.max_messenger %}
+                    {% include "core/includes/lead_form_field.html" with field=form.instagram %}
+                    {% include "core/includes/lead_form_field.html" with field=form.facebook %}
+                    {% include "core/includes/lead_form_field.html" with field=form.vk %}
+                </div>
+            </details>
+            <div class="mt-4">{% include "core/includes/lead_form_field.html" with field=form.contacts %}</div>
+            {% if form.instance.messenger %}<p class="lead-form-field__help mt-3">Контакт из прежней карточки: {{ form.instance.messenger }}</p>{% endif %}
+        </section>
+
+        <section class="lead-form-section">
+            <div class="lead-form-section__header">
+                <div><span class="lead-form-section__number">03</span><h2>Предпочтения и сегмент</h2></div>
+                <p>Контекст, который поможет подготовить подходящее предложение.</p>
+            </div>
+            <div class="lead-form-grid">
+                {% include "core/includes/lead_form_field.html" with field=form.segment %}
+                {% include "core/includes/lead_form_field.html" with field=form.preferences field_class="lead-form-field--wide" %}
+            </div>
+        </section>
+
+        {% if form.instance.pk %}
+            <section class="lead-form-section">
+                <div class="lead-form-section__header"><div><h2>История мероприятий</h2></div><p>Мероприятия, связанные с клиентом в CRM.</p></div>
+                {% for event in client_events %}
+                    <div class="client-form-event"><a href="{% url 'core:event_detail' event.pk %}">{{ event }}</a><span>{{ event.date|date:"d.m.Y" }} · {{ event.get_status_display }}</span></div>
+                {% empty %}<p class="text-secondary mb-0">Связанных мероприятий пока нет.</p>{% endfor %}
+                {% if form.instance.event_history %}<details class="lead-form-more"><summary>Прежние заметки о мероприятиях</summary><p>{{ form.instance.event_history|linebreaksbr }}</p></details>{% endif %}
+            </section>
+        {% endif %}
+    </form>
+</div>
+<script src="{% static 'js/client_form.js' %}" defer></script>
+{% endblock %}
