@@ -17,6 +17,7 @@
           data-lead-url="{% url 'core:client_lead_data' %}" data-client-id="{{ form.instance.pk|default:'' }}">
         {% csrf_token %}
         <input type="hidden" name="lead_contacts_loaded" value="{{ form.imported_lead_id }}">
+        {{ form.manager_selection_changed }}
         {% if form.errors %}
             <div class="alert alert-danger" role="alert">
                 Проверьте отмеченные поля. Введённые данные сохранены в форме.
@@ -56,6 +57,7 @@
             <div class="lead-form-grid">
                 {% include "core/includes/lead_form_field.html" with field=form.client_type %}
                 {% include "core/includes/lead_form_field.html" with field=form.name %}
+                {% include "core/includes/lead_form_field.html" with field=form.manager %}
             </div>
         </section>
 

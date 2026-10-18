@@ -526,7 +526,7 @@ class ClientListView(ClientAccessMixin, ListView):
     }
 
     def get_queryset(self):
-        queryset = Client.objects.select_related("lead", "lead__manager").annotate(events_count=Count("events"))
+        queryset = Client.objects.select_related("lead", "manager").annotate(events_count=Count("events"))
         self.search_query = self.request.GET.get("q", "").strip()
         self.client_type = self.request.GET.get("client_type", "")
         self.segment = self.request.GET.get("segment", "")
@@ -543,9 +543,9 @@ class ClientListView(ClientAccessMixin, ListView):
         if self.segment:
             queryset = queryset.filter(segment=self.segment)
         if self.manager_filter == "unassigned":
-            queryset = queryset.filter(lead__manager__isnull=True)
+            queryset = queryset.filter(manager__isnull=True)
         elif self.manager_filter.isdigit():
-            queryset = queryset.filter(lead__manager_id=self.manager_filter)
+            queryset = queryset.filter(manager_id=self.manager_filter)
         else:
             self.manager_filter = ""
         queryset = queryset.order_by(*self.sort_options[self.sort])
@@ -558,7 +558,7 @@ class ClientListView(ClientAccessMixin, ListView):
         context = super().get_context_data(**kwargs)
         for item in context["clients"]:
             item.contact_items = client_contact_items(item)
-        managers = User.objects.filter(assigned_leads__client__isnull=False).distinct().order_by("username")
+        managers = User.objects.filter(managed_clients__isnull=False).distinct().order_by("username")
         selected_manager = next((item for item in managers if str(item.pk) == self.manager_filter), None)
         context.update({
             "search_query": self.search_query,
@@ -594,7 +594,7 @@ class ClientDetailView(ClientAccessMixin, DetailView):
     context_object_name = "crm_client"
 
     def get_queryset(self):
-        return Client.objects.select_related("lead", "lead__manager")
+        return Client.objects.select_related("lead", "manager")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1412,7 +1412,13 @@ class ClientLeadDataView(ClientManagementMixin, View):
             if not lead_id.isdigit():
                 return JsonResponse({"error": "Некорректный лид"}, status=400)
             lead = get_object_or_404(leads, pk=lead_id)
-            response = JsonResponse({"fields": {field: getattr(lead, field) for field in ClientForm.lead_contact_fields}})
+            manager_id = lead.manager_id if User.objects.filter(
+                pk=lead.manager_id, is_active=True, crm_profile__isnull=False,
+            ).exists() else None
+            response = JsonResponse({
+                "fields": {field: getattr(lead, field) for field in ClientForm.lead_contact_fields},
+                "manager_id": manager_id,
+            })
         else:
             query = request.GET.get("q", "").strip()
             matches = (lead for lead in leads if lead_matches_search(lead, query))

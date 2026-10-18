@@ -77,23 +77,23 @@ def test_client_list_keeps_structured_contacts_visible_over_notes(client, viewer
 
 def test_client_filters_combine_and_metrics_cover_whole_database(client, viewer):
     lead = Lead.objects.create(name='Заявка', manager=viewer)
-    target = Client.objects.create(name='Целевой', lead=lead, client_type='b2b', segment='vip')
+    target = Client.objects.create(name='Целевой', lead=lead, manager=viewer, client_type='b2b', segment='vip')
     Client.objects.create(name='Целевой частный', client_type='b2c', segment='vip')
     Client.objects.create(name='Другой', client_type='b2b', segment='standard')
     response = client.get(reverse('core:clients'), {'q': 'целевой', 'client_type': 'b2b', 'segment': 'vip', 'manager': viewer.pk})
     assert list(response.context['clients']) == [target]
     assert response.context['paginator'].count == 1
     assert response.context['client_metrics'] == {'total': 3, 'companies': 2, 'individuals': 1, 'vip': 2}
-    assert 'Менеджер лида' in response.content.decode()
+    assert 'Ответственный' in response.content.decode()
 
 
-def test_unassigned_filter_includes_manual_clients_and_leads_without_manager(client, viewer):
+def test_unassigned_filter_uses_client_assignment_independently_of_lead(client, viewer):
     manual = Client.objects.create(name='Вручную')
     free_lead = Lead.objects.create(name='Без менеджера')
     Lead.objects.filter(pk=free_lead.pk).update(manager=None)
     unassigned = Client.objects.create(name='Из свободного лида', lead=free_lead)
     assigned_lead = Lead.objects.create(name='Назначен', manager=viewer)
-    Client.objects.create(name='Назначенный клиент', lead=assigned_lead)
+    Client.objects.create(name='Назначенный клиент', lead=assigned_lead, manager=viewer)
     response = client.get(reverse('core:clients'), {'manager': 'unassigned'})
     assert set(response.context['clients']) == {manual, unassigned}
 

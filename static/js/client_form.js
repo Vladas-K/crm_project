@@ -2,6 +2,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("client-form");
     if (!form) return;
     const lead = form.elements.lead;
+    const manager = form.elements.manager;
+    const managerSelectionChanged = form.elements.manager_selection_changed;
+    const canImportManager = () => !form.dataset.clientId && !["true", "1", "on"].includes(managerSelectionChanged.value.toLowerCase());
+    manager.addEventListener("change", () => { managerSelectionChanged.value = "true"; });
     const type = form.elements.client_type;
     const name = form.elements.name;
     const nameLabel = form.querySelector(`label[for="${name.id}"]`);
@@ -22,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
         nameLabel.firstChild.textContent = type.value === "b2b" ? "Название компании" : "Имя клиента";
         name.autocomplete = type.value === "b2b" ? "organization" : "name";
     };
-    const updateMode = () => {
+    const updateMode = (event) => {
         const mode = form.querySelector('input[name="creation_mode"]:checked');
         section.hidden = Boolean(mode && mode.value === "manual");
         lead.disabled = section.hidden;
@@ -30,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
             lead.value = "";
             form.elements.lead_contacts_loaded.value = "";
             contactController?.abort();
+            if (event && canImportManager()) manager.value = "";
         }
     };
     type.addEventListener("change", updateType);
@@ -69,7 +74,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     lead.addEventListener("change", async () => {
         contactController?.abort();
-        if (!lead.value) return;
+        if (!lead.value) {
+            if (canImportManager()) manager.value = "";
+            return;
+        }
         const selectedId = lead.value;
         contactController = new AbortController();
         status.textContent = "Загружаем контакты лида…";
@@ -78,6 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!response.ok) throw new Error();
             const data = await response.json();
             if (lead.value !== selectedId || lead.disabled) return;
+            if (canImportManager()) manager.value = data.manager_id == null ? "" : String(data.manager_id);
             Object.entries(data.fields).forEach(([key, value]) => {
                 const input = form.elements[key];
                 if (input && (!input.value.trim() || input.value === imported[key])) input.value = value;

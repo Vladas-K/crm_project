@@ -146,6 +146,7 @@ class ClientForm(BootstrapModelForm):
         label="Как создать клиента", choices=[("manual", "С нуля"), ("lead", "Из лида")],
         widget=forms.RadioSelect, initial="manual", required=False,
     )
+    manager_selection_changed = forms.BooleanField(required=False, widget=forms.HiddenInput)
     lead_contact_fields = ("name", "phone", "email", "telegram", "whatsapp", "max_messenger", "instagram", "facebook", "vk")
 
     class Meta:
@@ -154,6 +155,7 @@ class ClientForm(BootstrapModelForm):
             "lead",
             "client_type",
             "name",
+            "manager",
             "phone",
             "email",
             "telegram",
@@ -180,6 +182,13 @@ class ClientForm(BootstrapModelForm):
             self.fields.pop("creation_mode")
         self.fields["lead"].queryset = Lead.objects.filter(eligible).order_by("name", "pk")
         self.fields["lead"].empty_label = "Выберите исходный лид"
+        manager_choices = Q(is_active=True, crm_profile__isnull=False)
+        if self.instance.pk and self.instance.manager_id:
+            manager_choices |= Q(pk=self.instance.manager_id)
+        self.fields["manager"].queryset = User.objects.filter(manager_choices).order_by("username")
+        self.fields["manager"].empty_label = "Без ответственного"
+        self.fields["manager"].label_from_instance = lambda user: user.get_full_name() or user.get_username()
+        self.fields["manager"].help_text = "Ответственный за работу с клиентом. Назначение не зависит от менеджера лида."
         if "creation_mode" in self.fields:
             self.fields["creation_mode"].widget.attrs.pop("class", None)
         self.fields["client_type"].label = "Тип клиента"
@@ -208,6 +217,12 @@ class ClientForm(BootstrapModelForm):
                 lead = self.fields["lead"].queryset.filter(pk=lead_id).first()
                 if lead:
                     target = self.data if self.is_bound else self.initial
+                    manager_changed = self.fields["manager_selection_changed"].to_python(
+                        self.data.get("manager_selection_changed", False)
+                    ) if self.is_bound else False
+                    if not manager_changed and not target.get("manager") and lead.manager_id:
+                        if self.fields["manager"].queryset.filter(pk=lead.manager_id).exists():
+                            target["manager"] = lead.manager_id
                     if not self.is_bound or str(self.imported_lead_id) != str(lead_id):
                         for field in self.lead_contact_fields:
                             if not str(target.get(field, "")).strip():

@@ -404,6 +404,7 @@ class Command(BaseCommand):
                 defaults={
                     "lead": lead,
                     "client_type": client_type,
+                    "manager": lead.manager,
                     "phone": lead.phone,
                     "email": lead.email,
                     "messenger": lead.telegram,

@@ -323,6 +323,14 @@ class Client(ContactMixin):
         related_name="client",
         verbose_name="Исходный лид",
     )
+    manager = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="managed_clients",
+        verbose_name="Ответственный менеджер",
+    )
     client_type = models.CharField("Тип", max_length=10, choices=ClientType.choices, default=ClientType.B2C)
     name = models.CharField("Имя / компания", max_length=255)
     contacts = models.TextField("Контакты", blank=True)

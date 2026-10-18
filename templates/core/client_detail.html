@@ -46,7 +46,7 @@
             <div class="lead-profile-info">
                 <div class="lead-profile-info__item"><span>Предпочтения</span><p>{{ crm_client.preferences|default:'Пока не указаны'|linebreaksbr }}</p></div>
                 <div class="lead-profile-info__item"><span>Исходный лид</span>{% if crm_client.lead %}<a href="{% url 'core:lead_detail' crm_client.lead.pk %}">{{ crm_client.lead.name }}</a>{% else %}<p>Клиент создан с нуля</p>{% endif %}</div>
-                <div class="lead-profile-info__item"><span>Менеджер исходного лида</span><p>{% if crm_client.lead.manager %}{{ crm_client.lead.manager.get_full_name|default:crm_client.lead.manager.get_username }}{% else %}Не назначен{% endif %}</p></div>
+                <div class="lead-profile-info__item"><span>Ответственный менеджер</span><p>{% if crm_client.manager %}{{ crm_client.manager.get_full_name|default:crm_client.manager.get_username }}{% else %}Не назначен{% endif %}</p></div>
             </div>
         </section>
     </div>

@@ -40,10 +40,10 @@
             </div>
         </div>
         <div class="lead-filter-field">
-            <label for="client-manager" class="form-label">Менеджер лида</label>
+            <label for="client-manager" class="form-label">Ответственный</label>
             <select id="client-manager" name="manager" class="form-select">
                 <option value="">Все менеджеры</option>
-                <option value="unassigned"{% if client_manager_filter == 'unassigned' %} selected{% endif %}>Без менеджера лида</option>
+                <option value="unassigned"{% if client_manager_filter == 'unassigned' %} selected{% endif %}>Без ответственного</option>
                 {% for manager in client_managers %}<option value="{{ manager.pk }}"{% if client_manager_filter == manager.pk|stringformat:'s' %} selected{% endif %}>{{ manager.get_full_name|default:manager.get_username }}</option>{% endfor %}
             </select>
         </div>
@@ -72,7 +72,7 @@
             {% if selected_type %}<span class="event-chip event-chip--soft">{{ selected_type }}</span>{% endif %}
             {% if selected_segment %}<span class="event-chip event-chip--soft">{{ selected_segment }}</span>{% endif %}
             {% if selected_manager %}<span class="event-chip event-chip--soft">{{ selected_manager.get_full_name|default:selected_manager.get_username }}</span>{% endif %}
-            {% if client_manager_filter == 'unassigned' %}<span class="event-chip event-chip--soft">Без менеджера лида</span>{% endif %}
+            {% if client_manager_filter == 'unassigned' %}<span class="event-chip event-chip--soft">Без ответственного</span>{% endif %}
             <a href="{% url 'core:clients' %}" class="lead-filter-reset">Сбросить всё</a>
         </div>
     {% endif %}
@@ -84,7 +84,7 @@
 </div>
 <section class="lead-directory client-directory{% if crm_permissions.can_view_finance %} client-directory--finance{% endif %}" aria-label="Список клиентов">
     <div class="lead-directory__head" aria-hidden="true">
-        <span>Клиент и контакты</span><span>Тип и сегмент</span><span>Менеджер лида</span><span>Мероприятия</span>{% if crm_permissions.can_view_finance %}<span>LTV · сохранено</span>{% endif %}<span></span>
+        <span>Клиент и контакты</span><span>Тип и сегмент</span><span>Ответственный</span><span>Мероприятия</span>{% if crm_permissions.can_view_finance %}<span>LTV · сохранено</span>{% endif %}<span></span>
     </div>
     <div class="lead-directory__list">
         {% for item in clients %}
@@ -111,8 +111,8 @@
                     <span class="event-chip {% if item.segment == 'vip' %}event-chip--warning{% else %}event-chip--soft{% endif %} align-self-start">{{ item.get_segment_display }}</span>
                 </div>
                 <div class="lead-card__manager">
-                    <span class="lead-card__mobile-label">Менеджер лида</span>
-                    {% if item.lead.manager %}<strong>{{ item.lead.manager.get_full_name|default:item.lead.manager.get_username }}</strong>{% else %}<span class="lead-card__empty">Не назначен</span>{% endif %}
+                    <span class="lead-card__mobile-label">Ответственный</span>
+                    {% if item.manager %}<strong>{{ item.manager.get_full_name|default:item.manager.get_username }}</strong>{% else %}<span class="lead-card__empty">Не назначен</span>{% endif %}
                 </div>
                 <div class="lead-card__context">
                     <span class="lead-card__mobile-label">Мероприятия</span>
