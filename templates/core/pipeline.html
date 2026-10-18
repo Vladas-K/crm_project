@@ -3,45 +3,123 @@
 {% block title %}Воронка | CRM{% endblock %}
 
 {% block content %}
-<div class="page-header">
+<div class="page-header lead-directory-header">
     <div>
+        <p class="lead-directory-header__eyebrow mb-2">Продажи и первый контакт</p>
         <h1 class="h2 mb-1">Воронка продаж</h1>
-        <p class="text-secondary mb-0">Отдельная сущность с вероятностью сделки и контролем потерь.</p>
+        <p class="text-secondary mb-0">Контролируйте заявки по этапам и вовремя связывайтесь с клиентами.</p>
     </div>
-    {% if crm_permissions.can_manage_system %}<a href="{% url 'core:pipeline_create' %}" class="btn btn-primary">Добавить этап</a>{% endif %}
+    {% if crm_permissions.can_manage_leads %}<a href="{% url 'core:lead_create' %}" class="btn btn-primary">Добавить лид</a>{% endif %}
 </div>
-
-<div class="row g-4">
-    {% for stage in stages %}
-        <div class="col-md-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <h2 class="h5 mb-0">{{ stage.name }}</h2>
-                        <span class="event-chip event-chip--soft">{{ stage.probability }}%</span>
-                    </div>
-                    <div class="small text-secondary mb-3">Лидов: {{ stage.leads.count }}</div>
-                    {% if crm_permissions.can_manage_system %}
-                        <div class="d-flex gap-2 mb-3">
-                            <a href="{% url 'core:pipeline_update' stage.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
-                            <a href="{% url 'core:pipeline_delete' stage.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>
-                        </div>
-                    {% endif %}
-                    {% for lead in stage.leads.all|slice:":4" %}
-                        <div class="list-row">
-                            <div>
-                                <div class="fw-semibold">{{ lead.name }}</div>
-                                <div class="small text-secondary">{{ lead.manager|default:"Без менеджера" }}</div>
-                            </div>
-                        </div>
-                    {% empty %}
-                        <p class="text-secondary mb-0">На этапе пока нет лидов.</p>
-                    {% endfor %}
-                </div>
-            </div>
+<div class="lead-metrics pipeline-metrics mb-4" aria-label="Показатели всех лидов">
+    <a href="{% url 'core:pipeline' %}" class="lead-metric"><span>Всего лидов</span><strong>{{ pipeline_metrics.total }}</strong></a>
+    <a href="{% url 'core:pipeline' %}?attention=needs_response" class="lead-metric lead-metric--attention"><span>Требуют ответа</span><strong>{{ pipeline_metrics.needs_response }}</strong></a>
+    <a href="{% url 'core:pipeline' %}?stage=unassigned" class="lead-metric"><span>Без этапа</span><strong>{{ pipeline_metrics.unassigned }}</strong></a>
+</div>
+<form method="get" class="lead-filter-panel mb-4">
+    <div class="lead-filter-grid pipeline-filter-grid">
+        <div class="lead-filter-field">
+            <label for="pipeline-search" class="form-label">Поиск</label>
+            <input id="pipeline-search" type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Имя, телефон или email">
         </div>
+        <div class="lead-filter-field">
+            <label for="pipeline-manager" class="form-label">Ответственный</label>
+            <select id="pipeline-manager" name="manager" class="form-select">
+                <option value="">Все менеджеры</option>
+                <option value="unassigned"{% if manager_filter == 'unassigned' %} selected{% endif %}>Без менеджера</option>
+                {% for manager in pipeline_managers %}<option value="{{ manager.pk }}"{% if manager_filter == manager.pk|stringformat:'s' %} selected{% endif %}>{{ manager.get_full_name|default:manager.get_username }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="lead-filter-field">
+            <label for="pipeline-stage" class="form-label">Этап</label>
+            <select id="pipeline-stage" name="stage" class="form-select">
+                <option value="">Все этапы</option>
+                <option value="unassigned"{% if stage_filter == 'unassigned' %} selected{% endif %}>Без этапа</option>
+                {% for stage in pipeline_stages %}<option value="{{ stage.pk }}"{% if stage_filter == stage.pk|stringformat:'s' %} selected{% endif %}>{{ stage.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="lead-filter-field">
+            <label for="pipeline-attention" class="form-label">Первый контакт</label>
+            <select id="pipeline-attention" name="attention" class="form-select">
+                <option value="">Все лиды</option>
+                <option value="needs_response"{% if attention_filter == 'needs_response' %} selected{% endif %}>Требуют ответа</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary lead-filter-submit">Показать</button>
+    </div>
+    {% if has_filters %}
+        <div class="lead-active-filters" aria-label="Активные фильтры">
+            <span class="lead-active-filters__label">Выбрано:</span>
+            {% if search_query %}<span class="event-chip event-chip--soft">«{{ search_query }}»</span>{% endif %}
+            {% if selected_stage %}<span class="event-chip event-chip--soft">{{ selected_stage.name }}</span>{% endif %}
+            {% if stage_filter == 'unassigned' %}<span class="event-chip event-chip--soft">Без этапа</span>{% endif %}
+            {% if selected_manager %}<span class="event-chip event-chip--soft">{{ selected_manager.get_full_name|default:selected_manager.get_username }}</span>{% endif %}
+            {% if manager_filter == 'unassigned' %}<span class="event-chip event-chip--soft">Без менеджера</span>{% endif %}
+            {% if attention_filter %}<span class="event-chip event-chip--danger">Требуют ответа</span>{% endif %}
+            <a href="{% url 'core:pipeline' %}" class="lead-filter-reset">Сбросить всё</a>
+        </div>
+    {% endif %}
+</form>
+<div class="pipeline-board-summary">
+    <div class="lead-directory-summary mb-0"><h2>Этапы продаж</h2><p>Найдено лидов: {{ filtered_count }}</p></div>
+    <div class="event-actions">
+        <a href="{% url 'core:leads' %}" class="btn btn-outline-secondary">Все лиды</a>
+        {% if crm_permissions.can_manage_system %}<a href="{% url 'core:pipeline_create' %}" class="btn btn-outline-primary">Добавить этап</a>{% endif %}
+    </div>
+</div>
+{% if has_filters and not filtered_count %}<p class="pipeline-search-empty" role="status">По выбранным условиям лиды не найдены. Измените фильтры или сбросьте их.</p>{% endif %}
+<div class="pipeline-board" aria-label="Лиды по этапам продаж">
+    {% for group in pipeline_groups %}
+        <section class="pipeline-stage{% if not group.stage %} pipeline-stage--unassigned{% elif group.stage.is_lost %} pipeline-stage--lost{% endif %}">
+            <div class="pipeline-stage__header">
+                <div class="pipeline-stage__heading">
+                    <h2>{{ group.name }}</h2>
+                    <span class="event-chip event-chip--soft" aria-label="Лидов: {{ group.total }}">{{ group.total }}</span>
+                </div>
+                {% if group.stage and crm_permissions.can_manage_system %}
+                    <details class="item-action-menu">
+                        <summary aria-label="Настройки этапа {{ group.name }}"><span aria-hidden="true">•••</span></summary>
+                        <div class="item-action-menu__popover">
+                            <a href="{% url 'core:pipeline_update' group.stage.pk %}">Изменить</a>
+                            <a href="{% url 'core:pipeline_delete' group.stage.pk %}" class="item-action-menu__danger">Удалить</a>
+                        </div>
+                    </details>
+                {% endif %}
+            </div>
+            <p class="pipeline-stage__probability">{% if group.stage %}Вероятность сделки: <strong>{{ group.stage.probability }}%</strong>{% else %}Назначьте заявкам подходящий этап{% endif %}</p>
+            <div class="pipeline-stage__leads">
+                {% for lead in group.leads %}
+                    <article class="pipeline-lead-card" data-profile-url="{% url 'core:lead_detail' lead.pk %}" tabindex="0" aria-label="Открыть карточку лида {{ lead.name }}">
+                        <div class="pipeline-lead-card__header">
+                            <a href="{% url 'core:lead_detail' lead.pk %}" class="lead-card__name" title="{{ lead.name }}">{{ lead.name }}</a>
+                            {% if crm_permissions.can_manage_leads %}
+                                <details class="item-action-menu">
+                                    <summary aria-label="Действия с лидом {{ lead.name }}"><span aria-hidden="true">•••</span></summary>
+                                    <div class="item-action-menu__popover">
+                                        <a href="{% url 'core:lead_detail' lead.pk %}">Открыть профиль</a>
+                                        <a href="{% url 'core:lead_stage_update' lead.pk %}{% if pipeline_query %}?{{ pipeline_query }}{% endif %}">Сменить этап</a>
+                                        <a href="{% url 'core:lead_update' lead.pk %}">Изменить</a>
+                                    </div>
+                                </details>
+                            {% endif %}
+                        </div>
+                        <div class="lead-card__contacts pipeline-lead-card__contacts">
+                            {% if lead.phone %}<a href="tel:{{ lead.phone }}">{{ lead.phone }}</a>{% endif %}
+                            {% if lead.email %}<a href="mailto:{{ lead.email }}">{{ lead.email }}</a>{% endif %}
+                            {% if not lead.phone and not lead.email %}<span>Контакт не указан</span>{% endif %}
+                        </div>
+                        <p class="pipeline-lead-card__manager">{% if lead.manager %}{{ lead.manager.get_full_name|default:lead.manager.get_username }}{% else %}Без менеджера{% endif %}</p>
+                        <span class="lead-card__created">Создан {{ lead.created_at|date:'d.m.Y' }}</span>
+                        {% if lead.needs_response %}<span class="lead-attention-chip lead-attention-chip--danger">Требует ответа</span>{% elif lead.last_contact_at %}<span class="pipeline-lead-card__responded">Первый контакт состоялся</span>{% endif %}
+                    </article>
+                {% empty %}<p class="pipeline-stage__empty">{% if has_filters %}По фильтрам лидов нет{% else %}На этапе пока нет лидов{% endif %}</p>{% endfor %}
+            </div>
+            {% if group.total %}<div class="pipeline-stage__footer"><span>Показаны {{ group.leads|length }} из {{ group.total }}</span><a href="{{ group.all_url }}">Все лиды ({{ group.total }})</a></div>{% endif %}
+        </section>
     {% empty %}
-        <div class="col-12"><div class="card border-0 shadow-sm"><div class="card-body py-5 text-center text-secondary">Этапы воронки пока не добавлены.</div></div></div>
+        <div class="lead-directory-empty pipeline-board__empty"><strong>Этапы воронки пока не добавлены</strong><span>Лиды без этапа доступны через фильтр «Без этапа».</span></div>
     {% endfor %}
 </div>
+{% include 'core/partials/item_action_menus.html' %}
+{% include 'core/partials/clickable_profile_cards.html' %}
 {% endblock %}

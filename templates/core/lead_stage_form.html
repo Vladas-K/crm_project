@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Смена этапа лида | CRM{% endblock %}
+{% block content %}
+<div class="pipeline-transition">
+    <div class="page-header"><div><p class="lead-form-header__eyebrow">Воронка продаж</p><h1 class="h2">Смена этапа лида</h1><a href="{% url 'core:lead_detail' object.pk %}">{{ object.name }}</a></div></div>
+    <section class="premium-panel">
+        <p class="text-secondary">Текущий этап: <strong>{{ current_stage }}</strong></p>
+        <form method="post" novalidate data-lead-stage-form>
+            {% csrf_token %}
+            {% if form.errors %}<div class="alert alert-danger" role="alert">Проверьте отмеченные поля.{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>{% endif %}
+            {% include 'core/includes/lead_form_field.html' with field=form.stage %}
+            <div class="mt-4" data-loss-reason>{% include 'core/includes/lead_form_field.html' with field=form.loss_reason %}</div>
+            <div class="d-flex flex-wrap gap-2 mt-4"><button type="submit" class="btn btn-primary">Сохранить этап</button><a href="{{ cancel_url }}" class="btn btn-outline-secondary">Отмена</a></div>
+        </form>
+    </section>
+</div>
+<script src="{% static 'js/lead_stage_form.js' %}" defer></script>
+{% endblock %}

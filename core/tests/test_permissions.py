@@ -756,7 +756,7 @@ def test_lists_hide_actions_without_management_permission(
 @pytest.mark.parametrize(
     "url_name, object_key, action_labels",
     [
-        ("pipeline", "stage", ("Добавить этап", "Изменить", "Удалить")),
+        ("pipeline", "stage", ("Добавить этап", "Настройки этапа", "Удалить")),
         ("formats", "event_format", ("Добавить формат", "Изменить", "Удалить")),
         ("vendors", "vendor", ("Добавить подрядчика", "Изменить", "Удалить")),
         ("packages", "service_package", ("Добавить пакет", "Изменить", "Удалить")),
@@ -784,6 +784,10 @@ def test_reference_lists_hide_mutation_actions_without_system_access(
     assert response.status_code == 200
     for label in action_labels:
         assert label not in html
+    if url_name == "pipeline":
+        # Управление лидами независимо от системного доступа к этапам.
+        for action in ("update", "delete"):
+            assert reverse(f"core:pipeline_{action}", kwargs={"pk": crm_objects[object_key].pk}) not in html
 
 
 @pytest.mark.django_db

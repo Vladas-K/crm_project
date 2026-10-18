@@ -135,6 +135,35 @@ class LeadForm(BootstrapModelForm):
         return normalize_russian_phone(value)
 
 
+class LeadStageForm(BootstrapModelForm):
+    """Меняет только этап и причину отказа, не затрагивая остальные данные лида."""
+
+    class Meta:
+        model = Lead
+        fields = ["stage", "loss_reason"]
+        labels = {"stage": "Новый этап"}
+        widgets = {"loss_reason": forms.Textarea(attrs={"rows": 3})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.original_stage_id = self.instance.stage_id
+        self.fields["stage"].empty_label = "Без этапа"
+        stages = list(PipelineStage.objects.order_by("order", "pk"))
+        self.fields["stage"].widget.attrs["data-lost-stage-ids"] = json.dumps(
+            [str(stage.pk) for stage in stages if stage.is_lost]
+        )
+        self.fields["stage"].help_text = "При смене этапа вероятность сделки берётся из его настроек. Без этапа — 0%."
+        self.fields["loss_reason"].help_text = "Обязательно при переводе в потерянный этап."
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if instance.stage_id != self.original_stage_id:
+            instance.probability = instance.stage.probability if instance.stage else 0
+        if commit:
+            instance.save(update_fields=["stage", "probability", "loss_reason"])
+        return instance
+
+
 class PipelineStageForm(BootstrapModelForm):
     class Meta:
         model = PipelineStage

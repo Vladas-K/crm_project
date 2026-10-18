@@ -53,6 +53,7 @@
             <label for="lead-stage" class="form-label">Этап</label>
             <select id="lead-stage" name="stage" class="form-select">
                 <option value="">Все этапы</option>
+                <option value="unassigned"{% if stage_filter == 'unassigned' %} selected{% endif %}>Без этапа</option>
                 {% for stage in pipeline_stages %}
                     <option value="{{ stage.pk }}"{% if stage_filter == stage.pk|stringformat:"s" %} selected{% endif %}>{{ stage.name }}</option>
                 {% endfor %}
@@ -62,6 +63,7 @@
             <label for="lead-manager" class="form-label">Ответственный</label>
             <select id="lead-manager" name="manager" class="form-select">
                 <option value="">Все менеджеры</option>
+                <option value="unassigned"{% if manager_filter == 'unassigned' %} selected{% endif %}>Без менеджера</option>
                 {% for manager in lead_managers %}
                     <option value="{{ manager.pk }}"{% if manager_filter == manager.pk|stringformat:"s" %} selected{% endif %}>{{ manager.get_username }}</option>
                 {% endfor %}
@@ -93,7 +95,9 @@
             <span class="lead-active-filters__label">Выбрано:</span>
             {% if search_query %}<span class="event-chip event-chip--soft">«{{ search_query }}»</span>{% endif %}
             {% if lead_selected_stage %}<span class="event-chip event-chip--soft">{{ lead_selected_stage.name }}</span>{% endif %}
+            {% if stage_filter == 'unassigned' %}<span class="event-chip event-chip--soft">Без этапа</span>{% endif %}
             {% if lead_selected_manager %}<span class="event-chip event-chip--soft">{{ lead_selected_manager.get_username }}</span>{% endif %}
+            {% if manager_filter == 'unassigned' %}<span class="event-chip event-chip--soft">Без менеджера</span>{% endif %}
             {% if source_filter %}<span class="event-chip event-chip--soft">{{ source_filter }}</span>{% endif %}
             {% if attention_filter == "needs_response" %}<span class="event-chip event-chip--danger">Требуют ответа</span>{% endif %}
             <a href="{% url 'core:leads' %}" class="lead-filter-reset">Сбросить всё</a>

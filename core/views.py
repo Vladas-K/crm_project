@@ -7,7 +7,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.db.models import Avg, Case, Count, IntegerField, Q, Sum, Value, When
+from django.db.models import Avg, Case, Count, IntegerField, Prefetch, Q, Sum, Value, When
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.http import urlencode
@@ -27,6 +27,7 @@ from .forms import (
     EventTimelineItemForm,
     EventVendorForm,
     LeadForm,
+    LeadStageForm,
     PipelineStageForm,
     ServicePackageForm,
     VendorForm,
@@ -386,8 +387,12 @@ class LeadListView(CRMLoginRequiredMixin, ListView):
 
         if stage_filter.isdigit():
             queryset = queryset.filter(stage_id=stage_filter)
+        elif stage_filter == "unassigned":
+            queryset = queryset.filter(stage__isnull=True)
         if manager_filter.isdigit():
             queryset = queryset.filter(manager_id=manager_filter)
+        elif manager_filter == "unassigned":
+            queryset = queryset.filter(manager__isnull=True)
         if source_filter:
             queryset = queryset.filter(source=source_filter)
         if attention_filter == "needs_response":
@@ -497,19 +502,82 @@ class LeadAutocompleteView(CRMLoginRequiredMixin, View):
 
 
 class PipelineView(CRMLoginRequiredMixin, TemplateView):
-    """Показывает воронку продаж, сгруппированную по этапам pipeline."""
+    """Обзор лидов по этапам с ограниченными превью и полными списками."""
 
     template_name = "core/pipeline.html"
+    preview_limit = 4
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        stages = PipelineStage.objects.prefetch_related("leads__manager").all()
+        all_stages = list(PipelineStage.objects.all())
         stage_filter = self.request.GET.get("stage", "")
-        if stage_filter.isdigit():
+        manager_filter = self.request.GET.get("manager", "")
+        query = self.request.GET.get("q", "").strip()
+        attention = self.request.GET.get("attention", "")
+        if stage_filter not in {str(stage.pk) for stage in all_stages} | {"unassigned"}:
+            stage_filter = ""
+        if not manager_filter.isdigit() and manager_filter != "unassigned":
+            manager_filter = ""
+        if attention != "needs_response":
+            attention = ""
+        leads = Lead.objects.select_related("manager", "stage")
+        if stage_filter == "unassigned":
+            leads = leads.filter(stage__isnull=True)
+        elif stage_filter:
+            leads = leads.filter(stage_id=stage_filter)
+        if manager_filter == "unassigned":
+            leads = leads.filter(manager__isnull=True)
+        elif manager_filter:
+            leads = leads.filter(manager_id=manager_filter)
+        attention_query = Q(last_contact_at__isnull=True, created_at__lt=timezone.now() - timezone.timedelta(hours=24))
+        if attention:
+            leads = leads.filter(attention_query)
+        if query:
+            # SQLite не обеспечивает нужный поиск кириллицы через обычный icontains.
+            matches = [lead.pk for lead in leads.iterator() if lead_matches_search(lead, query)]
+            leads = leads.filter(pk__in=matches)
+        stages = PipelineStage.objects.annotate(
+            board_count=Count("leads", filter=Q(leads__in=leads)),
+        ).order_by("order", "pk").prefetch_related(Prefetch(
+            "leads", queryset=leads.order_by("-created_at", "-pk")[:self.preview_limit], to_attr="board_leads",
+        ))
+        if stage_filter == "unassigned":
+            stages = stages.none()
+        elif stage_filter:
             stages = stages.filter(pk=stage_filter)
-        context["stages"] = stages
-        context["stage_filter"] = stage_filter
+        filters = {"q": query, "manager": manager_filter, "attention": attention}
+
+        def all_leads_url(stage_key):
+            return f"{reverse('core:leads')}?{urlencode({key: value for key, value in dict(filters, stage=stage_key).items() if value})}"
+
+        groups = []
+        unassigned = leads.filter(stage__isnull=True)
+        unassigned_count = unassigned.count()
+        if unassigned_count or stage_filter == "unassigned":
+            groups.append({"stage": None, "name": "Без этапа", "total": unassigned_count,
+                           "leads": list(unassigned.order_by("-created_at", "-pk")[:self.preview_limit]),
+                           "all_url": all_leads_url("unassigned")})
+        stage_list = list(stages)
+        groups.extend({"stage": stage, "name": stage.name, "total": stage.board_count,
+                       "leads": stage.board_leads, "all_url": all_leads_url(str(stage.pk))} for stage in stage_list)
+        selected_stage = next((stage for stage in all_stages if str(stage.pk) == stage_filter), None)
+        params = {key: value for key, value in dict(filters, stage=stage_filter).items() if value}
+        context.update({
+            "stages": stage_list, "pipeline_stages": all_stages, "pipeline_groups": groups,
+            "search_query": query, "stage_filter": stage_filter, "manager_filter": manager_filter,
+            "attention_filter": attention, "has_filters": bool(params), "pipeline_query": urlencode(params),
+            "selected_stage": selected_stage,
+            "selected_manager": User.objects.filter(pk=manager_filter).first() if manager_filter.isdigit() else None,
+            "pipeline_managers": User.objects.filter(assigned_leads__isnull=False).distinct().order_by("username"),
+            "filtered_count": leads.count(),
+            "pipeline_metrics": Lead.objects.aggregate(
+                total=Count("pk"), needs_response=Count("pk", filter=attention_query),
+                unassigned=Count("pk", filter=Q(stage__isnull=True)),
+            ),
+        })
         return context
+
+
 
 
 class ClientListView(ClientAccessMixin, ListView):
@@ -1310,6 +1378,32 @@ class EventScopedFormMixin(CRMLoginRequiredMixin):
         if event:
             return f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab={self.get_return_tab()}#event-tabs"
         return super().get_success_url()
+
+
+class LeadStageUpdateView(LeadManagementMixin, SuccessMessageMixin, UpdateView):
+    """Быстрая смена этапа с серверной проверкой причины отказа."""
+
+    model = Lead
+    form_class = LeadStageForm
+    template_name = "core/lead_stage_form.html"
+    success_message = "Этап лида обновлён."
+
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        self.current_stage = str(obj.stage) if obj.stage else "Без этапа"
+        return obj
+
+    def get_success_url(self):
+        params = {key: self.request.GET[key] for key in ("q", "stage", "manager", "attention") if self.request.GET.get(key)}
+        url = reverse("core:pipeline")
+        return f"{url}?{urlencode(params)}" if params else url
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["cancel_url"] = self.get_success_url()
+        context["current_stage"] = self.current_stage
+        return context
+
 
 
 class LeadCreateView(LeadManagementMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):

@@ -137,7 +137,9 @@ class PipelineStage(models.Model):
     name = models.CharField("Этап", max_length=100, unique=True)
     code = models.SlugField("Код", max_length=50, unique=True)
     order = models.PositiveIntegerField("Порядок", default=0)
-    probability = models.PositiveSmallIntegerField("Вероятность (%)", default=0)
+    probability = models.PositiveSmallIntegerField(
+        "Вероятность (%)", default=0, validators=[MinValueValidator(0), MaxValueValidator(100)],
+    )
     is_lost = models.BooleanField("Потерянный этап", default=False)
 
     class Meta:
@@ -192,7 +194,9 @@ class Lead(ContactMixin):
         related_name="leads",
         verbose_name="Статус",
     )
-    probability = models.PositiveSmallIntegerField("Вероятность сделки (%)", default=0)
+    probability = models.PositiveSmallIntegerField(
+        "Вероятность сделки (%)", default=0, validators=[MinValueValidator(0), MaxValueValidator(100)],
+    )
     loss_reason = models.TextField("Причина отказа", blank=True)
     manager = models.ForeignKey(
         User,
