@@ -256,7 +256,7 @@ def test_risk_delete_returns_to_risks_tab(client, django_user_model, crm_objects
 @pytest.mark.django_db
 def test_nested_outcome_create_returns_to_outcome_tab(client, django_user_model, crm_objects):
     """Создание итогов из карточки мероприятия возвращает на вкладку итогов."""
-    login_user(client, django_user_model)
+    login_user(client, django_user_model, can_view_finance=True)
     event = crm_objects["event"]
 
     response = client.post(
@@ -283,7 +283,7 @@ def test_nested_outcome_create_returns_to_outcome_tab(client, django_user_model,
 @pytest.mark.django_db
 def test_nested_outcome_update_returns_to_outcome_tab(client, django_user_model, crm_objects):
     """Редактирование итогов из карточки мероприятия возвращает на вкладку итогов."""
-    login_user(client, django_user_model)
+    login_user(client, django_user_model, can_view_finance=True)
     outcome = EventOutcome.objects.create(
         event=crm_objects["event"],
         client_feedback="Хорошая работа",

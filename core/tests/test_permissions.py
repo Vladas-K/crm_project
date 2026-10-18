@@ -1,6 +1,8 @@
 import pytest
 from datetime import timedelta
+from decimal import Decimal
 
+from django.utils.formats import localize
 from django.utils import timezone
 from django.urls import reverse
 
@@ -624,6 +626,52 @@ def test_event_detail_shows_financial_ui_with_finance_access(client, django_user
     assert "Оплачено" in html
     assert reverse("core:event_expense_create", kwargs={"event_pk": crm_objects["event"].pk}) in html
     assert reverse("core:event_expense_update", kwargs={"pk": crm_objects["expense"].pk}) in html
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("finance_access", [False, True, None])
+@pytest.mark.parametrize("final_profit", [Decimal("125000.37"), Decimal("0"), None])
+def test_event_outcome_financial_visibility(client, django_user_model, crm_objects, finance_access, final_profit):
+    """Прибыль в итогах требует финансового права; остальные итоги доступны всем сотрудникам."""
+    if finance_access is None:
+        user = django_user_model.objects.create_user(username="outcome_without_profile", password="TestPass123!")
+    else:
+        user = create_user_with_profile(
+            django_user_model,
+            "outcome_financial_visibility",
+            can_view_finance=finance_access,
+        )
+    client.force_login(user)
+    event = crm_objects["event"]
+    outcome = EventOutcome.objects.create(
+        event=event,
+        final_profit=final_profit,
+        project_rating=4,
+        client_feedback="Отзыв для проверки доступа",
+        lessons_learned="Выводы для проверки доступа",
+        media_links="https://example.com/event-materials",
+    )
+    outcome.refresh_from_db()
+
+    response = client.get(f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=outcome")
+    html = response.content.decode()
+
+    assert response.status_code == 200
+    assert response.context["active_tab"] == "outcome"
+    assert outcome.client_feedback in html
+    assert outcome.lessons_learned in html
+    assert outcome.media_links in html
+    assert "4/5" in html
+    if finance_access:
+        assert "Финальная прибыль" in html
+        if outcome.final_profit is None:
+            assert "<strong>Не указано</strong>" in html
+        else:
+            assert f"<strong>{localize(outcome.final_profit)} ₽</strong>" in html
+    else:
+        assert "Финальная прибыль" not in html
+        if outcome.final_profit is not None:
+            assert f"{localize(outcome.final_profit)} ₽" not in html
 
 
 @pytest.mark.django_db

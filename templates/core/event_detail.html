@@ -245,6 +245,7 @@
         </div>
         {% if event_outcome %}
             <div class="row g-3 event-outcome-metrics">
+                {% if crm_permissions.can_view_finance %}
                 <div class="col-md-6">
                     <div class="metric-card">
                         <span>Финальная прибыль</span>
@@ -255,6 +256,7 @@
                         {% endif %}
                     </div>
                 </div>
+                {% endif %}
                 <div class="col-md-6">
                     <div class="metric-card">
                         <span>Оценка проекта</span>

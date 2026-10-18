@@ -251,7 +251,21 @@ class ServicePackageForm(BootstrapModelForm):
         widgets = {"services": forms.Textarea(attrs={"rows": 4})}
 
 
-class EventForm(BootstrapModelForm):
+class FinancialFieldsFormMixin:
+    """Исключает финансовые поля из отображения, валидации и сохранения без права доступа."""
+
+    financial_fields = ()
+
+    def __init__(self, *args, can_view_finance=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not can_view_finance:
+            for name in self.financial_fields:
+                self.fields.pop(name, None)
+
+
+class EventForm(FinancialFieldsFormMixin, BootstrapModelForm):
+    financial_fields = ("planned_budget",)
+
     class Meta:
         model = Event
         fields = [
@@ -324,7 +338,9 @@ class EventRiskForm(BootstrapModelForm):
         }
 
 
-class EventOutcomeForm(BootstrapModelForm):
+class EventOutcomeForm(FinancialFieldsFormMixin, BootstrapModelForm):
+    financial_fields = ("final_profit",)
+
     class Meta:
         model = EventOutcome
         fields = ["event", "client_feedback", "final_profit", "lessons_learned", "media_links", "project_rating"]
