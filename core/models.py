@@ -335,7 +335,6 @@ class Client(ContactMixin):
     name = models.CharField("Имя / компания", max_length=255)
     contacts = models.TextField("Контакты", blank=True)
     segment = models.CharField("Сегмент", max_length=20, choices=Segment.choices, default=Segment.STANDARD)
-    ltv = models.DecimalField("LTV", max_digits=12, decimal_places=2, default=0)
     preferences = models.TextField("Предпочтения", blank=True)
     event_history = models.TextField("История мероприятий", blank=True)
     created_at = models.DateTimeField("Создан", auto_now_add=True)

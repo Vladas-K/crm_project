@@ -82,9 +82,9 @@
     <h2>Список клиентов</h2>
     <p>Найдено: {{ paginator.count }}{% if is_paginated %} · Показаны {{ page_obj.start_index }}–{{ page_obj.end_index }}{% endif %}</p>
 </div>
-<section class="lead-directory client-directory{% if crm_permissions.can_view_finance %} client-directory--finance{% endif %}" aria-label="Список клиентов">
+<section class="lead-directory client-directory" aria-label="Список клиентов">
     <div class="lead-directory__head" aria-hidden="true">
-        <span>Клиент и контакты</span><span>Тип и сегмент</span><span>Ответственный</span><span>Мероприятия</span>{% if crm_permissions.can_view_finance %}<span>LTV · сохранено</span>{% endif %}<span></span>
+        <span>Клиент и контакты</span><span>Тип и сегмент</span><span>Ответственный</span><span>Мероприятия</span><span></span>
     </div>
     <div class="lead-directory__list">
         {% for item in clients %}
@@ -118,7 +118,6 @@
                     <span class="lead-card__mobile-label">Мероприятия</span>
                     <strong>{{ item.events_count }}</strong><span class="lead-card__empty">в истории клиента</span>
                 </div>
-                {% if crm_permissions.can_view_finance %}<div class="lead-card__context"><span class="lead-card__mobile-label">LTV · сохранено</span><strong class="client-card__money">{{ item.ltv|floatformat:'2g' }} ₽</strong></div>{% endif %}
                 <div class="lead-card__actions">
                     {% if crm_permissions.can_manage_clients or crm_permissions.can_manage_system %}
                         <details class="item-action-menu">
@@ -140,7 +139,6 @@
         {% endfor %}
     </div>
 </section>
-{% if crm_permissions.can_view_finance %}<p class="client-directory-note">LTV — ранее сохранённое значение. Автоматический расчёт по мероприятиям пока не выполняется.</p>{% endif %}
 {% if is_paginated %}
     <nav class="client-pagination" aria-label="Страницы списка клиентов">
         {% if page_obj.has_previous %}<a class="btn btn-outline-secondary" href="?{{ pagination_query }}&amp;page={{ page_obj.previous_page_number }}">Назад</a>{% endif %}

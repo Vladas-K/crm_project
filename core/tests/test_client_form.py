@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 import pytest
 from django.urls import reverse
 
@@ -22,7 +20,7 @@ def payload():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("can_view_finance", [False, True])
-def test_manual_client_creation_ignores_finance_and_history(client, operator, payload, can_view_finance):
+def test_manual_client_creation_ignores_legacy_history(client, operator, payload, can_view_finance):
     profile = operator.crm_profile
     profile.can_view_finance = can_view_finance
     profile.save()
@@ -33,12 +31,11 @@ def test_manual_client_creation_ignores_finance_and_history(client, operator, pa
     assert "Создать клиента" in html
     assert "Django admin" not in html
     assert {"telegram", "whatsapp", "max_messenger", "instagram", "facebook", "vk"}.issubset(response.context["form"].fields)
-    for field in ("ltv", "event_history", "messenger"):
+    for field in ("event_history", "messenger"):
         assert f'name="{field}"' not in html
-    response = client.post(reverse("core:client_create"), dict(payload, ltv="777777", event_history="Подмена"))
+    response = client.post(reverse("core:client_create"), dict(payload, event_history="Подмена"))
     saved = Client.objects.get(name=payload["name"])
     assert response.status_code == 302
-    assert saved.ltv == 0
     assert saved.event_history == ""
     assert saved.lead is None
 
@@ -114,23 +111,20 @@ def test_used_lead_is_excluded_and_cannot_be_reused(client, operator, payload):
 
 
 @pytest.mark.django_db
-def test_client_edit_preserves_finance_legacy_notes_and_shows_real_events(client, operator, payload, crm_objects):
+def test_client_edit_preserves_legacy_notes_and_shows_real_events(client, operator, payload, crm_objects):
     existing = crm_objects["client"]
-    existing.ltv = Decimal("87654.32")
     existing.event_history = "Прежние заметки"
     existing.messenger = "Сохранённый контакт"
     existing.save()
     url = reverse("core:client_update", kwargs={"pk": existing.pk})
     response = client.get(url)
     html = response.content.decode()
-    assert "87654" not in html
     assert "Прежние заметки" in html
     assert "Сохранённый контакт" in html
     assert reverse("core:event_detail", kwargs={"pk": crm_objects["event"].pk}) in html
-    response = client.post(url, dict(payload, lead=existing.lead_id, ltv="1", event_history="Подмена", messenger="Подмена", telegram="@new"))
+    response = client.post(url, dict(payload, lead=existing.lead_id, event_history="Подмена", messenger="Подмена", telegram="@new"))
     existing.refresh_from_db()
     assert response.status_code == 302
-    assert existing.ltv == Decimal("87654.32")
     assert existing.event_history == "Прежние заметки"
     assert existing.messenger == "Сохранённый контакт"
     assert existing.telegram == "@new"
@@ -179,15 +173,18 @@ def test_client_lead_endpoint_requires_login(client):
 
 
 @pytest.mark.django_db
-def test_client_ltv_list_visibility_requires_finance(client, operator):
-    Client.objects.create(name="Проверка финансов", ltv=Decimal("87654.32"))
-    url = reverse("core:clients")
-    response = client.get(url)
-    assert "LTV" not in response.content.decode()
-    assert "87654" not in response.content.decode()
+@pytest.mark.parametrize("can_view_finance", [False, True])
+def test_ltv_is_absent_from_all_client_pages(client, operator, can_view_finance):
+    item = Client.objects.create(name="Проверка клиента")
     profile = operator.crm_profile
-    profile.can_view_finance = True
+    profile.can_view_finance = can_view_finance
     profile.save()
-    response = client.get(url)
-    assert "LTV" in response.content.decode()
-    assert "87\xa0654,32" in response.content.decode()
+    for url in (
+        reverse("core:clients"),
+        reverse("core:client_detail", args=[item.pk]),
+        reverse("core:client_create"),
+        reverse("core:client_update", args=[item.pk]),
+    ):
+        response = client.get(url)
+        assert response.status_code == 200
+        assert "ltv" not in response.content.decode().lower()

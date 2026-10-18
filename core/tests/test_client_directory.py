@@ -44,7 +44,6 @@ def test_client_profile_contains_contacts_context_and_events_without_edit_access
         telegram='@person', whatsapp='8 (999) 123-45-67', max_messenger='Имя в MAX',
         instagram='person', facebook='person', vk='person', contacts='Звонить утром',
         messenger='Прежний мессенджер', event_history='Прежняя история', preferences='Без громкой музыки',
-        ltv=Decimal('987654.32'),
     )
     event = Event.objects.create(client=item, title='Связанное мероприятие', date=timezone.localdate(), planned_budget=Decimal('7654321.12'))
     html = client.get(reverse('core:client_detail', args=[item.pk])).content.decode()
@@ -57,8 +56,6 @@ def test_client_profile_contains_contacts_context_and_events_without_edit_access
     assert 'href="Имя в MAX"' not in html
     assert reverse('core:client_update', args=[item.pk]) not in html
     assert reverse('core:client_delete', args=[item.pk]) not in html
-    assert ('987\xa0654,32' in html) is finance
-    assert ('LTV' in html) is finance
     assert '7654321' not in html
     assert '7\xa0654\xa0321' not in html
 
@@ -177,7 +174,7 @@ def test_create_edit_and_cancel_return_to_client_profile(client, viewer):
 
 def test_unknown_sort_and_filters_use_safe_defaults(client, viewer):
     item = Client.objects.create(name='Тест')
-    response = client.get(reverse('core:clients'), {'sort': '-ltv', 'segment': 'bad', 'client_type': 'bad', 'manager': 'bad'})
+    response = client.get(reverse('core:clients'), {'sort': 'unsupported', 'segment': 'bad', 'client_type': 'bad', 'manager': 'bad'})
     assert response.status_code == 200
     assert list(response.context['clients']) == [item]
     assert response.context['client_sort'] == 'name'

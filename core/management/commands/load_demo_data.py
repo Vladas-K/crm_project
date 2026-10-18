@@ -386,7 +386,6 @@ class Command(BaseCommand):
                 leads["Анна и Михаил"],
                 Client.ClientType.B2C,
                 Client.Segment.VIP,
-                Decimal("1800000.00"),
                 "Любят современную классику, важен сервис уровня concierge.",
             ),
             (
@@ -394,11 +393,10 @@ class Command(BaseCommand):
                 leads["ООО Альфа Тех"],
                 Client.ClientType.B2B,
                 Client.Segment.STANDARD,
-                Decimal("2500000.00"),
                 "Сильный бренд-слой, важна отчётность по KPI и чёткий тайминг.",
             ),
         ]
-        for name, lead, client_type, segment, ltv, preferences in specs:
+        for name, lead, client_type, segment, preferences in specs:
             client, _ = Client.objects.update_or_create(
                 name=name,
                 defaults={
@@ -411,7 +409,6 @@ class Command(BaseCommand):
                     "telegram": lead.telegram,
                     "contacts": f"{lead.phone}, {lead.email}",
                     "segment": segment,
-                    "ltv": ltv,
                     "preferences": preferences,
                     "event_history": "Первый проект в CRM" if not Event.objects.filter(client__name=name).exists() else "Повторный клиент",
                 },

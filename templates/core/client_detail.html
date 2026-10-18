@@ -18,7 +18,6 @@
 <div class="lead-profile-metrics client-profile-metrics mb-4">
     <div class="metric-card metric-card--large"><span>Мероприятия</span><strong>{{ events_count }}</strong></div>
     <div class="metric-card metric-card--large"><span>Клиент с</span><strong>{{ crm_client.created_at|date:'d.m.Y' }}</strong></div>
-    {% if crm_permissions.can_view_finance %}<div class="metric-card metric-card--large"><span>LTV · сохранено</span><strong>{{ crm_client.ltv|floatformat:'2g' }} ₽</strong><small>Автоматический расчёт пока не выполняется.</small></div>{% endif %}
 </div>
 <div class="row g-4">
     <div class="col-xl-7">

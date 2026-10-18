@@ -106,7 +106,7 @@ class LeadAdmin(admin.ModelAdmin):
 
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
-    list_display = ("name", "client_type", "segment", "manager", "ltv", "created_at")
+    list_display = ("name", "client_type", "segment", "manager", "created_at")
     list_filter = ("client_type", "segment", "manager")
     list_select_related = ("manager",)
     search_fields = ("name", "contacts", "phone", "email")
