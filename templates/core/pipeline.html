@@ -17,10 +17,10 @@
     </div>
     {% if crm_permissions.can_manage_leads %}<a href="{% url 'core:lead_create' %}" class="btn btn-primary">Добавить лид</a>{% endif %}
 </div>
-<div class="lead-metrics pipeline-metrics mb-4" aria-label="Показатели всех лидов">
-    <a href="{% url 'core:pipeline' %}" class="lead-metric"><span>Всего лидов</span><strong>{{ pipeline_metrics.total }}</strong></a>
-    <a href="{% url 'core:pipeline' %}?attention=needs_response" class="lead-metric lead-metric--attention"><span>Требуют ответа</span><strong>{{ pipeline_metrics.needs_response }}</strong></a>
-    <a href="{% url 'core:pipeline' %}?stage=unassigned" class="lead-metric"><span>Без этапа</span><strong>{{ pipeline_metrics.unassigned }}</strong></a>
+<div class="pipeline-summary mb-4" role="group" aria-label="Показатели всех лидов">
+    <a href="{% url 'core:pipeline' %}" class="pipeline-summary__item"><span>Всего лидов</span><strong>{{ pipeline_metrics.total }}</strong></a>
+    <a href="{% url 'core:pipeline' %}?attention=needs_response" class="pipeline-summary__item"><span>Требуют ответа</span><strong>{{ pipeline_metrics.needs_response }}</strong></a>
+    <a href="{% url 'core:pipeline' %}?stage=unassigned" class="pipeline-summary__item"><span>Без этапа</span><strong>{{ pipeline_metrics.unassigned }}</strong></a>
 </div>
 <form method="get" class="lead-filter-panel mb-4">
     <div class="lead-filter-grid pipeline-filter-grid">

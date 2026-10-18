@@ -3451,7 +3451,15 @@ a.lead-profile-contact:focus {
 .workspace-page-header h1 { margin: 0 0 0.5rem; color: var(--crm-text); font-size: clamp(1.75rem, 2.5vw, 2.25rem); font-weight: 650; letter-spacing: -0.035em; }
 .workspace-page-header p { max-width: 46rem; margin: 0; color: var(--crm-muted); line-height: 1.5; }
 .workspace-page-header > .btn { flex-shrink: 0; }
-.pipeline-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pipeline-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 0.35rem; border: 1px solid #435d77; border-radius: 1.35rem; background: #4f6b87; box-shadow: 0 12px 28px rgba(79, 107, 135, 0.12); }
+.pipeline-summary__item { display: flex; min-width: 0; flex-direction: column; gap: 0.4rem; padding: 1rem 1.35rem; color: #fff; text-decoration: none; }
+.pipeline-summary__item + .pipeline-summary__item { border-left: 1px solid rgba(255, 255, 255, 0.3); }
+.pipeline-summary__item:first-child { border-radius: 1rem 0 0 1rem; }
+.pipeline-summary__item:last-child { border-radius: 0 1rem 1rem 0; }
+.pipeline-summary__item span { font-size: 0.8rem; line-height: 1.4; }
+.pipeline-summary__item strong { font-size: 1.8rem; font-weight: 650; line-height: 1.2; letter-spacing: -0.035em; }
+.pipeline-summary__item:hover { color: #fff; background: rgba(255, 255, 255, 0.06); }
+.pipeline-summary__item:focus-visible { color: #fff; outline: 2px solid #fff; outline-offset: -4px; }
 .pipeline-filter-grid { grid-template-columns: minmax(13rem, 1.5fr) repeat(3, minmax(9rem, 1fr)) auto; }
 .pipeline-board-summary { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }
 .pipeline-board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; align-items: start; }
@@ -3492,6 +3500,7 @@ a.lead-profile-contact:focus {
     .workspace-page-header__content { gap: 0.75rem; }
     .workspace-page-header > .btn { width: 100%; }
     .pipeline-board-summary { align-items: stretch; flex-direction: column; }
-    .pipeline-metrics .lead-metric { padding: 0.8rem 0.65rem; }
-    .pipeline-metrics .lead-metric span { font-size: 0.7rem; }
+    .pipeline-summary__item { padding: 0.8rem 0.65rem; }
+    .pipeline-summary__item span { min-height: 2.8em; font-size: 0.7rem; }
+    .pipeline-summary__item strong { font-size: 1.45rem; }
 }
