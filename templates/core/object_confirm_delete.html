@@ -1,26 +1,32 @@
 {% extends "base.html" %}
 
-{% block title %}Удаление | CRM{% endblock %}
+{% block title %}{{ page_title|default:"Удаление" }} | CRM{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div>
-        <h1 class="h2 mb-1">Удаление объекта</h1>
-        <p class="text-secondary mb-0">Подтвердите удаление записи.</p>
+        <h1 class="h2 mb-1">{{ page_title|default:"Удаление объекта" }}</h1>
+        <p class="text-secondary mb-0">{% if parent_event %}Мероприятие: {{ parent_event }}{% else %}Подтвердите удаление записи.{% endif %}</p>
     </div>
-    <a href="javascript:history.back()" class="btn btn-outline-secondary">Назад</a>
+    <a href="{{ cancel_url|default:'javascript:history.back()' }}" class="btn btn-outline-secondary">Назад</a>
 </div>
 
 <div class="card border-0 shadow-sm">
     <div class="card-body p-4">
         <p class="mb-4">Вы уверены, что хотите удалить: <strong>{{ object }}</strong>?</p>
+        {% if communication_date %}<p>Дата и время: {{ communication_date|date:"d.m.Y H:i" }}.</p>{% endif %}
+        {% if communication_comment %}<p>{{ communication_comment|linebreaksbr }}</p>{% endif %}
+        {% if document_status %}<p>Статус документа: {{ document_status }}.</p>{% endif %}
+        {% if attachment_name %}<p>Вложенный файл «{{ attachment_name }}» также будет удалён, если он не используется другим документом.</p>{% endif %}
         <form method="post" class="d-flex gap-2">
             {% csrf_token %}
-            {% if request.GET.return_tab %}
+            {% if return_tab %}
+                <input type="hidden" name="return_tab" value="{{ return_tab }}">
+            {% elif request.GET.return_tab %}
                 <input type="hidden" name="return_tab" value="{{ request.GET.return_tab }}">
             {% endif %}
             <button type="submit" class="btn btn-danger">Удалить</button>
-            <a href="javascript:history.back()" class="btn btn-outline-secondary">Отмена</a>
+            <a href="{{ cancel_url|default:'javascript:history.back()' }}" class="btn btn-outline-secondary">Отмена</a>
         </form>
     </div>
 </div>

@@ -485,6 +485,7 @@
                         {{ communication.comment|default:"Без комментария" }}
                         <div class="mt-2">
                             {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_communication_update' communication.pk %}?return_tab=communications" class="panel-action-link">Изменить</a>{% endif %}
+                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_communication_delete' communication.pk %}?return_tab=communications" class="panel-action-link panel-action-link--danger">Удалить</a>{% endif %}
                         </div>
                     </div>
                 </div>
@@ -527,6 +528,7 @@
                         {% endif %}
                         <div class="mt-2">
                             {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_document_update' document.pk %}?return_tab=documents" class="panel-action-link">Изменить</a>{% endif %}
+                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_document_delete' document.pk %}?return_tab=documents" class="panel-action-link panel-action-link--danger">Удалить</a>{% endif %}
                         </div>
                     </div>
                 </div>

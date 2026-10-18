@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Avg, Case, Count, IntegerField, Q, Sum, Value, When
@@ -1782,6 +1783,80 @@ class EventVendorStatusUpdateView(EventManagementMixin, View):
             assignment.save(update_fields=["status"])
             messages.success(request, "Статус подрядчика обновлён.")
         return redirect(f"{reverse('core:event_detail', kwargs={'pk': assignment.event.pk})}?tab=vendors#event-tabs")
+
+
+class EventRecordDeleteView(EventManagementMixin, DeleteView):
+    """Удаляет запись мероприятия и возвращает в её фиксированную вкладку."""
+
+    template_name = "core/object_confirm_delete.html"
+    http_method_names = ["get", "post", "head", "options"]
+
+    def get_queryset(self):
+        return super().get_queryset().select_related("event")
+
+    def get_success_url(self):
+        return f"{reverse('core:event_detail', kwargs={'pk': self.object.event_id})}?tab={self.return_tab}#event-tabs"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            page_title=self.page_title,
+            parent_event=self.object.event,
+            cancel_url=self.get_success_url(),
+            return_tab=self.return_tab,
+        )
+        return context
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, self.success_message)
+        return response
+
+
+class EventCommunicationDeleteView(EventRecordDeleteView):
+    """Удаляет коммуникацию после подтверждения."""
+
+    model = EventCommunication
+    page_title = "Удаление коммуникации"
+    return_tab = "communications"
+    success_message = "Коммуникация удалена."
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["communication_date"] = self.object.date
+        context["communication_comment"] = self.object.comment
+        return context
+
+
+class EventDocumentDeleteView(EventRecordDeleteView):
+    """Удаляет документ и освобождает его файл после фиксации изменения в БД."""
+
+    model = EventDocument
+    page_title = "Удаление документа"
+    return_tab = "documents"
+    success_message = "Документ удалён."
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["document_status"] = self.object.get_status_display()
+        if self.object.file:
+            context["attachment_name"] = self.object.file.name.rsplit("/", 1)[-1]
+        return context
+
+    def form_valid(self, form):
+        storage = self.object.file.storage
+        filename = self.object.file.name
+
+        def delete_attachment():
+            # Один физический файл может остаться связан с другой записью документа.
+            if not EventDocument.objects.filter(file=filename).exists():
+                storage.delete(filename)
+
+        with transaction.atomic():
+            response = super().form_valid(form)
+            if filename:
+                transaction.on_commit(delete_attachment, robust=True)
+        return response
 
 
 class EventCommunicationCreateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
