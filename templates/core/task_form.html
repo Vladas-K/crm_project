@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | CRM{% endblock %}
+
+{% block content %}
+<div class="event-form-shell task-form-shell">
+    <header class="workspace-page-header task-form-header">
+        <div class="workspace-page-header__content">
+            <svg class="workspace-page-header__icon" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="6" y="5" width="21" height="24" rx="4"/><path d="M12 3h9v5h-9zM11 15l2 2 4-4M20 15h3M11 23h12"/></svg>
+            <div><h1>{{ page_title }}</h1><p>{% if form.instance.pk %}Обновите задачу, ответственного и срок выполнения.{% else %}Укажите мероприятие, ответственного и срок.{% endif %}</p></div>
+        </div>
+    </header>
+    <a href="{{ cancel_url }}" class="event-form-back">{% if return_to %}← К списку задач{% else %}← К мероприятию{% endif %}</a>
+    <form method="post" class="event-form" novalidate>
+        {% csrf_token %}
+        {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
+        {% if return_tab %}<input type="hidden" name="return_tab" value="{{ return_tab }}">{% endif %}
+        {% if form.errors %}
+            <div class="event-form-errors" role="alert">
+                <strong>Проверьте отмеченные поля</strong>
+                <p>Введённые данные сохранены в форме.</p>
+                <ul>
+                    {% for field in form %}{% if field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ field.errors|join:' ' }}</a></li>{% endif %}{% endfor %}
+                    {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+        <div class="event-form-panel">
+            <p class="event-form-required-note"><span aria-hidden="true">*</span> Обязательные поля. Остальное можно заполнить позже.</p>
+            <section class="event-form-section" aria-labelledby="task-form-basics">
+                <div class="event-form-section__header"><h2 id="task-form-basics">Основное</h2><p>Что нужно сделать и кто за это отвечает.</p></div>
+                <div class="event-form-grid">
+                    {% include 'core/includes/event_form_field.html' with field=form.title wide=True %}
+                    {% include 'core/includes/event_form_field.html' with field=form.event wide=False %}
+                    {% include 'core/includes/event_form_field.html' with field=form.responsible wide=False %}
+                </div>
+            </section>
+            <section class="event-form-section" aria-labelledby="task-form-description">
+                <div class="event-form-section__header"><h2 id="task-form-description">Описание</h2><p>Детали и ожидаемый результат помогут выполнить задачу.</p></div>
+                <div class="event-form-grid">
+                    {% include 'core/includes/event_form_field.html' with field=form.description wide=True %}
+                </div>
+            </section>
+            <section class="event-form-section" aria-labelledby="task-form-execution">
+                <div class="event-form-section__header"><h2 id="task-form-execution">Срок и выполнение</h2><p>Укажите дату или настройте расчёт от мероприятия.</p></div>
+                <div class="event-form-grid">
+                    {% include 'core/includes/event_form_field.html' with field=form.deadline wide=False %}
+                    {% include 'core/includes/event_form_field.html' with field=form.status wide=False %}
+                </div>
+                <details class="task-form-deadline-settings"{% if form.deadline_settings_open %} open{% endif %}>
+                    <summary>Рассчитать срок от мероприятия</summary>
+                    <div class="task-form-deadline-settings__content">
+                        {% include 'core/includes/event_form_field.html' with field=form.deadline_offset_days wide=False %}
+                    </div>
+                </details>
+            </section>
+            <div class="event-form-actions">
+                <a href="{{ cancel_url }}" class="btn btn-outline-secondary">Отмена</a>
+                <button type="submit" class="btn btn-primary">{{ submit_label }}</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

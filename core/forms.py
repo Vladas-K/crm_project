@@ -570,19 +570,24 @@ class EventTaskForm(BootstrapModelForm):
     class Meta:
         model = EventTask
         fields = [
-            "event",
             "title",
+            "event",
+            "responsible",
             "description",
             "deadline",
-            "deadline_offset_days",
-            "responsible",
             "status",
+            "deadline_offset_days",
         ]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 4}),
             "deadline": forms.DateInput(),
         }
 
+        labels = {
+            "title": "Название задачи",
+            "deadline": "Срок задачи",
+            "deadline_offset_days": "Срок относительно мероприятия, дней",
+        }
         help_texts = {
             "deadline": "Указанная дата имеет приоритет. Оставьте срок пустым, чтобы рассчитать его от даты мероприятия.",
             "deadline_offset_days": (
@@ -593,6 +598,9 @@ class EventTaskForm(BootstrapModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["title"].widget.attrs["placeholder"] = "Например, согласовать концепцию с клиентом"
+        self.fields["description"].widget.attrs["placeholder"] = "Что нужно сделать и какой результат ожидается"
+        self.fields["event"].empty_label = "Выберите мероприятие"
         responsible_choices = Q(is_active=True, crm_profile__isnull=False)
         if self.instance.pk and self.instance.responsible_id:
             responsible_choices |= Q(pk=self.instance.responsible_id)
@@ -600,6 +608,11 @@ class EventTaskForm(BootstrapModelForm):
         self.fields["responsible"].empty_label = "Без ответственного"
         self.fields["responsible"].label_from_instance = lambda user: user.get_full_name() or user.get_username()
         self.fields["event"].queryset = Event.objects.select_related("client").order_by("date", "title", "id")
+
+    @property
+    def deadline_settings_open(self):
+        field = self["deadline_offset_days"]
+        return bool(field.errors or field.value() not in (None, "", 0, "0"))
 
 
 class EventTimelineItemForm(BootstrapModelForm):

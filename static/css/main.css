@@ -3887,3 +3887,17 @@ a.lead-profile-contact:focus {
     .task-detail-actions { width: 100%; }
     .task-detail-panel { padding: 1.1rem; }
 }
+
+/* Task forms reuse the structured event-form field and surface styles. */
+.task-form-shell { max-width: 56rem; }
+.task-form-header { margin-bottom: 0.25rem; }
+.task-form-deadline-settings { margin-top: 1.25rem; border-top: 1px solid #e6ebf1; padding-top: 1rem; }
+.task-form-deadline-settings > summary { width: fit-content; color: #354052; font-size: 0.88rem; cursor: pointer; }
+.task-form-deadline-settings > summary:focus-visible { outline: 2px solid var(--crm-accent); outline-offset: 4px; border-radius: 0.2rem; }
+.task-form-deadline-settings__content { max-width: 35rem; padding-top: 1rem; }
+.task-form-deadline-settings .form-control { max-width: 12rem; }
+@media (max-width: 767.98px) {
+    .task-form-shell .event-form-grid { grid-template-columns: minmax(0, 1fr); }
+    .task-form-shell .event-form-actions { flex-direction: column-reverse; }
+    .task-form-shell .event-form-actions .btn { width: 100%; }
+}

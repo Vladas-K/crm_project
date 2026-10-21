@@ -1859,9 +1859,10 @@ class TaskCreateView(TaskReturnMixin, EventManagementMixin, EventScopedFormMixin
 
     model = EventTask
     form_class = EventTaskForm
-    template_name = "core/object_form.html"
+    template_name = "core/task_form.html"
     return_tab = "tasks"
     page_title = "Новая задача"
+    submit_label = "Создать задачу"
     success_message = "Задача создана."
     success_url = reverse_lazy("core:tasks")
     cancel_url = reverse_lazy("core:tasks")
@@ -1872,9 +1873,10 @@ class TaskUpdateView(TaskReturnMixin, EventManagementMixin, EventScopedFormMixin
 
     model = EventTask
     form_class = EventTaskForm
-    template_name = "core/object_form.html"
+    template_name = "core/task_form.html"
     return_tab = "tasks"
     page_title = "Редактирование задачи"
+    submit_label = "Сохранить изменения"
     success_message = "Задача обновлена."
     success_url = reverse_lazy("core:tasks")
     cancel_url = reverse_lazy("core:tasks")
