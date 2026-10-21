@@ -12,6 +12,12 @@
     --crm-violet: #7c3aed;
 }
 
+/* Общая геометрия полей форм и фильтров. */
+.form-control,
+.form-select {
+    border-radius: var(--crm-radius-control);
+}
+
 /* Общая система действий для всех страниц CRM. */
 .btn {
     display: inline-flex;
@@ -340,7 +346,7 @@ body {
     width: 100%;
     padding: 0.72rem 0.85rem;
     border: 1px solid rgba(15, 23, 42, 0.12);
-    border-radius: 0.85rem;
+    border-radius: var(--crm-radius-control);
 }
 
 .auth-form input:focus {
@@ -774,7 +780,6 @@ body {
     min-height: 3rem;
     padding: 0.72rem 0.9rem;
     border-color: rgba(15, 23, 42, 0.13);
-    border-radius: 0.9rem;
     background-color: #fff;
 }
 
@@ -971,7 +976,6 @@ body {
     min-height: 3rem;
     padding: 0.72rem 0.9rem;
     border-color: rgba(15, 23, 42, 0.13);
-    border-radius: 0.9rem;
     background-color: #fff;
 }
 
@@ -1270,7 +1274,6 @@ body {
 .lead-filter-field .form-select {
     min-height: 2.8rem;
     border-color: rgba(15, 23, 42, 0.11);
-    border-radius: 0.85rem;
     background-color: #fff;
     font-size: 0.9rem;
 }
@@ -1888,7 +1891,6 @@ a.lead-profile-contact:focus {
 .vendor-filter-field .form-select {
     min-height: 2.8rem;
     border-color: rgba(15, 23, 42, 0.11);
-    border-radius: 0.85rem;
     background-color: #fff;
     font-size: 0.9rem;
 }
@@ -3539,7 +3541,7 @@ a.lead-profile-contact:focus {
 .event-filter-grid { display: grid; grid-template-columns: minmax(12rem, 2fr) minmax(10rem, 1fr) minmax(12rem, 1.15fr) auto; align-items: end; gap: 1rem; }
 .event-filter-field { min-width: 0; }
 .event-filter-field .form-label { margin-bottom: 0.4rem; color: #535e6d; font-size: 0.8rem; }
-.event-filter-field .form-control, .event-filter-field .form-select { min-height: 2.7rem; border-radius: var(--crm-radius-control); font-size: 0.88rem; }
+.event-filter-field .form-control, .event-filter-field .form-select { min-height: 2.7rem; font-size: 0.88rem; }
 .event-filter-submit { min-width: 7rem; }
 .event-date-range { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 1fr; align-items: end; gap: 1rem; margin-top: 1rem; }
 .event-date-range[hidden] { display: none; }
@@ -3649,7 +3651,7 @@ a.lead-profile-contact:focus {
 .event-form-field--wide { grid-column: 1 / -1; }
 .event-form-field__label { display: block; margin-bottom: 0.45rem; color: #354052; font-size: 0.88rem; font-weight: 500; }
 .event-form-field__optional { margin-left: 0.4rem; color: #6b7280; font-size: 0.74rem; font-weight: 400; }
-.event-form-field .form-control, .event-form-field .form-select { min-width: 0; min-height: 2.8rem; padding: 0.65rem 0.8rem; border-color: #d6dce4; border-radius: 0.7rem; font-size: 0.9rem; }
+.event-form-field .form-control, .event-form-field .form-select { min-width: 0; min-height: 2.8rem; padding: 0.65rem 0.8rem; border-color: #d6dce4; font-size: 0.9rem; }
 .event-form-field .form-select { padding-right: 2.25rem; }
 .event-form-field textarea.form-control { min-height: 6rem; resize: vertical; line-height: 1.5; }
 .event-form-field .form-control:focus, .event-form-field .form-select:focus { border-color: var(--crm-accent); box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.12); }
