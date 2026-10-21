@@ -983,6 +983,10 @@ class EventDetailView(CRMLoginRequiredMixin, DetailView):
             documents = documents.filter(status=document_filter)
 
         context["today"] = today
+        context["event_date_overdue"] = (
+            self.object.date < today
+            and self.object.status in {Event.Status.PLANNING, Event.Status.IN_PROGRESS}
+        )
         context["active_tab"] = active_tab
         context["task_filter"] = task_filter
         context["expense_filter"] = expense_filter

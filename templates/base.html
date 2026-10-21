@@ -30,7 +30,7 @@
                 {% endif %}
             </div>
             <nav class="crm-nav">
-                <a class="crm-nav__link" href="{% url 'core:dashboard' %}">Дашборд</a>
+                <a class="crm-nav__link" href="{% url 'core:dashboard' %}"{% if request.resolver_match.url_name == 'dashboard' %} aria-current="page"{% endif %}>Дашборд</a>
                 <a class="crm-nav__link" href="{% url 'core:leads' %}">Лиды</a>
                 <a class="crm-nav__link" href="{% url 'core:pipeline' %}"{% if request.path|slice:':10' == '/pipeline/' or request.resolver_match.url_name == 'lead_stage_update' %} aria-current="page"{% endif %}>Воронка</a>
                 {% if crm_permissions.can_view_clients %}

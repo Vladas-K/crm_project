@@ -3,160 +3,62 @@
 {% block title %}{{ event.title|default:event.client }} | CRM{% endblock %}
 
 {% block content %}
-<div class="event-hero mb-4">
-    <div class="event-hero__content">
-        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-            <span class="event-chip">{{ event.get_status_display }}</span>
-            {% if event.event_format %}
-                <span class="event-chip event-chip--soft">{{ event.event_format }}</span>
-            {% endif %}
-            <span class="event-chip event-chip--soft">{{ event.date|date:"d.m.Y" }} • {{ event.city }}</span>
+<section class="event-workspace" aria-label="Карточка мероприятия">
+<a href="{% url 'core:events' %}" class="event-back-link">← К списку мероприятий</a>
+<header class="workspace-page-header d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
+    <div>
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <span class="event-chip{% if event.status == 'planning' or event.status == 'cancelled' %} event-chip--soft{% elif event.status == 'completed' %} event-chip--success{% endif %}">{{ event.get_status_display }}</span>
+            {% if event.event_format %}<span class="event-detail-meta">{{ event.event_format }}</span>{% endif %}
+            <span class="event-detail-meta"><time datetime="{{ event.date|date:'Y-m-d' }}">{{ event.date|date:"d.m.Y" }}</time> · {{ event.city }}</span>
         </div>
-
-        <div class="d-flex flex-column flex-xl-row justify-content-between gap-4">
-            <div>
-                <h1 class="event-hero__title mb-2">{{ event.title|default:event.client }}</h1>
-                <p class="event-hero__subtitle mb-0">
-                    Клиент: {{ event.client }}{% if event.manager %} • Project Manager: {{ event.manager }}{% endif %}
-                </p>
-            </div>
-            <div class="event-actions align-self-start">
-                <a href="{% url 'core:events' %}" class="btn btn-outline-secondary">К списку</a>
-                {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_update' event.pk %}" class="btn btn-primary">Редактировать</a>{% endif %}
-            </div>
-        </div>
+        <h1>{{ event.title|default:event.client }}</h1>
+        <p>Клиент: {% if crm_permissions.can_view_clients %}<a href="{% url 'core:client_detail' event.client_id %}">{{ event.client }}</a>{% else %}{{ event.client }}{% endif %}</p>
     </div>
+    {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_update' event.pk %}" class="btn btn-primary">Редактировать</a>{% endif %}
+</header>
+{% if event_date_overdue %}
+    <p class="event-date-warning" role="status">Дата прошла — проверьте статус мероприятия.</p>
+{% endif %}
+
+<div class="event-context-grid mb-3">
+    <section class="premium-panel">
+        <h2 class="premium-panel__title mb-3">Основное</h2>
+        <dl class="event-context-fields">
+            <div><dt>Ответственный</dt><dd>{% if event.manager %}{{ event.manager.get_full_name|default:event.manager.get_username }}{% else %}Не назначен{% endif %}</dd></div>
+            <div><dt>Гостей</dt><dd>{{ event.guests_count }}</dd></div>
+            <div><dt>Исходный лид</dt><dd{% if not event.lead %} class="event-context-empty"{% endif %}>{% if event.lead %}<a href="{% url 'core:lead_detail' event.lead_id %}">{{ event.lead }}</a>{% else %}Не привязан{% endif %}</dd></div>
+        </dl>
+        {% if event.goal or event.preferences or event.stop_factors %}
+            <dl class="event-context-notes">
+                {% if event.goal %}<div><dt>Цель</dt><dd>{{ event.goal|linebreaksbr }}</dd></div>{% endif %}
+                {% if event.preferences %}<div><dt>Предпочтения</dt><dd>{{ event.preferences|linebreaksbr }}</dd></div>{% endif %}
+                {% if event.stop_factors %}<div><dt>Стоп-факторы</dt><dd>{{ event.stop_factors|linebreaksbr }}</dd></div>{% endif %}
+            </dl>
+        {% endif %}
+    </section>
+    <section class="premium-panel">
+        <h2 class="premium-panel__title mb-3">Операционный статус</h2>
+        <div class="event-operation-grid">
+            <a href="{% url 'core:event_detail' event.pk %}?tab=tasks&amp;task_filter=open#event-tabs"><span>Открытые задачи</span><strong>{{ event_status_summary.open_tasks }}</strong></a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=tasks&amp;task_filter=overdue#event-tabs"{% if event_status_summary.overdue_tasks %} class="event-operation-overdue"{% endif %}><span>Просрочено</span><strong>{{ event_status_summary.overdue_tasks }}</strong></a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=vendors&amp;vendor_filter=approved#event-tabs"><span>Подрядчиков утверждено</span><strong>{{ event_status_summary.approved_vendors }}</strong></a>
+            <a href="{% url 'core:event_detail' event.pk %}?tab=documents&amp;document_filter=signed#event-tabs"><span>Документов подписано</span><strong>{{ event_status_summary.signed_documents }}</strong></a>
+        </div>
+    </section>
 </div>
 
 {% if crm_permissions.can_view_finance %}
-    <div class="row g-3 mb-4">
-        <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100 dashboard-stat">
-                <div class="card-body">
-                    <p class="text-secondary mb-2">Плановый бюджет</p>
-                    <h2 class="display-6 mb-0">{{ event.planned_budget }} ₽</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100 dashboard-stat">
-                <div class="card-body">
-                    <p class="text-secondary mb-2">Расходы</p>
-                    <h2 class="display-6 mb-0">{{ event.total_expenses }} ₽</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100 dashboard-stat">
-                <div class="card-body">
-                    <p class="text-secondary mb-2">Прибыль</p>
-                    <h2 class="display-6 mb-0">{{ event.profit }} ₽</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100 dashboard-stat">
-                <div class="card-body">
-                    <p class="text-secondary mb-2">Маржа</p>
-                    <h2 class="display-6 mb-0">{{ event.margin|floatformat:1 }}%</h2>
-                </div>
-            </div>
-        </div>
-    </div>
+<section class="event-finance mb-3" aria-label="Финансовая сводка">
+    <dl class="event-finance__metrics">
+        <div><dt>Плановый бюджет</dt><dd>{{ event.planned_budget|floatformat:"-2g" }} ₽</dd></div>
+        <div><dt>Расходы</dt><dd>{{ event.total_expenses|floatformat:"-2g" }} ₽</dd></div>
+        <div><dt>Расчётная прибыль</dt><dd>{{ event.profit|floatformat:"-2g" }} ₽</dd></div>
+        <div><dt>Расчётная маржа</dt><dd>{{ event.margin|floatformat:1 }}%</dd></div>
+    </dl>
+    <p class="event-finance__note">Оплачено по расходам: {{ event.paid_amount_total|floatformat:"-2g" }} ₽. Прибыль и маржа рассчитаны от планового бюджета по внесённым расходам.{% if not event.expenses.all %} Расходы ещё не добавлены.{% endif %}</p>
+</section>
 {% endif %}
-
-<div class="row g-4 mb-4">
-    <div class="col-xl-8">
-        <div class="premium-panel h-100">
-            <div class="premium-panel__header">
-                <div>
-                    <h2 class="premium-panel__title">Основное</h2>
-                    <p class="premium-panel__subtitle">Краткая сводка по мероприятию и рабочему контексту.</p>
-                </div>
-            </div>
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <div class="metric-card">
-                        <span>Клиент</span>
-                        <strong>{{ event.client }}</strong>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="metric-card">
-                        <span>Лид</span>
-                        <strong>{{ event.lead|default:"Не привязан" }}</strong>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="metric-card">
-                        <span>Гостей</span>
-                        <strong>{{ event.guests_count }}</strong>
-                    </div>
-                </div>
-                {% if crm_permissions.can_view_finance %}
-                    <div class="col-md-6">
-                        <div class="metric-card">
-                            <span>Оплачено</span>
-                            <strong>{{ event.paid_amount_total }} ₽</strong>
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-
-            {% if event.goal or event.preferences or event.stop_factors %}
-                <div class="event-notes-grid mt-4">
-                    <div class="premium-note">
-                        <span>Цель</span>
-                        <p>{{ event.goal|default:"Не указана" }}</p>
-                    </div>
-                    <div class="premium-note">
-                        <span>Предпочтения</span>
-                        <p>{{ event.preferences|default:"Не указаны" }}</p>
-                    </div>
-                    <div class="premium-note">
-                        <span>Стоп-факторы</span>
-                        <p>{{ event.stop_factors|default:"Не указаны" }}</p>
-                    </div>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-
-    <div class="col-xl-4">
-        <div class="premium-panel h-100">
-            <div class="premium-panel__header">
-                <div>
-                    <h2 class="premium-panel__title">Операционный статус</h2>
-                    <p class="premium-panel__subtitle">Быстрый взгляд на исполнение.</p>
-                </div>
-            </div>
-            <div class="event-side-list">
-                <div class="event-side-list__item">
-                    <span>Открытые задачи</span>
-                    <strong>{{ event_status_summary.open_tasks }}</strong>
-                </div>
-                <div class="event-side-list__item">
-                    <span>Просрочено</span>
-                    <strong>{{ event_status_summary.overdue_tasks }}</strong>
-                </div>
-                {% if crm_permissions.can_view_finance %}
-                    <div class="event-side-list__item">
-                        <span>Расходы</span>
-                        <strong>{{ event_status_summary.total_expenses }} ₽</strong>
-                    </div>
-                {% endif %}
-                <div class="event-side-list__item">
-                    <span>Подрядчиков утверждено</span>
-                    <strong>{{ event_status_summary.approved_vendors }}</strong>
-                </div>
-                <div class="event-side-list__item">
-                    <span>Документов подписано</span>
-                    <strong>{{ event_status_summary.signed_documents }}</strong>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <div id="event-tabs" class="event-tabs mb-4">
     <a href="{% url 'core:event_detail' event.pk %}?tab=tasks#event-tabs" class="event-tabs__link{% if active_tab == 'tasks' %} event-tabs__link--active{% endif %}">Задачи</a>
@@ -299,7 +201,7 @@
                 <h2 class="premium-panel__title">Задачи</h2>
                 <p class="premium-panel__subtitle">Текущая работа по подготовке и проведению мероприятия.</p>
             </div>
-            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_task_create' event.pk %}?return_tab=tasks" class="btn btn-sm btn-primary">Добавить</a>{% endif %}
+            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_task_create' event.pk %}?return_tab=tasks" class="btn btn-sm btn-primary">Добавить задачу</a>{% endif %}
         </div>
         <div class="event-filter mb-3">
             <a href="{% url 'core:event_detail' event.pk %}?tab=tasks#event-tabs" class="event-filter__link{% if task_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>
@@ -315,11 +217,12 @@
                             <a href="{% url 'core:task_detail' task.pk %}" class="text-decoration-none text-reset">{{ task.title }}</a>
                         </div>
                         <div class="text-secondary small">
-                            {% if task.responsible %}{{ task.responsible }}{% else %}Без ответственного{% endif %}
-                            {% if task.deadline %} • {{ task.deadline|date:"d.m.Y" }}{% endif %}
+                            {% if task.responsible %}{{ task.responsible.get_full_name|default:task.responsible.get_username }}{% else %}Без ответственного{% endif %}
+                                {% if task.deadline %} • {{ task.deadline|date:"d.m.Y" }}{% endif %}
                         </div>
                     </div>
-                    <div class="event-row-actions">
+                    <div class="event-task-controls">
+                        <div class="event-task-statuses">
                         {% if task.deadline and task.deadline < today and task.status != "done" %}
                             <span class="event-chip event-chip--danger">Просрочено</span>
                         {% endif %}
@@ -330,22 +233,32 @@
                         {% else %}
                             <span class="event-chip event-chip--warning">{{ task.get_status_display }}</span>
                         {% endif %}
-                        {% if crm_permissions.can_manage_events and task.status == "todo" %}
-                            <form method="post" action="{% url 'core:task_status_update' task.pk %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="status" value="in_progress">
-                                <button type="submit" class="btn btn-sm btn-outline-secondary">В работу</button>
-                            </form>
-                        {% endif %}
-                        {% if crm_permissions.can_manage_events and task.status == "in_progress" %}
-                            <form method="post" action="{% url 'core:task_status_update' task.pk %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="status" value="done">
-                                <button type="submit" class="btn btn-sm btn-outline-success">Готово</button>
-                            </form>
-                        {% endif %}
-                        {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_update' task.pk %}?return_tab=tasks" class="panel-action-link">Изменить</a>{% endif %}
-                        {% if crm_permissions.can_manage_system %}<a href="{% url 'core:task_delete' task.pk %}?return_tab=tasks" class="panel-action-link panel-action-link--danger">Удалить</a>{% endif %}
+                        </div>
+                        <div class="event-row-actions">
+                            {% if crm_permissions.can_manage_events and task.status == "todo" %}
+                                <form method="post" action="{% url 'core:task_status_update' task.pk %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="status" value="in_progress">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">В работу</button>
+                                </form>
+                            {% endif %}
+                            {% if crm_permissions.can_manage_events and task.status == "in_progress" %}
+                                <form method="post" action="{% url 'core:task_status_update' task.pk %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="status" value="done">
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Завершить</button>
+                                </form>
+                            {% endif %}
+                            {% if crm_permissions.can_manage_events or crm_permissions.can_manage_system %}
+                                <details class="item-action-menu item-action-menu--drop-up">
+                                    <summary aria-label="Действия с задачей {{ task.title }}"><span aria-hidden="true">•••</span></summary>
+                                    <div class="item-action-menu__popover">
+                                        {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_update' task.pk %}?return_tab=tasks">Изменить</a>{% endif %}
+                                        {% if crm_permissions.can_manage_system %}<a href="{% url 'core:task_delete' task.pk %}?return_tab=tasks" class="item-action-menu__danger">Удалить</a>{% endif %}
+                                    </div>
+                                </details>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             {% empty %}
@@ -538,4 +451,5 @@
         </div>
     {% endif %}
 </div>
+</section>
 {% endblock %}
