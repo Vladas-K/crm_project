@@ -583,6 +583,14 @@ class EventTaskForm(BootstrapModelForm):
             "deadline": forms.DateInput(),
         }
 
+        help_texts = {
+            "deadline": "Указанная дата имеет приоритет. Оставьте срок пустым, чтобы рассчитать его от даты мероприятия.",
+            "deadline_offset_days": (
+                "Используется только при пустом сроке: −7 — за неделю до мероприятия, 0 — в день мероприятия, "
+                "2 — через два дня. Изменение смещения не пересчитывает уже заданный срок."
+            ),
+        }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         responsible_choices = Q(is_active=True, crm_profile__isnull=False)

@@ -137,7 +137,7 @@ def test_detail_passes_origin_to_edit_and_delete(client, operator, crm_objects):
     assert response.context["task_return_url"] == "/tasks/?filter=overdue"
     assert "return_to=" in response.context["task_return_query"]
     html = response.content.decode()
-    list_link = re.search(r'<a href="([^"]+)"[^>]*>К списку задач</a>', html)
+    list_link = re.search(r'<a href="([^"]+)"[^>]*>← К списку задач</a>', html)
     assert unescape(list_link.group(1)) == "/tasks/?filter=overdue"
     assert reverse("core:event_update", args=[crm_objects["event"].pk]) not in html
     assert reverse("core:event_detail", args=[crm_objects["event"].pk]) in html
@@ -195,3 +195,60 @@ def test_task_create_rejects_inactive_responsible_post(client, operator, crm_obj
     assert response.status_code == 200
     assert "responsible" in response.context["form"].errors
     assert not EventTask.objects.filter(title="Новая задача").exists()
+
+
+@pytest.mark.parametrize("status,target", [("todo", "in_progress"), ("in_progress", "done")])
+@pytest.mark.parametrize("origin", [None, "/tasks/?filter=open&mine=1&page=2"])
+def test_detail_quick_action_stays_on_task(client, operator, crm_objects, status, target, origin):
+    task = crm_objects["task"]
+    task.status = status
+    task.save()
+    response = client.get(reverse("core:task_detail", args=[task.pk]), {"return_to": origin} if origin else {})
+    html = response.content.decode()
+    assert 'name="return_task" value="1"' in html
+    assert ('>В работу</button>' if status == "todo" else '>Завершить</button>') in html
+    payload = {"return_task": "1", "status": target}
+    if origin:
+        payload["return_to"] = origin
+    response = client.post(reverse("core:task_status_update", args=[task.pk]), payload)
+    assert urlsplit(response.url).path == reverse("core:task_detail", args=[task.pk])
+    if origin:
+        assert parse_qs(urlsplit(response.url).query)["return_to"] == [origin]
+    task.refresh_from_db()
+    assert task.status == target
+
+
+@pytest.mark.parametrize("can_manage,status", [(False, "todo"), (False, "in_progress"), (True, "done")])
+def test_detail_quick_action_visibility(client, operator, crm_objects, can_manage, status):
+    operator.crm_profile.can_manage_events = can_manage
+    operator.crm_profile.save()
+    task = crm_objects["task"]
+    task.status = status
+    task.save()
+    html = client.get(reverse("core:task_detail", args=[task.pk])).content.decode()
+    assert reverse("core:task_status_update", args=[task.pk]) not in html
+    if not can_manage:
+        response = client.post(reverse("core:task_status_update", args=[task.pk]), {"return_task": "1", "status": "done"})
+        assert response.status_code == 403
+        task.refresh_from_db()
+        assert task.status == status
+
+
+def test_detail_return_discards_external_destination(client, operator, crm_objects):
+    task = crm_objects["task"]
+    response = client.post(reverse("core:task_status_update", args=[task.pk]), {"return_task": "1", "status": "in_progress", "return_to": "https://evil.example/"})
+    assert response.url == reverse("core:task_detail", args=[task.pk])
+
+
+@pytest.mark.parametrize("status,offset,expected", [("todo", -1, "overdue"), ("todo", 0, "today"), ("done", -1, "none"), ("todo", None, "none")])
+def test_detail_deadline_states(client, operator, crm_objects, status, offset, expected):
+    task = crm_objects["task"]
+    EventTask.objects.filter(pk=task.pk).update(status=status, deadline=timezone.localdate() + timedelta(days=offset) if offset is not None else None)
+    response = client.get(reverse("core:task_detail", args=[task.pk]))
+    assert response.context["is_overdue"] is (expected == "overdue")
+    assert response.context["is_due_today"] is (expected == "today")
+    html = response.content.decode()
+    assert "Смещение дедлайна" not in html
+    assert "metric-card" not in html
+    if offset is None:
+        assert "Не задан" in html

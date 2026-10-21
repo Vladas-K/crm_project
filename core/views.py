@@ -1155,6 +1155,9 @@ class TaskDetailView(CRMLoginRequiredMixin, DetailView):
     template_name = "core/task_detail.html"
     context_object_name = "task"
 
+    def get_queryset(self):
+        return EventTask.objects.select_related("responsible", "event__client", "event__event_format")
+
     def get_context_data(self, **kwargs):
         """Добавляет флаги просрочки и дедлайна на сегодня."""
 
@@ -2020,6 +2023,11 @@ class TaskStatusUpdateView(EventManagementMixin, View):
             task.save(update_fields=["status"])
             messages.success(request, "Статус задачи обновлён.")
         return_url = safe_task_return_url(request.POST.get("return_to", ""))
+        if request.POST.get("return_task") == "1":
+            detail_url = reverse("core:task_detail", args=[task.pk])
+            if return_url:
+                detail_url += "?" + urlencode({"return_to": return_url})
+            return redirect(detail_url)
         return redirect(return_url or f"{reverse('core:event_detail', kwargs={'pk': task.event.pk})}?tab=tasks#event-tabs")
 
 

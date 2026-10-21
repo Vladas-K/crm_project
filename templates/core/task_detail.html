@@ -3,107 +3,70 @@
 {% block title %}{{ task.title }} | CRM{% endblock %}
 
 {% block content %}
-{% if task_return_url %}<a href="{{ task_return_url }}" class="event-back-link">← К списку задач</a>{% endif %}
-<div class="page-header">
-    <div>
-        <h1 class="h2 mb-1">{{ task.title }}</h1>
-        <p class="text-secondary mb-0">Детальная карточка задачи по мероприятию.</p>
-    </div>
-    <div class="d-flex gap-2">
-        {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_update' task.pk %}{% if task_return_query %}?{{ task_return_query }}{% endif %}" class="btn btn-outline-primary">Изменить</a>{% endif %}
-        {% if crm_permissions.can_manage_system %}<a href="{% url 'core:task_delete' task.pk %}{% if task_return_query %}?{{ task_return_query }}{% endif %}" class="btn btn-outline-danger">Удалить</a>{% endif %}
-    </div>
-</div>
-
-<div class="row g-4">
-    <div class="col-xl-8">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body p-4">
-                <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
-                    <div>
-                        <div class="text-secondary small mb-1">Мероприятие</div>
-                        <h2 class="h4 mb-0">{{ task.event.title|default:task.event.client }}</h2>
-                    </div>
-                    {% if task.status == "done" %}
-                        <span class="event-chip event-chip--success">Готово</span>
-                    {% elif task.status == "in_progress" %}
-                        <span class="event-chip">В работе</span>
-                    {% else %}
-                        <span class="event-chip event-chip--warning">К выполнению</span>
-                    {% endif %}
-                </div>
-
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6">
-                        <div class="metric-card">
-                            <span>Дедлайн</span>
-                            <strong>{{ task.deadline|date:"d.m.Y"|default:"Не задан" }}</strong>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="metric-card">
-                            <span>Ответственный</span>
-                            <strong>{{ task.responsible|default:"Не назначен" }}</strong>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="metric-card">
-                            <span>Смещение дедлайна</span>
-                            <strong>{{ task.deadline_offset_days }} дн.</strong>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="metric-card">
-                            <span>Дата мероприятия</span>
-                            <strong>{{ task.event.date|date:"d.m.Y" }}</strong>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <h3 class="h5 mb-3">Описание</h3>
-                    {% if task.description %}
-                        <p class="mb-0">{{ task.description|linebreaksbr }}</p>
-                    {% else %}
-                        <p class="text-secondary mb-0">Описание пока не заполнено.</p>
-                    {% endif %}
-                </div>
-
-                <div class="d-flex gap-2">
-                    <a href="{% if task_return_url %}{{ task_return_url }}{% else %}{% url 'core:tasks' %}{% endif %}" class="btn btn-outline-secondary">К списку задач</a>
-                    <a href="{% url 'core:event_detail' task.event.pk %}" class="btn btn-outline-primary">Открыть мероприятие</a>
-                </div>
-            </div>
+<section class="task-detail-workspace" aria-label="Карточка задачи">
+    <a href="{% if task_return_url %}{{ task_return_url }}{% else %}{% url 'core:tasks' %}{% endif %}" class="event-back-link">← К списку задач</a>
+    <header class="workspace-page-header task-detail-header">
+        <h1>{{ task.title }}</h1>
+        <div class="task-detail-actions">
+            {% if crm_permissions.can_manage_events %}
+                {% if task.status == 'todo' or task.status == 'in_progress' %}
+                    <form method="post" action="{% url 'core:task_status_update' task.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="return_task" value="1">
+                        {% if task_return_url %}<input type="hidden" name="return_to" value="{{ task_return_url }}">{% endif %}
+                        {% if task.status == 'todo' %}
+                            <input type="hidden" name="status" value="in_progress">
+                            <button type="submit" class="btn btn-primary">В работу</button>
+                        {% else %}
+                            <input type="hidden" name="status" value="done">
+                            <button type="submit" class="btn btn-primary">Завершить</button>
+                        {% endif %}
+                    </form>
+                {% endif %}
+                <a href="{% url 'core:task_update' task.pk %}{% if task_return_query %}?{{ task_return_query }}{% endif %}" class="btn btn-outline-secondary">Изменить</a>
+            {% endif %}
+            {% if crm_permissions.can_manage_system %}
+                <details class="item-action-menu">
+                    <summary aria-label="Дополнительные действия с задачей"><span aria-hidden="true">•••</span></summary>
+                    <div class="item-action-menu__popover"><a href="{% url 'core:task_delete' task.pk %}{% if task_return_query %}?{{ task_return_query }}{% endif %}" class="item-action-menu__danger">Удалить</a></div>
+                </details>
+            {% endif %}
         </div>
-    </div>
+    </header>
 
-    <div class="col-xl-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body p-4">
-                <h3 class="h5 mb-3">Контекст</h3>
-                <div class="small text-secondary mb-2">Город</div>
-                <div class="fw-semibold mb-3">{{ task.event.city }}</div>
-
-                <div class="small text-secondary mb-2">Клиент</div>
-                <div class="fw-semibold mb-3">{{ task.event.client }}</div>
-
-                <div class="small text-secondary mb-2">Формат</div>
-                <div class="fw-semibold mb-3">{{ task.event.event_format|default:"Не выбран" }}</div>
-
-                <div class="small text-secondary mb-2">Состояние задачи</div>
-                <div class="fw-semibold">
-                    {% if is_overdue %}
-                        <span class="text-danger">Просрочено</span>
-                    {% elif is_due_today %}
-                        <span class="text-warning">Срок сегодня</span>
-                    {% elif task.status == "done" %}
-                        <span class="text-success">Завершена</span>
-                    {% else %}
-                        <span class="text-secondary">В срок</span>
-                    {% endif %}
-                </div>
-            </div>
+    <section class="task-detail-summary" aria-label="Статус, срок и ответственный">
+        <div>
+            <span class="task-detail-label">Статус</span>
+            <strong>{{ task.get_status_display }}</strong>
+            {% if is_overdue %}<span class="task-detail-overdue">Просрочено</span>
+            {% elif is_due_today %}<span class="task-detail-today">Срок сегодня</span>{% endif %}
         </div>
+        <div>
+            <span class="task-detail-label">Срок задачи</span>
+            <strong{% if is_overdue %} class="task-detail-overdue"{% endif %}>{% if task.deadline %}<time datetime="{{ task.deadline|date:'Y-m-d' }}">{{ task.deadline|date:"d.m.Y" }}</time>{% else %}Не задан{% endif %}</strong>
+        </div>
+        <div>
+            <span class="task-detail-label">Ответственный</span>
+            <strong>{% if task.responsible %}{{ task.responsible.get_full_name|default:task.responsible.get_username }}{% else %}Не назначен{% endif %}</strong>
+        </div>
+    </section>
+
+    <div class="task-detail-grid">
+        <section class="task-detail-panel task-detail-description">
+            <h2>Описание</h2>
+            {% if task.description %}<div>{{ task.description|linebreaks }}</div>
+            {% else %}<p class="task-detail-empty">Описание пока не заполнено.</p>{% endif %}
+        </section>
+        <aside class="task-detail-panel" aria-labelledby="task-event-heading">
+            <h2 id="task-event-heading">Мероприятие</h2>
+            <a href="{% url 'core:event_detail' task.event_id %}" class="task-detail-event-link">{{ task.event.title|default:task.event.client }} <span aria-hidden="true">↗</span></a>
+            <dl class="task-detail-context">
+                <div><dt>Дата мероприятия</dt><dd><time datetime="{{ task.event.date|date:'Y-m-d' }}">{{ task.event.date|date:"d.m.Y" }}</time></dd></div>
+                <div><dt>Город</dt><dd>{{ task.event.city|default:"Не указан" }}</dd></div>
+                <div><dt>Клиент</dt><dd>{% if crm_permissions.can_view_clients %}<a href="{% url 'core:client_detail' task.event.client_id %}">{{ task.event.client }}</a>{% else %}{{ task.event.client }}{% endif %}</dd></div>
+                <div><dt>Формат</dt><dd>{{ task.event.event_format|default:"Не выбран" }}</dd></div>
+            </dl>
+        </aside>
     </div>
-</div>
+</section>
 {% endblock %}
