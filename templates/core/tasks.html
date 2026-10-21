@@ -3,138 +3,75 @@
 {% block title %}Задачи | CRM{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div>
-        <h1 class="h2 mb-1">Задачи</h1>
-        <p class="text-secondary mb-0">Операционный список задач по мероприятиям: дедлайны, ответственные и текущий статус.</p>
-    </div>
-    {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_create' %}" class="btn btn-primary">Добавить задачу</a>{% endif %}
-</div>
+<section class="task-workspace" aria-label="Рабочая область задач">
+    <header class="page-header workspace-page-header">
+        <div class="workspace-page-header__content">
+            <svg class="workspace-page-header__icon" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="6" y="5" width="21" height="24" rx="4"/><path d="M12 3h9v5h-9zM11 15l2 2 4-4M20 15h3M11 23h12"/></svg>
+            <div><h1>Задачи</h1><p>Сроки, ответственные и подготовка мероприятий — в одном месте.</p></div>
+        </div>
+        {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_create' %}" class="btn btn-primary">Добавить задачу</a>{% endif %}
+    </header>
 
-<div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-3">
-        <a href="{% url 'core:tasks' %}" class="card border-0 shadow-sm h-100 dashboard-stat{% if active_filter == 'all' %} dashboard-stat--active{% endif %}">
-            <div class="card-body">
-                <p class="text-secondary mb-2">Всего задач</p>
-                <h2 class="display-6 mb-0">{{ task_stats.total }}</h2>
-            </div>
-        </a>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <a href="{% url 'core:tasks' %}?filter=open" class="card border-0 shadow-sm h-100 dashboard-stat{% if active_filter == 'open' %} dashboard-stat--active{% endif %}">
-            <div class="card-body">
-                <p class="text-secondary mb-2">Открытые</p>
-                <h2 class="display-6 mb-0">{{ task_stats.open }}</h2>
-            </div>
-        </a>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <a href="{% url 'core:tasks' %}?filter=overdue" class="card border-0 shadow-sm h-100 dashboard-stat{% if active_filter == 'overdue' %} dashboard-stat--active{% endif %}">
-            <div class="card-body">
-                <p class="text-secondary mb-2">Просроченные</p>
-                <h2 class="display-6 mb-0">{{ task_stats.overdue }}</h2>
-            </div>
-        </a>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <a href="{% url 'core:tasks' %}?filter=done" class="card border-0 shadow-sm h-100 dashboard-stat{% if active_filter == 'done' %} dashboard-stat--active{% endif %}">
-            <div class="card-body">
-                <p class="text-secondary mb-2">Завершённые</p>
-                <h2 class="display-6 mb-0">{{ task_stats.done }}</h2>
-            </div>
-        </a>
-    </div>
-</div>
+    <nav class="task-summary" aria-label="Фильтры и показатели задач">
+        <a href="{% url 'core:tasks' %}"{% if active_filter == 'all' %} aria-current="page"{% endif %}><span>Всего задач</span><strong>{{ task_stats.total }}</strong></a>
+        <a href="{% url 'core:tasks' %}?filter=open"{% if active_filter == 'open' %} aria-current="page"{% endif %}><span>Открытые</span><strong>{{ task_stats.open }}</strong></a>
+        <a href="{% url 'core:tasks' %}?filter=overdue"{% if active_filter == 'overdue' %} aria-current="page"{% endif %}><span>Просроченные</span><strong>{{ task_stats.overdue }}</strong></a>
+        <a href="{% url 'core:tasks' %}?filter=done"{% if active_filter == 'done' %} aria-current="page"{% endif %}><span>Завершённые</span><strong>{{ task_stats.done }}</strong></a>
+    </nav>
 
-{% if active_filter == "open" %}
-    <div class="alert alert-light border shadow-sm mb-4">Показаны только открытые задачи.</div>
-{% elif active_filter == "overdue" %}
-    <div class="alert alert-light border shadow-sm mb-4">Показаны только просроченные задачи.</div>
-{% elif active_filter == "done" %}
-    <div class="alert alert-light border shadow-sm mb-4">Показаны только завершённые задачи.</div>
-{% endif %}
+    <div class="task-directory-heading">
+        <h2>{% if active_filter == 'open' %}Открытые задачи{% elif active_filter == 'overdue' %}Просроченные задачи{% elif active_filter == 'done' %}Завершённые задачи{% else %}Все задачи{% endif %}</h2>
+        <p>{% if active_filter == 'open' %}Показаны только открытые задачи.{% elif active_filter == 'overdue' %}Показаны только просроченные задачи.{% elif active_filter == 'done' %}Показаны только завершённые задачи.{% else %}От первого шага до готового мероприятия.{% endif %}</p>
+    </div>
 
-<div class="row g-4">
-    {% for task in tasks %}
-        <div class="col-xl-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-                        <div>
-                            <h2 class="h4 mb-1">
-                                <a href="{% url 'core:task_detail' task.pk %}" class="text-decoration-none text-reset">
-                                    {{ task.title }}
-                                </a>
-                            </h2>
-                            <div class="text-secondary small">
-                                {{ task.event.title|default:task.event.client }} • {{ task.event.date|date:"d.m.Y" }}
+    <div class="task-directory-grid">
+        {% for task in tasks %}
+            <article class="task-directory-card" aria-labelledby="task-title-{{ task.pk }}">
+                <div class="task-directory-card__header">
+                    <h3 id="task-title-{{ task.pk }}"><a href="{% url 'core:task_detail' task.pk %}">{{ task.title }}</a></h3>
+                    <div class="task-directory-card__controls">
+                    {% if task.status == "done" %}<span class="event-chip event-chip--success">Готово</span>
+                    {% elif task.status == "in_progress" %}<span class="event-chip">В работе</span>
+                    {% else %}<span class="event-chip event-chip--soft">К выполнению</span>{% endif %}
+                    {% if crm_permissions.can_manage_events or crm_permissions.can_manage_system %}
+                        <details class="item-action-menu">
+                            <summary aria-label="Действия с задачей {{ task.title }}"><span aria-hidden="true">•••</span></summary>
+                            <div class="item-action-menu__popover">
+                                {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_update' task.pk %}">Изменить</a>{% endif %}
+                                {% if crm_permissions.can_manage_system %}<a href="{% url 'core:task_delete' task.pk %}" class="item-action-menu__danger">Удалить</a>{% endif %}
                             </div>
-                        </div>
-                        {% if task.status == "done" %}
-                            <span class="event-chip event-chip--success">Готово</span>
-                        {% elif task.status == "in_progress" %}
-                            <span class="event-chip">В работе</span>
-                        {% else %}
-                            <span class="event-chip event-chip--warning">К выполнению</span>
-                        {% endif %}
-                    </div>
-
-                    {% if task.description %}
-                        <p class="text-secondary mb-3">{{ task.description }}</p>
+                        </details>
                     {% endif %}
-
-                    <div class="row g-3">
-                        <div class="col-sm-6">
-                            <div class="metric-card">
-                                <span>Дедлайн</span>
-                                <strong>{{ task.deadline|date:"d.m.Y"|default:"Не задан" }}</strong>
-                            </div>
-                        </div>
-                        <div class="col-sm-6">
-                            <div class="metric-card">
-                                <span>Ответственный</span>
-                                <strong>{{ task.responsible|default:"Не назначен" }}</strong>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="task-card-actions mt-3">
-                        <div class="small">
-                            {% if task.deadline and task.deadline < today and task.status != "done" %}
-                                <span class="text-danger fw-semibold">Просрочено</span>
-                            {% elif task.deadline == today and task.status != "done" %}
-                                <span class="text-warning fw-semibold">Срок сегодня</span>
-                            {% else %}
-                                <span class="text-secondary">Статус актуален</span>
-                            {% endif %}
-                        </div>
-                        <div class="event-row-actions">
-                            {% if crm_permissions.can_manage_events and task.status == "todo" %}
-                                <form method="post" action="{% url 'core:task_status_update' task.pk %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="status" value="in_progress">
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary">В работу</button>
-                                </form>
-                            {% elif crm_permissions.can_manage_events and task.status == "in_progress" %}
-                                <form method="post" action="{% url 'core:task_status_update' task.pk %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="status" value="done">
-                                    <button type="submit" class="btn btn-sm btn-outline-success">Готово</button>
-                                </form>
-                            {% endif %}
-                            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_update' task.pk %}" class="panel-action-link">Изменить</a>{% endif %}
-                            {% if crm_permissions.can_manage_system %}<a href="{% url 'core:task_delete' task.pk %}" class="panel-action-link panel-action-link--danger">Удалить</a>{% endif %}
-                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    {% empty %}
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body py-5 text-center text-secondary">Задач пока нет.</div>
-            </div>
-        </div>
-    {% endfor %}
-</div>
+                <p class="task-directory-card__event"><a href="{% url 'core:event_detail' task.event_id %}">{{ task.event.title|default:task.event.client }}</a><span>Мероприятие · {{ task.event.date|date:"d.m.Y" }}</span></p>
+                {% if task.description %}<p class="task-directory-card__description">{{ task.description|truncatechars:180 }}</p>{% endif %}
+                <dl class="task-directory-card__context">
+                    <div><dt>Срок задачи</dt><dd{% if task.deadline and task.deadline < today and task.status != 'done' %} class="task-directory-card__overdue"{% endif %}>{% if task.deadline %}<time datetime="{{ task.deadline|date:'Y-m-d' }}">{{ task.deadline|date:"d.m.Y" }}</time>{% else %}Не задан{% endif %}</dd></div>
+                    <div><dt>Ответственный</dt><dd>{% if task.responsible %}{{ task.responsible.get_full_name|default:task.responsible.get_username }}{% else %}Не назначен{% endif %}</dd></div>
+                </dl>
+                <div class="task-directory-card__footer">
+                    <div class="task-directory-card__timing">
+                        {% if task.deadline and task.deadline < today and task.status != "done" %}<span class="task-directory-card__overdue">Просрочено</span>
+                        {% elif task.deadline == today and task.status != "done" %}<span class="task-directory-card__today">Срок сегодня</span>
+                        {% else %}<a href="{% url 'core:task_detail' task.pk %}">Открыть задачу <span aria-hidden="true">↗</span></a>{% endif %}
+                    </div>
+                    {% if crm_permissions.can_manage_events and task.status == "todo" %}
+                        <form method="post" action="{% url 'core:task_status_update' task.pk %}">
+                            {% csrf_token %}<input type="hidden" name="status" value="in_progress">
+                            <button type="submit" class="btn btn-sm btn-outline-primary">В работу</button>
+                        </form>
+                    {% elif crm_permissions.can_manage_events and task.status == "in_progress" %}
+                        <form method="post" action="{% url 'core:task_status_update' task.pk %}">
+                            {% csrf_token %}<input type="hidden" name="status" value="done">
+                            <button type="submit" class="btn btn-sm btn-outline-success">Завершить</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </article>
+        {% empty %}
+            <div class="task-directory-empty"><h3>{% if active_filter == 'all' %}Задач пока нет{% else %}В этой группе задач нет{% endif %}</h3><p>{% if active_filter == 'all' %}Добавьте первую задачу для подготовки мероприятия.{% else %}Выберите другую группу в сводке выше.{% endif %}</p></div>
+        {% endfor %}
+    </div>
+</section>
 {% endblock %}
