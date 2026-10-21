@@ -38,12 +38,12 @@
         <div>
             <span class="task-detail-label">Статус</span>
             <strong>{{ task.get_status_display }}</strong>
-            {% if is_overdue %}<span class="task-detail-overdue">Просрочено</span>
-            {% elif is_due_today %}<span class="task-detail-today">Срок сегодня</span>{% endif %}
         </div>
         <div>
             <span class="task-detail-label">Срок задачи</span>
             <strong{% if is_overdue %} class="task-detail-overdue"{% endif %}>{% if task.deadline %}<time datetime="{{ task.deadline|date:'Y-m-d' }}">{{ task.deadline|date:"d.m.Y" }}</time>{% else %}Не задан{% endif %}</strong>
+            {% if is_overdue %}<span class="task-detail-overdue">Просрочено</span>
+            {% elif is_due_today %}<span class="task-detail-today">Срок сегодня</span>{% endif %}
         </div>
         <div>
             <span class="task-detail-label">Ответственный</span>
@@ -51,13 +51,13 @@
         </div>
     </section>
 
-    <div class="task-detail-grid">
-        <section class="task-detail-panel task-detail-description">
+    <div class="task-detail-panel task-detail-grid">
+        <section class="task-detail-description">
             <h2>Описание</h2>
             {% if task.description %}<div>{{ task.description|linebreaks }}</div>
             {% else %}<p class="task-detail-empty">Описание пока не заполнено.</p>{% endif %}
         </section>
-        <aside class="task-detail-panel" aria-labelledby="task-event-heading">
+        <aside class="task-detail-event" aria-labelledby="task-event-heading">
             <h2 id="task-event-heading">Мероприятие</h2>
             <a href="{% url 'core:event_detail' task.event_id %}" class="task-detail-event-link">{{ task.event.title|default:task.event.client }} <span aria-hidden="true">↗</span></a>
             <dl class="task-detail-context">
