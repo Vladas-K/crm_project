@@ -585,7 +585,12 @@ class EventTaskForm(BootstrapModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["responsible"].queryset = User.objects.order_by("username")
+        responsible_choices = Q(is_active=True, crm_profile__isnull=False)
+        if self.instance.pk and self.instance.responsible_id:
+            responsible_choices |= Q(pk=self.instance.responsible_id)
+        self.fields["responsible"].queryset = User.objects.filter(responsible_choices).order_by("username")
+        self.fields["responsible"].empty_label = "Без ответственного"
+        self.fields["responsible"].label_from_instance = lambda user: user.get_full_name() or user.get_username()
         self.fields["event"].queryset = Event.objects.select_related("client").order_by("date", "title", "id")
 
 

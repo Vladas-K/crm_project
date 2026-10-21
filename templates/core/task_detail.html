@@ -3,14 +3,15 @@
 {% block title %}{{ task.title }} | CRM{% endblock %}
 
 {% block content %}
+{% if task_return_url %}<a href="{{ task_return_url }}" class="event-back-link">← К списку задач</a>{% endif %}
 <div class="page-header">
     <div>
         <h1 class="h2 mb-1">{{ task.title }}</h1>
         <p class="text-secondary mb-0">Детальная карточка задачи по мероприятию.</p>
     </div>
     <div class="d-flex gap-2">
-        {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_update' task.pk %}" class="btn btn-outline-primary">Изменить</a>{% endif %}
-        {% if crm_permissions.can_manage_system %}<a href="{% url 'core:task_delete' task.pk %}" class="btn btn-outline-danger">Удалить</a>{% endif %}
+        {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_update' task.pk %}{% if task_return_query %}?{{ task_return_query }}{% endif %}" class="btn btn-outline-primary">Изменить</a>{% endif %}
+        {% if crm_permissions.can_manage_system %}<a href="{% url 'core:task_delete' task.pk %}{% if task_return_query %}?{{ task_return_query }}{% endif %}" class="btn btn-outline-danger">Удалить</a>{% endif %}
     </div>
 </div>
 
@@ -69,8 +70,8 @@
                 </div>
 
                 <div class="d-flex gap-2">
-                    <a href="{% url 'core:tasks' %}" class="btn btn-outline-secondary">К списку задач</a>
-                    <a href="{% url 'core:event_update' task.event.pk %}" class="btn btn-outline-primary">Открыть мероприятие</a>
+                    <a href="{% if task_return_url %}{{ task_return_url }}{% else %}{% url 'core:tasks' %}{% endif %}" class="btn btn-outline-secondary">К списку задач</a>
+                    <a href="{% url 'core:event_detail' task.event.pk %}" class="btn btn-outline-primary">Открыть мероприятие</a>
                 </div>
             </div>
         </div>

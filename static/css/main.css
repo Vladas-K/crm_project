@@ -3836,3 +3836,17 @@ a.lead-profile-contact:focus {
     .task-summary { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
     .task-directory-card { break-inside: avoid; }
 }
+
+
+/* Task list controls share the existing form geometry. */
+.task-directory-filters { padding: 1.1rem 1.25rem; margin-bottom: 1.5rem; border: 1px solid var(--crm-border); border-radius: 1.25rem; background: #fff; }
+.task-directory-filters__grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; gap: 0.85rem; }
+.task-directory-filters__grid > div { min-width: 0; }
+.task-directory-filters .form-label { color: #526071; font-size: 0.8rem; margin-bottom: 0.4rem; }
+.task-directory-filters .form-control, .task-directory-filters .form-select { min-height: 2.7rem; font-size: 0.85rem; }
+.task-directory-filters__footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: 1rem; font-size: 0.85rem; }
+.task-directory-mine { display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+.task-directory-mine input { width: 1.05rem; height: 1.05rem; accent-color: var(--crm-accent); }
+.task-directory-filters__footer a { color: var(--crm-accent); text-underline-offset: 0.2rem; }
+@media (max-width: 1199.98px) { .task-directory-filters__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 767.98px) { .task-directory-filters__grid { grid-template-columns: minmax(0, 1fr); } .task-directory-filters { padding: 1rem; } }

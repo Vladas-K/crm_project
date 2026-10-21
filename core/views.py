@@ -1,6 +1,7 @@
 import calendar
 from decimal import Decimal
 from itertools import islice
+from urllib.parse import parse_qs, urlsplit
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -9,7 +10,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.db.models import Avg, Case, Count, DecimalField, IntegerField, OuterRef, Prefetch, Q, Subquery, Sum, Value, When
+from django.db.models import Avg, Case, Count, DecimalField, F, IntegerField, OuterRef, Prefetch, Q, Subquery, Sum, Value, When
 from django.db.models.functions import Coalesce
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -1014,43 +1015,136 @@ class EventDetailView(CRMLoginRequiredMixin, DetailView):
         return context
 
 
+TASK_FILTERS = {"all", "open", "overdue", "done"}
+TASK_SORTS = {
+    "priority": "Сначала открытые",
+    "deadline": "По сроку: сначала ближайшие",
+    "deadline_desc": "По сроку: сначала поздние",
+    "newest": "Сначала новые",
+}
+
+
+def task_list_params(query):
+    """Нормализует только поддерживаемые параметры списка задач."""
+    params = {}
+    search = query.get("q", "").strip()[:200]
+    if search:
+        params["q"] = search
+    state = query.get("filter", "all")
+    if state in TASK_FILTERS - {"all"}:
+        params["filter"] = state
+    event = query.get("event", "")
+    if event.isascii() and event.isdecimal() and len(event) <= 18 and int(event) > 0:
+        params["event"] = str(int(event))
+    if query.get("mine") == "1":
+        params["mine"] = "1"
+    sort = query.get("sort", "priority")
+    if sort in TASK_SORTS and sort != "priority":
+        params["sort"] = sort
+    page = query.get("page", "")
+    if page.isascii() and page.isdecimal() and len(page) <= 9 and int(page) > 1:
+        params["page"] = str(int(page))
+    return params
+
+
+def task_list_url(params):
+    query = urlencode(params)
+    return reverse("core:tasks") + (f"?{query}" if query else "")
+
+
+def safe_task_return_url(value):
+    """Разрешает возврат только в локальный список задач без произвольных URL."""
+    try:
+        target = urlsplit(value)
+    except ValueError:
+        return None
+    if target.scheme or target.netloc or target.path != reverse("core:tasks"):
+        return None
+    query = {key: values[-1] for key, values in parse_qs(target.query).items()}
+    return task_list_url(task_list_params(query))
+
+
 class TaskListView(CRMLoginRequiredMixin, ListView):
-    """Показывает общий список задач с фильтрами по состоянию."""
+    """Рабочий список задач с поиском, фильтрами, сортировкой и страницами."""
 
     model = EventTask
     template_name = "core/tasks.html"
     context_object_name = "tasks"
+    paginate_by = 20
 
     def get_queryset(self):
-        """Применяет фильтр задач из query-параметра filter."""
-
+        self.params = task_list_params(self.request.GET)
         today = timezone.localdate()
-        queryset = EventTask.objects.select_related("event", "responsible").order_by("deadline", "id")
-        task_filter = self.request.GET.get("filter", "all")
-
-        if task_filter == "open":
+        queryset = EventTask.objects.select_related("event__client", "responsible")
+        if self.params.get("event"):
+            queryset = queryset.filter(event_id=self.params["event"])
+        if self.params.get("mine"):
+            queryset = queryset.filter(responsible=self.request.user)
+        if self.params.get("q"):
+            # SQLite не обеспечивает регистронезависимый поиск кириллицы.
+            query = self.params["q"].casefold()
+            ids = [task.pk for task in queryset if any(
+                query in value.casefold() for value in
+                (task.title, task.description, task.event.title, task.event.client.name)
+            )]
+            queryset = queryset.filter(pk__in=ids)
+        self.task_scope = queryset
+        state = self.params.get("filter", "all")
+        if state == "open":
             queryset = queryset.exclude(status=EventTask.Status.DONE)
-        elif task_filter == "overdue":
+        elif state == "overdue":
             queryset = queryset.exclude(status=EventTask.Status.DONE).filter(deadline__lt=today)
-        elif task_filter == "done":
+        elif state == "done":
             queryset = queryset.filter(status=EventTask.Status.DONE)
+        sort = self.params.get("sort", "priority")
+        if sort == "newest":
+            return queryset.order_by("-pk")
+        if sort == "deadline_desc":
+            return queryset.order_by(F("deadline").desc(nulls_last=True), "pk")
+        if sort == "deadline":
+            return queryset.order_by(F("deadline").asc(nulls_last=True), "pk")
+        return queryset.annotate(
+            done_order=Case(When(status=EventTask.Status.DONE, then=Value(1)), default=Value(0))
+        ).order_by("done_order", F("deadline").asc(nulls_last=True), "pk")
 
-        return queryset
+    def paginate_queryset(self, queryset, page_size):
+        paginator = self.get_paginator(queryset, page_size)
+        page = paginator.get_page(self.params.get("page", "1"))
+        return paginator, page, page.object_list, page.has_other_pages()
 
     def get_context_data(self, **kwargs):
-        """Добавляет счетчики задач для KPI-карточек списка."""
-
         context = super().get_context_data(**kwargs)
         today = timezone.localdate()
-        active_filter = self.request.GET.get("filter", "all")
-        context["today"] = today
-        context["active_filter"] = active_filter
-        context["task_stats"] = {
-            "total": EventTask.objects.count(),
-            "open": EventTask.objects.exclude(status=EventTask.Status.DONE).count(),
-            "overdue": EventTask.objects.exclude(status=EventTask.Status.DONE).filter(deadline__lt=today).count(),
-            "done": EventTask.objects.filter(status=EventTask.Status.DONE).count(),
-        }
+        params = self.params.copy()
+        params.pop("page", None)
+        active_filter = params.get("filter", "all")
+        stats = self.task_scope.aggregate(
+            total=Count("pk"),
+            open=Count("pk", filter=~Q(status=EventTask.Status.DONE)),
+            overdue=Count("pk", filter=~Q(status=EventTask.Status.DONE) & Q(deadline__lt=today)),
+            done=Count("pk", filter=Q(status=EventTask.Status.DONE)),
+        )
+        tabs = []
+        for value, label in (("all", "Всего задач"), ("open", "Открытые"),
+                             ("overdue", "Просроченные"), ("done", "Завершённые")):
+            tab_params = {key: item for key, item in params.items() if key != "filter"}
+            if value != "all":
+                tab_params["filter"] = value
+            tabs.append({"url": task_list_url(tab_params), "label": label,
+                         "count": stats["total" if value == "all" else value], "active": value == active_filter})
+        return_params = params.copy()
+        if context["page_obj"].number > 1:
+            return_params["page"] = str(context["page_obj"].number)
+        return_url = task_list_url(return_params)
+        context.update(
+            today=today, active_filter=active_filter, task_stats=stats, task_tabs=tabs,
+            task_search=params.get("q", ""), task_event=params.get("event", ""),
+            task_mine=params.get("mine") == "1", task_sort=params.get("sort", "priority"),
+            task_sorts=TASK_SORTS.items(),
+            task_events=Event.objects.select_related("client").order_by("date", "title", "pk"),
+            pagination_query=urlencode(params), task_return_url=return_url,
+            task_return_query=urlencode({"return_to": return_url}),
+        )
         return context
 
 
@@ -1073,6 +1167,10 @@ class TaskDetailView(CRMLoginRequiredMixin, DetailView):
         context["is_due_today"] = bool(
             self.object.deadline and self.object.deadline == today and self.object.status != EventTask.Status.DONE
         )
+        return_url = safe_task_return_url(self.request.GET.get("return_to", ""))
+        if return_url:
+            context["task_return_url"] = return_url
+            context["task_return_query"] = urlencode({"return_to": return_url})
         return context
 
 
@@ -1726,7 +1824,34 @@ class EventDeleteView(SystemAccessMixin, DeleteView):
     success_url = reverse_lazy("core:events")
 
 
-class TaskCreateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+class TaskReturnMixin:
+    """Сохраняет происхождение действия: общий список или вкладка мероприятия."""
+
+    def get_task_list_url(self):
+        if getattr(self, "parent_event", None):
+            return None
+        if (self.request.POST.get("return_tab") or self.request.GET.get("return_tab")) == "tasks":
+            return None
+        value = self.request.POST.get("return_to") or self.request.GET.get("return_to", "")
+        return safe_task_return_url(value) or reverse("core:tasks")
+
+    def get_success_url(self):
+        return self.get_task_list_url() or super().get_success_url()
+
+    def get_cancel_url(self):
+        return self.get_task_list_url() or super().get_cancel_url()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return_url = self.get_task_list_url()
+        if return_url:
+            context.update(return_to=return_url, cancel_url=return_url, return_tab="")
+        elif not context.get("cancel_url") and getattr(self, "object", None):
+            context["cancel_url"] = f"{reverse('core:event_detail', args=[self.object.event_id])}?tab=tasks#event-tabs"
+        return context
+
+
+class TaskCreateView(TaskReturnMixin, EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Создает задачу, отдельно или из карточки мероприятия."""
 
     model = EventTask
@@ -1739,7 +1864,7 @@ class TaskCreateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixi
     cancel_url = reverse_lazy("core:tasks")
 
 
-class TaskUpdateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class TaskUpdateView(TaskReturnMixin, EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует задачу и возвращает пользователя в контекст мероприятия при необходимости."""
 
     model = EventTask
@@ -1866,7 +1991,7 @@ class EventOutcomeDeleteView(SystemAccessMixin, DeleteView):
         return f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=outcome#event-tabs"
 
 
-class TaskDeleteView(SystemAccessMixin, DeleteView):
+class TaskDeleteView(TaskReturnMixin, SystemAccessMixin, DeleteView):
     """Удаляет задачу и возвращает пользователя в список задач или вкладку мероприятия."""
 
     model = EventTask
@@ -1875,9 +2000,9 @@ class TaskDeleteView(SystemAccessMixin, DeleteView):
     def get_success_url(self):
         """Выбирает URL возврата по месту, откуда пользователь пришел удалять задачу."""
 
-        if self.request.GET.get("return_tab") == "tasks" or self.request.POST.get("return_tab") == "tasks":
-            return f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=tasks#event-tabs"
-        return reverse("core:tasks")
+        return self.get_task_list_url() or (
+            f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=tasks#event-tabs"
+        )
 
 
 class TaskStatusUpdateView(EventManagementMixin, View):
@@ -1894,7 +2019,8 @@ class TaskStatusUpdateView(EventManagementMixin, View):
             task.status = status
             task.save(update_fields=["status"])
             messages.success(request, "Статус задачи обновлён.")
-        return redirect(f"{reverse('core:event_detail', kwargs={'pk': task.event.pk})}?tab=tasks#event-tabs")
+        return_url = safe_task_return_url(request.POST.get("return_to", ""))
+        return redirect(return_url or f"{reverse('core:event_detail', kwargs={'pk': task.event.pk})}?tab=tasks#event-tabs")
 
 
 class EventExpenseCreateView(

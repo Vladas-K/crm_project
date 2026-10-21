@@ -20,6 +20,7 @@
         {% if attachment_name %}<p>Вложенный файл «{{ attachment_name }}» также будет удалён, если он не используется другим документом.</p>{% endif %}
         <form method="post" class="d-flex gap-2">
             {% csrf_token %}
+            {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
             {% if return_tab %}
                 <input type="hidden" name="return_tab" value="{{ return_tab }}">
             {% elif request.GET.return_tab %}

@@ -9,26 +9,40 @@
             <svg class="workspace-page-header__icon" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="6" y="5" width="21" height="24" rx="4"/><path d="M12 3h9v5h-9zM11 15l2 2 4-4M20 15h3M11 23h12"/></svg>
             <div><h1>Задачи</h1><p>Сроки, ответственные и подготовка мероприятий — в одном месте.</p></div>
         </div>
-        {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_create' %}" class="btn btn-primary">Добавить задачу</a>{% endif %}
+        {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_create' %}?{{ task_return_query }}" class="btn btn-primary">Добавить задачу</a>{% endif %}
     </header>
 
     <nav class="task-summary" aria-label="Фильтры и показатели задач">
-        <a href="{% url 'core:tasks' %}"{% if active_filter == 'all' %} aria-current="page"{% endif %}><span>Всего задач</span><strong>{{ task_stats.total }}</strong></a>
-        <a href="{% url 'core:tasks' %}?filter=open"{% if active_filter == 'open' %} aria-current="page"{% endif %}><span>Открытые</span><strong>{{ task_stats.open }}</strong></a>
-        <a href="{% url 'core:tasks' %}?filter=overdue"{% if active_filter == 'overdue' %} aria-current="page"{% endif %}><span>Просроченные</span><strong>{{ task_stats.overdue }}</strong></a>
-        <a href="{% url 'core:tasks' %}?filter=done"{% if active_filter == 'done' %} aria-current="page"{% endif %}><span>Завершённые</span><strong>{{ task_stats.done }}</strong></a>
+        {% for tab in task_tabs %}
+            <a href="{{ tab.url }}"{% if tab.active %} aria-current="page"{% endif %}><span>{{ tab.label }}</span><strong>{{ tab.count }}</strong></a>
+        {% endfor %}
     </nav>
+
+    <form method="get" class="task-directory-filters" aria-label="Поиск и фильтры задач">
+        <input type="hidden" name="filter" value="{{ active_filter }}">
+        <div class="task-directory-filters__grid">
+            <div><label for="task-search" class="form-label">Поиск</label><input type="search" id="task-search" name="q" maxlength="200" class="form-control" value="{{ task_search }}" placeholder="Задача или мероприятие"></div>
+            <div><label for="task-event" class="form-label">Мероприятие</label><select id="task-event" name="event" class="form-select"><option value="">Все мероприятия</option>{% for event in task_events %}<option value="{{ event.pk }}"{% if task_event == event.pk|stringformat:'s' %} selected{% endif %}>{{ event.title|default:event.client }}</option>{% endfor %}</select></div>
+            <div><label for="task-sort" class="form-label">Сортировка</label><select id="task-sort" name="sort" class="form-select">{% for value, label in task_sorts %}<option value="{{ value }}"{% if task_sort == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+            <button type="submit" class="btn btn-primary">Показать</button>
+        </div>
+        <div class="task-directory-filters__footer">
+            <label class="task-directory-mine"><input type="checkbox" name="mine" value="1"{% if task_mine %} checked{% endif %}> Мои задачи</label>
+            {% if task_search or task_event or task_mine or task_sort != 'priority' %}<a href="{% url 'core:tasks' %}{% if active_filter != 'all' %}?filter={{ active_filter }}{% endif %}">Сбросить фильтры</a>{% endif %}
+        </div>
+    </form>
 
     <div class="task-directory-heading">
         <h2>{% if active_filter == 'open' %}Открытые задачи{% elif active_filter == 'overdue' %}Просроченные задачи{% elif active_filter == 'done' %}Завершённые задачи{% else %}Все задачи{% endif %}</h2>
         <p>{% if active_filter == 'open' %}Показаны только открытые задачи.{% elif active_filter == 'overdue' %}Показаны только просроченные задачи.{% elif active_filter == 'done' %}Показаны только завершённые задачи.{% else %}От первого шага до готового мероприятия.{% endif %}</p>
+        <p class="mt-1">Найдено: {{ paginator.count }}{% if is_paginated %} · Показаны {{ page_obj.start_index }}–{{ page_obj.end_index }}{% endif %}</p>
     </div>
 
     <div class="task-directory-grid">
         {% for task in tasks %}
             <article class="task-directory-card" aria-labelledby="task-title-{{ task.pk }}">
                 <div class="task-directory-card__header">
-                    <h3 id="task-title-{{ task.pk }}"><a href="{% url 'core:task_detail' task.pk %}">{{ task.title }}</a></h3>
+                    <h3 id="task-title-{{ task.pk }}"><a href="{% url 'core:task_detail' task.pk %}?{{ task_return_query }}">{{ task.title }}</a></h3>
                     <div class="task-directory-card__controls">
                     {% if task.status == "done" %}<span class="event-chip event-chip--success">Готово</span>
                     {% elif task.status == "in_progress" %}<span class="event-chip">В работе</span>
@@ -37,8 +51,8 @@
                         <details class="item-action-menu">
                             <summary aria-label="Действия с задачей {{ task.title }}"><span aria-hidden="true">•••</span></summary>
                             <div class="item-action-menu__popover">
-                                {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_update' task.pk %}">Изменить</a>{% endif %}
-                                {% if crm_permissions.can_manage_system %}<a href="{% url 'core:task_delete' task.pk %}" class="item-action-menu__danger">Удалить</a>{% endif %}
+                                {% if crm_permissions.can_manage_events %}<a href="{% url 'core:task_update' task.pk %}?{{ task_return_query }}">Изменить</a>{% endif %}
+                                {% if crm_permissions.can_manage_system %}<a href="{% url 'core:task_delete' task.pk %}?{{ task_return_query }}" class="item-action-menu__danger">Удалить</a>{% endif %}
                             </div>
                         </details>
                     {% endif %}
@@ -54,24 +68,31 @@
                     <div class="task-directory-card__timing">
                         {% if task.deadline and task.deadline < today and task.status != "done" %}<span class="task-directory-card__overdue">Просрочено</span>
                         {% elif task.deadline == today and task.status != "done" %}<span class="task-directory-card__today">Срок сегодня</span>
-                        {% else %}<a href="{% url 'core:task_detail' task.pk %}">Открыть задачу <span aria-hidden="true">↗</span></a>{% endif %}
+                        {% else %}<a href="{% url 'core:task_detail' task.pk %}?{{ task_return_query }}">Открыть задачу <span aria-hidden="true">↗</span></a>{% endif %}
                     </div>
                     {% if crm_permissions.can_manage_events and task.status == "todo" %}
                         <form method="post" action="{% url 'core:task_status_update' task.pk %}">
-                            {% csrf_token %}<input type="hidden" name="status" value="in_progress">
+                            {% csrf_token %}<input type="hidden" name="return_to" value="{{ task_return_url }}"><input type="hidden" name="status" value="in_progress">
                             <button type="submit" class="btn btn-sm btn-outline-primary">В работу</button>
                         </form>
                     {% elif crm_permissions.can_manage_events and task.status == "in_progress" %}
                         <form method="post" action="{% url 'core:task_status_update' task.pk %}">
-                            {% csrf_token %}<input type="hidden" name="status" value="done">
+                            {% csrf_token %}<input type="hidden" name="return_to" value="{{ task_return_url }}"><input type="hidden" name="status" value="done">
                             <button type="submit" class="btn btn-sm btn-outline-success">Завершить</button>
                         </form>
                     {% endif %}
                 </div>
             </article>
         {% empty %}
-            <div class="task-directory-empty"><h3>{% if active_filter == 'all' %}Задач пока нет{% else %}В этой группе задач нет{% endif %}</h3><p>{% if active_filter == 'all' %}Добавьте первую задачу для подготовки мероприятия.{% else %}Выберите другую группу в сводке выше.{% endif %}</p></div>
+            <div class="task-directory-empty"><h3>Задач с такими условиями нет</h3><p>Измените фильтры или добавьте новую задачу.</p></div>
         {% endfor %}
     </div>
+    {% if is_paginated %}
+        <nav class="client-pagination" aria-label="Страницы списка задач">
+            {% if page_obj.has_previous %}<a class="btn btn-outline-secondary" href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Назад</a>{% endif %}
+            <span>Страница {{ page_obj.number }} из {{ paginator.num_pages }}</span>
+            {% if page_obj.has_next %}<a class="btn btn-outline-secondary" href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Далее</a>{% endif %}
+        </nav>
+    {% endif %}
 </section>
 {% endblock %}
