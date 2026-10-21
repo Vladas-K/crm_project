@@ -4,6 +4,7 @@
     --crm-text: #1f2937;
     --crm-muted: #6b7280;
     --crm-border: rgba(15, 23, 42, 0.1);
+    --crm-radius-control: 0.9rem;
     --crm-blue: #1f6feb;
     --crm-green: #0f9f6e;
     --crm-amber: #d97706;
@@ -3538,7 +3539,7 @@ a.lead-profile-contact:focus {
 .event-filter-grid { display: grid; grid-template-columns: minmax(12rem, 2fr) minmax(10rem, 1fr) minmax(12rem, 1.15fr) auto; align-items: end; gap: 1rem; }
 .event-filter-field { min-width: 0; }
 .event-filter-field .form-label { margin-bottom: 0.4rem; color: #535e6d; font-size: 0.8rem; }
-.event-filter-field .form-control, .event-filter-field .form-select { min-height: 2.7rem; font-size: 0.88rem; }
+.event-filter-field .form-control, .event-filter-field .form-select { min-height: 2.7rem; border-radius: var(--crm-radius-control); font-size: 0.88rem; }
 .event-filter-submit { min-width: 7rem; }
 .event-date-range { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 1fr; align-items: end; gap: 1rem; margin-top: 1rem; }
 .event-date-range[hidden] { display: none; }
