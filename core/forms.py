@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from django import forms
 from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator
 from django.db.models import Max, Q
 
 from .models import (
@@ -526,14 +527,43 @@ class EventForm(FinancialFieldsFormMixin, BootstrapModelForm):
         ]
         widgets = {
             "date": forms.DateInput(),
+            "planned_budget": forms.NumberInput(attrs={"min": 0}),
             "goal": forms.Textarea(attrs={"rows": 3}),
             "preferences": forms.Textarea(attrs={"rows": 3}),
             "stop_factors": forms.Textarea(attrs={"rows": 3}),
         }
+        labels = {
+            "title": "Название мероприятия",
+            "lead": "Исходный лид",
+            "planned_budget": "Плановый бюджет, ₽",
+            "stop_factors": "Ограничения и запреты",
+            "status": "Статус",
+            "manager": "Ответственный менеджер",
+        }
+        help_texts = {
+            "title": "Если оставить пустым, в карточке будет показано имя клиента.",
+            "lead": "Лид, из которого поступил запрос на это мероприятие. Необязательно.",
+            "event_format": "Задачи, тайминг, расходы и подрядчики не добавляются автоматически.",
+            "guests_count": "Если количество гостей ещё уточняется, укажите 0.",
+            "planned_budget": "Укажите 0, если бюджет ещё не определён. Сумма не может быть отрицательной.",
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["manager"].queryset = User.objects.order_by("username")
+        self.fields["client"].empty_label = "Выберите клиента"
+        self.fields["lead"].empty_label = "Не выбран"
+        self.fields["event_format"].empty_label = "Не выбран"
+        self.fields["title"].widget.attrs["placeholder"] = "Например, ежегодная конференция"
+        self.fields["city"].widget.attrs.update(autocomplete="address-level2", placeholder="Например, Москва")
+        if "planned_budget" in self.fields:
+            self.fields["planned_budget"].min_value = 0
+            self.fields["planned_budget"].validators.append(MinValueValidator(0))
+        manager_choices = Q(is_active=True, crm_profile__isnull=False)
+        if self.instance.pk and self.instance.manager_id:
+            manager_choices |= Q(pk=self.instance.manager_id)
+        self.fields["manager"].queryset = User.objects.filter(manager_choices).order_by("username")
+        self.fields["manager"].empty_label = "Без ответственного"
+        self.fields["manager"].label_from_instance = lambda user: user.get_full_name() or user.get_username()
 
 
 class EventTaskForm(BootstrapModelForm):

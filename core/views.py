@@ -1684,11 +1684,15 @@ class EventCreateView(EventManagementMixin, FinanceFormMixin, CRUDContextMixin, 
 
     model = Event
     form_class = EventForm
-    template_name = "core/object_form.html"
+    template_name = "core/event_form.html"
     page_title = "Новое мероприятие"
+    submit_label = "Создать мероприятие"
     success_message = "Мероприятие создано."
     success_url = reverse_lazy("core:events")
     cancel_url = reverse_lazy("core:events")
+
+    def get_success_url(self):
+        return reverse("core:event_detail", kwargs={"pk": self.object.pk})
 
 
 class EventUpdateView(EventManagementMixin, FinanceFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
@@ -1696,11 +1700,18 @@ class EventUpdateView(EventManagementMixin, FinanceFormMixin, CRUDContextMixin, 
 
     model = Event
     form_class = EventForm
-    template_name = "core/object_form.html"
+    template_name = "core/event_form.html"
     page_title = "Редактирование мероприятия"
+    submit_label = "Сохранить изменения"
     success_message = "Мероприятие обновлено."
     success_url = reverse_lazy("core:events")
     cancel_url = reverse_lazy("core:events")
+
+    def get_success_url(self):
+        return reverse("core:event_detail", kwargs={"pk": self.object.pk})
+
+    def get_cancel_url(self):
+        return self.get_success_url()
 
 
 class EventDeleteView(SystemAccessMixin, DeleteView):

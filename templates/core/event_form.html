@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | CRM{% endblock %}
+
+{% block content %}
+<div class="event-form-shell">
+    <header class="page-header workspace-page-header event-form-header">
+        <div class="workspace-page-header__content">
+            <svg class="workspace-page-header__icon" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="6" width="24" height="23" rx="4"/><path d="M10 3v6M22 3v6M4 13h24M10 19h4M18 19h4M10 24h4"/></svg>
+            <div>
+                <h1>{{ page_title }}</h1>
+                <p>{% if form.instance.pk %}Обновите основные данные и условия работы по мероприятию.{% else %}Укажите клиента, дату и основные условия мероприятия.{% endif %}</p>
+            </div>
+        </div>
+    </header>
+    <a class="event-form-back" href="{{ cancel_url }}">{% if form.instance.pk %}← К карточке мероприятия{% else %}← К мероприятиям{% endif %}</a>
+
+    <form method="post" class="event-form" novalidate>
+        {% csrf_token %}
+        {% if form.errors %}
+            <div class="event-form-errors" role="alert">
+                <strong>Проверьте отмеченные поля</strong>
+                <p>Введённые данные сохранены в форме.</p>
+                <ul>
+                    {% for field in form %}{% if field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ field.errors|join:' ' }}</a></li>{% endif %}{% endfor %}
+                    {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+        <div class="event-form-panel">
+            <p class="event-form-required-note"><span aria-hidden="true">*</span> Обязательные поля. Остальное можно заполнить позже.</p>
+
+            <section class="event-form-section" aria-labelledby="event-basics-title">
+                <div class="event-form-section__header"><h2 id="event-basics-title">Основное</h2><p>Для кого, где и когда состоится мероприятие.</p></div>
+                <div class="event-form-grid">
+                    {% include 'core/includes/event_form_field.html' with field=form.title wide=True %}
+                    {% include 'core/includes/event_form_field.html' with field=form.client wide=False %}
+                    {% include 'core/includes/event_form_field.html' with field=form.event_format wide=False %}
+                    {% include 'core/includes/event_form_field.html' with field=form.date wide=False %}
+                    {% include 'core/includes/event_form_field.html' with field=form.city wide=False %}
+                </div>
+            </section>
+
+            <section class="event-form-section" aria-labelledby="event-parameters-title">
+                <div class="event-form-section__header"><h2 id="event-parameters-title">Параметры</h2><p>Предварительный масштаб мероприятия.</p></div>
+                <div class="event-form-grid{% if not form.planned_budget %} event-form-grid--single{% endif %}">
+                    {% include 'core/includes/event_form_field.html' with field=form.guests_count wide=False %}
+                    {% if form.planned_budget %}{% include 'core/includes/event_form_field.html' with field=form.planned_budget wide=False %}{% endif %}
+                </div>
+            </section>
+
+            <section class="event-form-section" aria-labelledby="event-request-title">
+                <div class="event-form-section__header"><h2 id="event-request-title">Запрос клиента</h2><p>Что важно учесть при подготовке. Этот блок можно заполнить позже.</p></div>
+                <div class="event-form-grid">
+                    {% include 'core/includes/event_form_field.html' with field=form.goal wide=True %}
+                    {% include 'core/includes/event_form_field.html' with field=form.preferences wide=True %}
+                    {% include 'core/includes/event_form_field.html' with field=form.stop_factors wide=True %}
+                </div>
+            </section>
+
+            <section class="event-form-section" aria-labelledby="event-organization-title">
+                <div class="event-form-section__header"><h2 id="event-organization-title">Организация работы</h2><p>Кто ведёт проект и на каком этапе находится подготовка.</p></div>
+                <div class="event-form-grid">
+                    {% include 'core/includes/event_form_field.html' with field=form.manager wide=False %}
+                    {% include 'core/includes/event_form_field.html' with field=form.status wide=False %}
+                    {% include 'core/includes/event_form_field.html' with field=form.lead wide=True %}
+                </div>
+            </section>
+
+            <div class="event-form-actions">
+                <a href="{{ cancel_url }}" class="btn btn-outline-secondary">Отмена</a>
+                <button type="submit" class="btn btn-primary">{{ submit_label }}</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

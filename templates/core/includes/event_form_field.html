@@ -1,0 +1,8 @@
+<div class="event-form-field{% if wide %} event-form-field--wide{% endif %}">
+    <label class="event-form-field__label" for="{{ field.id_for_label }}">
+        {{ field.label }}{% if field.field.required %}<span class="event-form-field__required" aria-hidden="true"> *</span>{% else %} <span class="event-form-field__optional">необязательно</span>{% endif %}
+    </label>
+    {{ field }}
+    {% if field.help_text %}<div id="{{ field.auto_id }}_helptext" class="event-form-field__help">{{ field.help_text }}</div>{% endif %}
+    {% if field.errors %}<div id="{{ field.auto_id }}_error">{% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}</div>{% endif %}
+</div>

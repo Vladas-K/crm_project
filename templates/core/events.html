@@ -128,9 +128,9 @@
                 <div class="event-directory-card__manager"><dt>Ответственный</dt><dd>{% if event.manager %}{{ event.manager.get_full_name|default:event.manager.get_username }}{% else %}Не назначен{% endif %}</dd></div>
             </dl>
             <div class="event-directory-card__operations" aria-label="Готовность мероприятия">
-                <a href="{% url 'core:event_detail' event.pk %}?tab=tasks&amp;task_filter=open"><span>Открытые задачи</span><strong>{{ event.open_tasks_count }}</strong>{% if event.overdue_tasks_count %}<small class="event-directory-card__overdue">Просрочено: {{ event.overdue_tasks_count }}</small>{% endif %}</a>
-                <a href="{% url 'core:event_detail' event.pk %}?tab=vendors"><span>Подрядчики</span><strong>{{ event.vendors_count }}</strong></a>
-                <a href="{% url 'core:event_detail' event.pk %}?tab=documents"><span>Документы</span><strong>{{ event.signed_documents_count }} / {{ event.documents_count }}</strong><small>подписано</small></a>
+                <a href="{% url 'core:event_detail' event.pk %}?tab=tasks&amp;task_filter=open#event-tabs"><span>Открытые задачи</span><strong>{{ event.open_tasks_count }}</strong>{% if event.overdue_tasks_count %}<small class="event-directory-card__overdue">Просрочено: {{ event.overdue_tasks_count }}</small>{% endif %}</a>
+                <a href="{% url 'core:event_detail' event.pk %}?tab=vendors#event-tabs"><span>Подрядчики</span><strong>{{ event.vendors_count }}</strong></a>
+                <a href="{% url 'core:event_detail' event.pk %}?tab=documents#event-tabs"><span>Документы</span><strong>{{ event.signed_documents_count }} / {{ event.documents_count }}</strong><small>подписано</small></a>
             </div>
             <div class="event-directory-card__footer">
                 {% if crm_permissions.can_view_finance %}<dl class="event-directory-card__finance"><div><dt>Бюджет</dt><dd>{{ event.directory_budget_display }} ₽</dd></div><div><dt>Плановая маржа</dt><dd>{% if event.planned_budget %}{{ event.directory_margin|floatformat:1 }}%{% else %}—{% endif %}</dd></div></dl>{% endif %}

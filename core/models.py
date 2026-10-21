@@ -585,7 +585,9 @@ class Event(models.Model):
     date = models.DateField("Дата")
     city = models.CharField("Город", max_length=120)
     guests_count = models.PositiveIntegerField("Количество гостей", default=0)
-    planned_budget = models.DecimalField("Бюджет плановый", max_digits=12, decimal_places=2, default=0)
+    planned_budget = models.DecimalField(
+        "Бюджет плановый", max_digits=12, decimal_places=2, default=0, validators=[MinValueValidator(0)]
+    )
     goal = models.TextField("Цель мероприятия", blank=True)
     preferences = models.TextField("Предпочтения", blank=True)
     stop_factors = models.TextField("Стоп-факторы", blank=True)
