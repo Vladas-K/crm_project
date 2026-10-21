@@ -36,7 +36,7 @@
                 {% if crm_permissions.can_view_clients %}
                     <a class="crm-nav__link" href="{% url 'core:clients' %}"{% if request.path|slice:':9' == '/clients/' %} aria-current="page"{% endif %}>Клиенты</a>
                 {% endif %}
-                <a class="crm-nav__link" href="{% url 'core:events' %}">Мероприятия</a>
+                <a class="crm-nav__link" href="{% url 'core:events' %}"{% if request.path|slice:':8' == '/events/' %} aria-current="page"{% endif %}>Мероприятия</a>
                 <a class="crm-nav__link" href="{% url 'core:tasks' %}">Задачи</a>
                 <a class="crm-nav__link" href="{% url 'core:formats' %}">Форматы</a>
                 <a class="crm-nav__link" href="{% url 'core:vendors' %}">Подрядчики</a>

@@ -96,7 +96,7 @@
                     <h2 class="premium-panel__title">Динамика мероприятий</h2>
                     <p class="premium-panel__subtitle">Количество мероприятий по месяцам.</p>
                 </div>
-                <a href="{% url 'core:events' %}" class="text-decoration-none">Открыть мероприятия</a>
+                <a href="{% url 'core:events' %}?scope=all" class="text-decoration-none">Открыть мероприятия</a>
             </div>
             {% if monthly_chart %}
                 <div class="analytics-chart-wrap">
@@ -116,7 +116,7 @@
                         <h2 class="premium-panel__title">Бюджет и расходы</h2>
                         <p class="premium-panel__subtitle">Плановый бюджет и фактические расходы по месяцам.</p>
                     </div>
-                    <a href="{% url 'core:events' %}" class="text-decoration-none">Открыть мероприятия</a>
+                    <a href="{% url 'core:events' %}?scope=all" class="text-decoration-none">Открыть мероприятия</a>
                 </div>
                 {% if finance_monthly_chart %}
                     <div class="analytics-chart-wrap">

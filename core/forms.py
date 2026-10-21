@@ -1,4 +1,7 @@
+import calendar
 import json
+import re
+from datetime import date
 from uuid import uuid4
 
 from django import forms
@@ -394,6 +397,99 @@ class ServicePackageForm(BootstrapModelForm):
         model = ServicePackage
         fields = ["name", "event_format", "services", "price"]
         widgets = {"services": forms.Textarea(attrs={"rows": 4})}
+
+
+class EventDirectoryFilterForm(forms.Form):
+    """Проверяет параметры каталога, в том числе старые ссылки на период."""
+
+    SCOPE_CHOICES = (("active", "Активные"), ("all", "Все"), ("archive", "Архив"))
+    PERIOD_CHOICES = (
+        ("all", "За всё время"), ("this_month", "Этот месяц"),
+        ("next_30", "Следующие 30 дней"), ("custom", "Произвольный период"),
+    )
+    SORT_CHOICES = (
+        ("date_asc", "Ближайшая дата"), ("date_desc", "Поздняя дата"),
+        ("created_desc", "Сначала новые"),
+    )
+    ATTENTION_CHOICES = (
+        ("", "Все мероприятия"), ("risks", "Есть риски"),
+        ("outcomes", "Не заполнены итоги"), ("unassigned_manager", "Нет ответственного"),
+        ("overdue_tasks", "Есть просроченные задачи"),
+    )
+
+    q = forms.CharField(label="Поиск", required=False, max_length=255)
+    scope = forms.ChoiceField(label="Мероприятия", choices=SCOPE_CHOICES)
+    status = forms.ChoiceField(label="Статус", required=False, choices=(("", "Все статусы"), *Event.Status.choices))
+    event_format = forms.ChoiceField(label="Формат", required=False)
+    manager = forms.ChoiceField(label="Ответственный", required=False)
+    attention = forms.ChoiceField(label="Требуют внимания", required=False, choices=ATTENTION_CHOICES)
+    period = forms.ChoiceField(label="Период", choices=PERIOD_CHOICES)
+    date_from = forms.DateField(
+        label="Дата от", required=False, input_formats=("%Y-%m-%d",),
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
+    )
+    date_to = forms.DateField(
+        label="Дата до", required=False, input_formats=("%Y-%m-%d",),
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
+    )
+    month = forms.CharField(label="Месяц", required=False, widget=forms.HiddenInput)
+    sort = forms.ChoiceField(label="Сортировка", choices=SORT_CHOICES)
+
+    def __init__(self, data=None, *args, **kwargs):
+        if data is not None:
+            data = data.copy()
+            data["scope"] = data.get("scope") or (
+                "all" if data.get("status") in {Event.Status.COMPLETED, Event.Status.CANCELLED} else "active"
+            )
+            data["period"] = data.get("period") or (
+                "custom" if any(data.get(key) for key in ("date_from", "date_to", "month")) else "all"
+            )
+            data["sort"] = data.get("sort") or "date_asc"
+            if data["period"] != "custom":
+                for key in ("date_from", "date_to", "month"):
+                    data[key] = ""
+            elif data.get("month") and not (data.get("date_from") or data.get("date_to")):
+                month_start = self.parse_month(data["month"])
+                if month_start:
+                    data["date_from"] = month_start.isoformat()
+                    data["date_to"] = month_start.replace(
+                        day=calendar.monthrange(month_start.year, month_start.month)[1]
+                    ).isoformat()
+        super().__init__(data, *args, **kwargs)
+        self.event_formats = list(EventFormat.objects.order_by("name"))
+        self.event_managers = list(
+            User.objects.filter(managed_events__isnull=False).distinct().order_by("username")
+        )
+        self.fields["event_format"].choices = [
+            ("", "Все форматы"), *((str(item.pk), item.name) for item in self.event_formats),
+        ]
+        self.fields["manager"].choices = [
+            ("", "Все ответственные"), ("unassigned", "Без ответственного"),
+            *((str(item.pk), item.get_full_name() or item.username) for item in self.event_managers),
+        ]
+
+    @staticmethod
+    def parse_month(value):
+        if not re.fullmatch(r"[0-9]{4}-[0-9]{2}", value):
+            return None
+        try:
+            return date.fromisoformat(f"{value}-01")
+        except ValueError:
+            return None
+
+    def clean_month(self):
+        month = self.cleaned_data["month"]
+        if month and not self.parse_month(month):
+            raise forms.ValidationError("Укажите корректный месяц в формате ГГГГ-ММ.")
+        return month
+
+    def clean(self):
+        cleaned_data = super().clean()
+        date_from = cleaned_data.get("date_from")
+        date_to = cleaned_data.get("date_to")
+        if cleaned_data.get("period") == "custom" and date_from and date_to and date_from > date_to:
+            self.add_error("date_to", "Дата окончания должна быть не раньше даты начала.")
+        return cleaned_data
 
 
 class FinancialFieldsFormMixin:

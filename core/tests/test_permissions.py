@@ -245,7 +245,7 @@ def test_analytics_contains_monthly_event_chart_data(client, django_user_model, 
     assert response.status_code == 200
     matching_month = next(item for item in response.context["monthly_chart"] if item["label"].endswith("2026"))
     assert matching_month["total"] == 1
-    assert matching_month["url"].endswith(f"?month={timezone.localdate():%Y-%m}")
+    assert matching_month["url"].endswith(f"?scope=all&month={timezone.localdate():%Y-%m}")
 
 
 @pytest.mark.django_db
@@ -268,7 +268,7 @@ def test_analytics_contains_team_chart_data(client, django_user_model, crm_objec
         {
             "label": "project_manager",
             "total": 1,
-            "url": f"{reverse('core:events')}?manager={manager.pk}",
+            "url": f"{reverse('core:events')}?scope=all&manager={manager.pk}",
         }
     ]
 

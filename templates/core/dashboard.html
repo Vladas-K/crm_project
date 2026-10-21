@@ -37,7 +37,7 @@
         {% if crm_permissions.can_view_clients %}</a>{% else %}</div>{% endif %}
     </div>
     <div class="col-md-6 col-xl-3">
-        <a href="{% url 'core:events' %}" class="card border-0 shadow-sm h-100 dashboard-stat dashboard-stat--events">
+        <a href="{% url 'core:events' %}?scope=all" class="card border-0 shadow-sm h-100 dashboard-stat dashboard-stat--events">
             <div class="card-body">
                 <p class="text-secondary mb-2">Мероприятия</p>
                 <h2 class="display-6 mb-0">{{ stats.events_count }}</h2>

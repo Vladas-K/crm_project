@@ -1,3 +1,5 @@
+import calendar
+from decimal import Decimal
 from itertools import islice
 
 from django.contrib import messages
@@ -7,7 +9,8 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.db.models import Avg, Case, Count, IntegerField, Prefetch, Q, Sum, Value, When
+from django.db.models import Avg, Case, Count, DecimalField, IntegerField, OuterRef, Prefetch, Q, Subquery, Sum, Value, When
+from django.db.models.functions import Coalesce
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.http import urlencode
@@ -18,6 +21,7 @@ from .forms import (
     ClientForm,
     EventCommunicationForm,
     EventDocumentForm,
+    EventDirectoryFilterForm,
     EventExpenseForm,
     EventForm,
     EventFormatForm,
@@ -692,73 +696,177 @@ class ClientAutocompleteView(ClientAccessMixin, View):
 
 
 class EventListView(CRMLoginRequiredMixin, ListView):
-    """Показывает список мероприятий с поиском и фильтрами."""
+    """Показывает рабочий каталог с проверенными фильтрами и постраничной сводкой."""
 
     model = Event
     template_name = "core/events.html"
     context_object_name = "events"
+    paginate_by = 20
+    sort_options = {
+        "date_asc": ("date", "pk"),
+        "date_desc": ("-date", "-pk"),
+        "created_desc": ("-created_at", "-pk"),
+    }
+    active_statuses = (Event.Status.PLANNING, Event.Status.IN_PROGRESS)
+
     def get_queryset(self):
-        """Фильтрует мероприятия по названию, клиенту, городу, статусу и формату."""
-
+        self.today = timezone.localdate()
+        self.filter_form = EventDirectoryFilterForm(self.request.GET)
+        form_valid = self.filter_form.is_valid()
+        filters = self.filter_form.cleaned_data
+        self.scope = filters.get("scope", "active")
+        self.period = filters.get("period", "all")
+        self.sort = filters.get("sort", "date_asc")
+        self.can_view_finance = bool(getattr(getattr(self.request.user, "crm_profile", None), "can_view_finance", False))
         queryset = Event.objects.select_related("client", "lead", "event_format", "manager")
-        search_query = self.request.GET.get("q", "").strip()
-        status_filter = self.request.GET.get("status", "")
-        format_filter = self.request.GET.get("event_format", "")
-        date_from = self.request.GET.get("date_from", "")
-        date_to = self.request.GET.get("date_to", "")
-        month_filter = self.request.GET.get("month", "")
-        manager_filter = self.request.GET.get("manager", "")
-        attention_filter = self.request.GET.get("attention", "")
-
-        if status_filter in {choice[0] for choice in Event.Status.choices}:
-            queryset = queryset.filter(status=status_filter)
-        if format_filter.isdigit():
-            queryset = queryset.filter(event_format_id=format_filter)
-        if date_from:
-            queryset = queryset.filter(date__gte=date_from)
-        if date_to:
-            queryset = queryset.filter(date__lte=date_to)
-        if len(month_filter) == 7 and month_filter[4] == "-":
-            year, month = month_filter.split("-")
-            if year.isdigit() and month.isdigit() and 1 <= int(month) <= 12:
-                queryset = queryset.filter(date__year=int(year), date__month=int(month))
-        if manager_filter.isdigit():
-            queryset = queryset.filter(manager_id=manager_filter)
+        if not form_valid:
+            return queryset.none().order_by(*self.sort_options[self.sort])
+        if self.scope == "active":
+            queryset = queryset.filter(status__in=self.active_statuses)
+        elif self.scope == "archive":
+            queryset = queryset.filter(status__in=(Event.Status.COMPLETED, Event.Status.CANCELLED))
+        if filters["status"]:
+            queryset = queryset.filter(status=filters["status"])
+        if filters["event_format"]:
+            queryset = queryset.filter(event_format_id=filters["event_format"])
+        if self.period == "this_month":
+            queryset = queryset.filter(
+                date__gte=self.today.replace(day=1),
+                date__lte=self.today.replace(day=calendar.monthrange(self.today.year, self.today.month)[1]),
+            )
+        elif self.period == "next_30":
+            queryset = queryset.filter(date__gte=self.today, date__lte=self.today + timezone.timedelta(days=29))
+        elif self.period == "custom":
+            if filters["date_from"]:
+                queryset = queryset.filter(date__gte=filters["date_from"])
+            if filters["date_to"]:
+                queryset = queryset.filter(date__lte=filters["date_to"])
+        if filters["manager"] == "unassigned":
+            queryset = queryset.filter(manager__isnull=True)
+        elif filters["manager"]:
+            queryset = queryset.filter(manager_id=filters["manager"])
+        attention_filter = filters["attention"]
         if attention_filter == "risks":
-            queryset = queryset.filter(
-                risks__isnull=False,
-                status__in=[Event.Status.PLANNING, Event.Status.IN_PROGRESS],
-            ).distinct().order_by("date", "id")
+            queryset = queryset.filter(risks__isnull=False, status__in=self.active_statuses).distinct()
         elif attention_filter == "outcomes":
-            queryset = queryset.filter(
-                outcome__isnull=True,
-                status__in=[Event.Status.PLANNING, Event.Status.IN_PROGRESS],
-            ).order_by("date", "id")
+            queryset = queryset.filter(outcome__isnull=True, status__in=self.active_statuses)
         elif attention_filter == "unassigned_manager":
+            queryset = queryset.filter(manager__isnull=True, status__in=self.active_statuses)
+        elif attention_filter == "overdue_tasks":
             queryset = queryset.filter(
-                manager__isnull=True,
-                status__in=[Event.Status.PLANNING, Event.Status.IN_PROGRESS],
-            ).order_by("date", "id")
-        if search_query:
-            queryset = [event for event in queryset if event_matches_search(event, search_query)]
+                tasks__deadline__lt=self.today,
+                tasks__status__in=(EventTask.Status.TODO, EventTask.Status.IN_PROGRESS),
+                status__in=self.active_statuses,
+            ).distinct()
+        if filters["q"]:
+            # SQLite не поддерживает регистронезависимый поиск кириллицы штатным icontains.
+            candidates = queryset.select_related(None).select_related("client").only("pk", "title", "city", "client__name")
+            matching_ids = [event.pk for event in candidates.iterator() if event_matches_search(event, filters["q"])]
+            queryset = queryset.filter(pk__in=matching_ids)
+        return queryset.order_by(*self.sort_options[self.sort])
 
-        return queryset
+    @staticmethod
+    def related_count(model, **filters):
+        counts = model.objects.filter(event_id=OuterRef("pk"), **filters).order_by().values("event_id").annotate(
+            total=Count("pk")
+        ).values("total")[:1]
+        return Coalesce(Subquery(counts, output_field=IntegerField()), Value(0))
+
+    def annotate_page(self, queryset):
+        """Считает сводку только для текущей страницы без перемножения связей."""
+
+        annotations = {
+            "open_tasks_count": self.related_count(EventTask, status__in=(EventTask.Status.TODO, EventTask.Status.IN_PROGRESS)),
+            "overdue_tasks_count": self.related_count(
+                EventTask, status__in=(EventTask.Status.TODO, EventTask.Status.IN_PROGRESS), deadline__lt=self.today,
+            ),
+            "vendors_count": self.related_count(EventVendor),
+            "documents_count": self.related_count(EventDocument),
+            "signed_documents_count": self.related_count(EventDocument, status=EventDocument.Status.SIGNED),
+        }
+        if self.can_view_finance:
+            expenses = EventExpense.objects.filter(event_id=OuterRef("pk")).order_by().values("event_id").annotate(
+                total=Sum("amount")
+            ).values("total")[:1]
+            amount_field = DecimalField(max_digits=14, decimal_places=2)
+            annotations["directory_total_expenses"] = Coalesce(
+                Subquery(expenses, output_field=amount_field), Value(Decimal("0")), output_field=amount_field,
+            )
+        return queryset.annotate(**annotations)
 
     def get_context_data(self, **kwargs):
-        """Передаёт в шаблон значения фильтров и доступные варианты выбора."""
-
         context = super().get_context_data(**kwargs)
-        context["search_query"] = self.request.GET.get("q", "")
-        context["event_status_filter"] = self.request.GET.get("status", "")
-        context["event_format_filter"] = self.request.GET.get("event_format", "")
-        context["event_date_from"] = self.request.GET.get("date_from", "")
-        context["event_date_to"] = self.request.GET.get("date_to", "")
-        context["event_month_filter"] = self.request.GET.get("month", "")
-        context["event_manager_filter"] = self.request.GET.get("manager", "")
-        context["event_attention_filter"] = self.request.GET.get("attention", "")
-        context["event_managers"] = User.objects.filter(managed_events__isnull=False).distinct().order_by("username")
-        context["event_statuses"] = Event.Status.choices
-        context["event_formats"] = EventFormat.objects.order_by("name")
+        events = self.annotate_page(context["events"])
+        for event in events:
+            event.directory_days_until = (event.date - self.today).days
+            event.directory_active = event.status in self.active_statuses
+            event.directory_date_overdue = event.directory_active and event.directory_days_until < 0
+            event.directory_status_kind = {
+                Event.Status.PLANNING: "soft", Event.Status.IN_PROGRESS: "",
+                Event.Status.COMPLETED: "success", Event.Status.CANCELLED: "soft",
+            }.get(event.status, "soft")
+            if self.can_view_finance:
+                budget = event.planned_budget
+                event.directory_margin = ((budget - event.directory_total_expenses) / budget * 100) if budget else Decimal("0")
+                formatted = format(budget, ",.0f" if budget == budget.to_integral_value() else ",.2f")
+                event.directory_budget_display = formatted.replace(",", "\u00a0").replace(".", ",")
+        context["events"] = context["object_list"] = context["page_obj"].object_list = events
+        filters = self.filter_form.cleaned_data
+        attention_filter = filters.get("attention", "")
+        context.update({
+            "filter_form": self.filter_form,
+            "search_query": filters.get("q", self.filter_form.data.get("q", "")),
+            "event_status_filter": filters.get("status", ""),
+            "event_format_filter": filters.get("event_format", ""),
+            "event_date_from": self.filter_form.data.get("date_from", ""),
+            "event_date_to": self.filter_form.data.get("date_to", ""),
+            "event_month_filter": self.request.GET.get("month", ""),
+            "event_manager_filter": filters.get("manager", ""),
+            "event_attention_filter": attention_filter,
+            "event_scope": self.scope,
+            "event_period": self.period,
+            "event_sort": self.sort,
+            "event_managers": self.filter_form.event_managers,
+            "event_statuses": [
+                (value, label) for value, label in Event.Status.choices
+                if self.scope == "all" or (value in self.active_statuses) == (self.scope == "active")
+            ],
+            "event_formats": self.filter_form.event_formats,
+            "filtered_count": context["paginator"].count,
+            "advanced_filters_open": bool(
+                filters.get("event_format") or filters.get("manager") or attention_filter or self.sort != "date_asc"
+                or any(field in self.filter_form.errors for field in ("event_format", "manager", "attention", "sort"))
+            ),
+            "has_filters": bool(
+                filters.get("q") or filters.get("status") or filters.get("event_format") or filters.get("manager")
+                or attention_filter or self.period != "all" or self.scope != "active" or self.sort != "date_asc"
+                or self.filter_form.errors
+            ),
+            "attention_label": {
+                "risks": "Показаны мероприятия с рисками.",
+                "outcomes": "Показаны мероприятия без заполненных итогов.",
+                "unassigned_manager": "Показаны мероприятия без ответственного менеджера.",
+                "overdue_tasks": "Показаны мероприятия с просроченными задачами.",
+            }.get(attention_filter, ""),
+        })
+        params = self.request.GET.copy()
+        params.pop("page", None)
+        context["pagination_query"] = params.urlencode()
+        scope_tabs = []
+        for scope, label in EventDirectoryFilterForm.SCOPE_CHOICES:
+            tab_params = params.copy()
+            tab_params["scope"] = scope
+            if scope == "archive":
+                tab_params.pop("attention", None)
+            status = filters.get("status")
+            if (scope == "active" and status and status not in self.active_statuses) or (
+                scope == "archive" and status in self.active_statuses
+            ):
+                tab_params.pop("status", None)
+            scope_tabs.append({
+                "label": label, "url": f"{reverse('core:events')}?{tab_params.urlencode()}", "active": self.scope == scope,
+            })
+        context["scope_tabs"] = scope_tabs
         return context
 
 
@@ -769,15 +877,12 @@ class EventAutocompleteView(CRMLoginRequiredMixin, View):
         """Ищет мероприятия по названию, клиенту или городу после двух символов."""
 
         query = request.GET.get("q", "").strip()
-        if len(query) < 2:
-            return JsonResponse({"results": []})
-
-        events = [
-            event
-            for event in Event.objects.select_related("client").order_by("date", "title", "id")
-            if event_matches_search(event, query)
-        ][:8]
-        return JsonResponse(
+        matches = (
+            event for event in Event.objects.select_related("client").only("pk", "title", "city", "client__name").order_by(
+                "date", "title", "id"
+            ).iterator() if event_matches_search(event, query)
+        ) if len(query) >= 2 else ()
+        response = JsonResponse(
             {
                 "results": [
                     {
@@ -785,11 +890,14 @@ class EventAutocompleteView(CRMLoginRequiredMixin, View):
                         "title": event.title or str(event.client),
                         "client": str(event.client),
                         "city": event.city,
+                        "url": reverse("core:event_detail", args=[event.pk]),
                     }
-                    for event in events
+                    for event in islice(matches, 8)
                 ]
             }
         )
+        response["Cache-Control"] = "no-store"
+        return response
 
 
 class EventDetailView(CRMLoginRequiredMixin, DetailView):
@@ -1188,7 +1296,7 @@ class AnalyticsView(AnalyticsAccessMixin, TemplateView):
             {
                 "label": f"{month_names[int(month_key[5:7]) - 1]} {month_key[:4]}",
                 "total": total,
-                "url": f"{reverse('core:events')}?month={month_key}",
+                "url": f"{reverse('core:events')}?scope=all&month={month_key}",
             }
             for month_key, total in sorted(monthly_totals.items())
         ]
@@ -1203,7 +1311,7 @@ class AnalyticsView(AnalyticsAccessMixin, TemplateView):
             {
                 "label": managers[item["manager_id"]].get_username(),
                 "total": item["total"],
-                "url": f"{reverse('core:events')}?manager={item['manager_id']}",
+                "url": f"{reverse('core:events')}?scope=all&manager={item['manager_id']}",
             }
             for item in manager_totals
         ]
@@ -1220,7 +1328,7 @@ class AnalyticsView(AnalyticsAccessMixin, TemplateView):
                     "label": f"{month_names[int(month_key[5:7]) - 1]} {month_key[:4]}",
                     "budget": values["budget"],
                     "expenses": values["expenses"],
-                    "url": f"{reverse('core:events')}?month={month_key}",
+                    "url": f"{reverse('core:events')}?scope=all&month={month_key}",
                 }
                 for month_key, values in sorted(finance_totals.items())
             ]

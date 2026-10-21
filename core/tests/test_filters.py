@@ -298,6 +298,7 @@ def test_event_autocomplete_returns_matching_event_data(client, django_user_mode
             "title": "Большая конференция",
             "client": "ООО Вектор",
             "city": "Москва",
+            "url": reverse("core:event_detail", args=[event.pk]),
         }
     ]
 
