@@ -106,7 +106,7 @@
 
 <div class="event-directory-grid">
     {% for event in events %}
-        <article class="event-directory-card" aria-labelledby="event-title-{{ event.pk }}">
+        <article class="event-directory-card" data-profile-url="{% url 'core:event_detail' event.pk %}" tabindex="0" aria-labelledby="event-title-{{ event.pk }}">
             <div class="event-directory-card__header">
                 <span class="event-chip{% if event.directory_status_kind %} event-chip--{{ event.directory_status_kind }}{% endif %}">{{ event.get_status_display }}</span>
                 {% if crm_permissions.can_manage_events or crm_permissions.can_manage_system %}
@@ -149,5 +149,6 @@
     </nav>
 {% endif %}
 {% include 'core/partials/item_action_menus.html' %}
+{% include 'core/partials/clickable_profile_cards.html' %}
 <script src="{% static_with_version 'js/event_directory.js' %}" defer></script>
 {% endblock %}

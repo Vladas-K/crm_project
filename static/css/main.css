@@ -3558,6 +3558,7 @@ a.lead-profile-contact:focus {
     display: flex;
     min-width: 0;
     flex-direction: column;
+    cursor: pointer;
     padding: 1.25rem;
     border: 1px solid rgba(15, 23, 42, 0.08);
     border-radius: 1.2rem;
@@ -3592,7 +3593,7 @@ a.lead-profile-contact:focus {
 .event-directory-empty { grid-column: 1 / -1; padding: 3rem 1.5rem; border: 1px solid var(--crm-border); border-radius: 1.2rem; background: #fff; text-align: center; }
 .event-directory-empty strong { display: block; margin-bottom: 0.5rem; font-size: 1.1rem; font-weight: 600; }
 .event-directory-empty p { color: var(--crm-muted); font-size: 0.9rem; }
-.event-directory-tabs a:focus-visible, .event-advanced-filters > summary:focus-visible, .event-directory-card a:focus-visible { outline: 2px solid var(--crm-accent); outline-offset: 4px; }
+.event-directory-tabs a:focus-visible, .event-advanced-filters > summary:focus-visible, .event-directory-card:focus-visible, .event-directory-card a:focus-visible { outline: 2px solid var(--crm-accent); outline-offset: 4px; }
 @media (min-width: 768px) and (max-width: 1199.98px) {
     .event-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .event-advanced-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
