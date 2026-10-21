@@ -32,17 +32,11 @@
         </div>
     </form>
 
-    <div class="task-directory-heading">
-        <h2>{% if active_filter == 'open' %}Открытые задачи{% elif active_filter == 'overdue' %}Просроченные задачи{% elif active_filter == 'done' %}Завершённые задачи{% else %}Все задачи{% endif %}</h2>
-        <p>{% if active_filter == 'open' %}Показаны только открытые задачи.{% elif active_filter == 'overdue' %}Показаны только просроченные задачи.{% elif active_filter == 'done' %}Показаны только завершённые задачи.{% else %}От первого шага до готового мероприятия.{% endif %}</p>
-        <p class="mt-1">Найдено: {{ paginator.count }}{% if is_paginated %} · Показаны {{ page_obj.start_index }}–{{ page_obj.end_index }}{% endif %}</p>
-    </div>
-
     <div class="task-directory-grid">
         {% for task in tasks %}
-            <article class="task-directory-card" aria-labelledby="task-title-{{ task.pk }}">
+            <article class="task-directory-card" data-profile-url="{% url 'core:task_detail' task.pk %}?{{ task_return_query }}" tabindex="0" aria-labelledby="task-title-{{ task.pk }}">
                 <div class="task-directory-card__header">
-                    <h3 id="task-title-{{ task.pk }}"><a href="{% url 'core:task_detail' task.pk %}?{{ task_return_query }}">{{ task.title }}</a></h3>
+                    <h2 id="task-title-{{ task.pk }}"><a href="{% url 'core:task_detail' task.pk %}?{{ task_return_query }}">{{ task.title }}</a></h2>
                     <div class="task-directory-card__controls">
                     {% if task.status == "done" %}<span class="event-chip event-chip--success">Готово</span>
                     {% elif task.status == "in_progress" %}<span class="event-chip">В работе</span>
@@ -95,4 +89,5 @@
         </nav>
     {% endif %}
 </section>
+{% include "core/partials/clickable_profile_cards.html" %}
 {% endblock %}
