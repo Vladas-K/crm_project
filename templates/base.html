@@ -9,6 +9,10 @@
     <link rel="stylesheet" href="{% static_with_version 'css/main.css' %}">
 </head>
 <body class="crm-body">
+    <header class="crm-mobile-bar">
+        <a href="{% url 'core:dashboard' %}" class="crm-mobile-brand"><span class="crm-brand__mark">CRM</span><span>Event Operations</span></a>
+        <button type="button" class="crm-mobile-menu-button" aria-label="Открыть меню" aria-controls="crm-mobile-navigation" aria-expanded="false"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 8h16M4 16h16"/></svg></button>
+    </header>
     <div class="crm-shell">
         <aside class="crm-sidebar">
             <a class="crm-brand" href="{% url 'core:dashboard' %}">
@@ -54,6 +58,10 @@
             </nav>
         </aside>
 
+        <dialog id="crm-mobile-navigation" class="crm-mobile-dialog" aria-labelledby="crm-mobile-navigation-title">
+            <div class="crm-mobile-dialog__header"><h2 id="crm-mobile-navigation-title">Меню</h2><button type="button" class="crm-mobile-menu-button" aria-label="Закрыть меню" autofocus><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+        </dialog>
+
         <main class="crm-main">
             <div class="container-fluid px-3 px-lg-4 py-4 py-lg-5">
                 {% if messages %}
@@ -69,5 +77,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static_with_version 'js/mobile_navigation.js' %}" defer></script>
 </body>
 </html>
