@@ -151,11 +151,10 @@ class PipelineStage(models.Model):
         return self.name
 
 class EventFormat(models.Model):
-    """Формат мероприятия, из которого можно создать структуру проекта."""
+    """Тип мероприятия для классификации, фильтров и аналитики."""
 
     name = models.CharField("Формат мероприятия", max_length=120, unique=True)
     description = models.TextField("Описание", blank=True)
-    default_budget = models.DecimalField("Бюджет по умолчанию", max_digits=12, decimal_places=2, default=0)
 
     class Meta:
         ordering = ("name",)
@@ -642,59 +641,6 @@ class Event(models.Model):
             return Decimal("0")
         return (self.profit / Decimal(self.planned_budget)) * Decimal("100")
 
-    def save(self, *args, **kwargs):
-        """Сохраняет основные данные мероприятия без создания связанных записей."""
-
-        super().save(*args, **kwargs)
-
-    def create_structure_from_format(self) -> None:
-        """Явно создаёт задачи, тайминг, бюджет и подрядчиков из шаблонов формата."""
-
-        if not self.event_format:
-            return
-
-        for template in self.event_format.task_templates.all():
-            EventTask.objects.get_or_create(
-                event=self,
-                title=template.title,
-                defaults={
-                    "description": template.description,
-                    "deadline_offset_days": template.deadline_offset_days,
-                    "responsible": self.manager,
-                    "status": EventTask.Status.TODO,
-                },
-            )
-        for template in self.event_format.timeline_templates.all():
-            EventTimelineItem.objects.get_or_create(
-                event=self,
-                time=template.time,
-                block=template.block,
-                defaults={
-                    "description": template.description,
-                    "responsible": template.responsible_label,
-                },
-            )
-        for template in self.event_format.budget_templates.all():
-            expense_category, _ = ExpenseCategory.objects.get_or_create(name=template.category)
-            EventExpense.objects.get_or_create(
-                event=self,
-                category=expense_category,
-                vendor_name=template.vendor_name,
-                defaults={
-                    "amount": template.amount,
-                    "payment_status": EventExpense.PaymentStatus.PLANNED,
-                },
-            )
-        for template in self.event_format.vendor_templates.select_related("vendor"):
-            EventVendor.objects.get_or_create(
-                event=self,
-                vendor=template.vendor,
-                role=template.role,
-                defaults={
-                    "cost": template.cost,
-                    "status": EventVendor.Status.PROPOSED,
-                },
-            )
 
 
 class ExpenseCategory(models.Model):
@@ -1015,94 +961,3 @@ class EventOutcome(models.Model):
         super().clean()
         if not 0 <= self.project_rating <= 5:
             raise ValidationError({"project_rating": "Оценка должна быть от 0 до 5."})
-
-
-class EventFormatTaskTemplate(models.Model):
-    """Шаблон задачи, создаваемой при старте мероприятия выбранного формата."""
-
-    event_format = models.ForeignKey(
-        EventFormat,
-        on_delete=models.CASCADE,
-        related_name="task_templates",
-        verbose_name="Формат мероприятия",
-    )
-    title = models.CharField("Задача", max_length=255)
-    description = models.TextField("Описание", blank=True)
-    deadline_offset_days = models.IntegerField("Смещение дедлайна", default=0)
-
-    class Meta:
-        verbose_name = "Шаблон задачи"
-        verbose_name_plural = "Шаблоны задач"
-
-    def __str__(self) -> str:
-        return self.title
-
-
-class EventFormatTimelineTemplate(models.Model):
-    """Шаблон тайминга, создаваемого для мероприятия выбранного формата."""
-
-    event_format = models.ForeignKey(
-        EventFormat,
-        on_delete=models.CASCADE,
-        related_name="timeline_templates",
-        verbose_name="Формат мероприятия",
-    )
-    time = models.TimeField("Время")
-    block = models.CharField("Блок", max_length=120)
-    description = models.TextField("Описание", blank=True)
-    responsible_label = models.CharField("Ответственный", max_length=120, blank=True)
-
-    class Meta:
-        ordering = ("time", "id")
-        verbose_name = "Шаблон тайминга"
-        verbose_name_plural = "Шаблоны тайминга"
-
-    def __str__(self) -> str:
-        return f"{self.event_format} - {self.block}"
-
-
-class EventFormatBudgetTemplate(models.Model):
-    """Шаблон бюджетной строки для мероприятия выбранного формата."""
-
-    event_format = models.ForeignKey(
-        EventFormat,
-        on_delete=models.CASCADE,
-        related_name="budget_templates",
-        verbose_name="Формат мероприятия",
-    )
-    category = models.CharField("Категория", max_length=120)
-    vendor_name = models.CharField("Подрядчик", max_length=255, blank=True)
-    amount = models.DecimalField("Сумма", max_digits=12, decimal_places=2, default=0)
-
-    class Meta:
-        verbose_name = "Шаблон бюджета"
-        verbose_name_plural = "Шаблоны бюджета"
-
-    def __str__(self) -> str:
-        return f"{self.event_format} - {self.category}"
-
-
-class EventFormatVendorTemplate(models.Model):
-    """Шаблон рекомендованного подрядчика для мероприятия выбранного формата."""
-
-    event_format = models.ForeignKey(
-        EventFormat,
-        on_delete=models.CASCADE,
-        related_name="vendor_templates",
-        verbose_name="Формат мероприятия",
-    )
-    vendor = models.ForeignKey(
-        Vendor,
-        on_delete=models.CASCADE,
-        related_name="format_templates",
-        verbose_name="Подрядчик",
-    )
-    role = models.CharField("Роль", max_length=120)
-    cost = models.DecimalField("Стоимость", max_digits=12, decimal_places=2, default=0)
-
-    class Meta:
-        verbose_name = "Шаблон подрядчика"
-        verbose_name_plural = "Шаблоны подрядчиков"
-
-    def __str__(self) -> str:
-        return f"{self.event_format} - {self.vendor}"

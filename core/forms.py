@@ -315,8 +315,12 @@ class ClientForm(BootstrapModelForm):
 class EventFormatForm(BootstrapModelForm):
     class Meta:
         model = EventFormat
-        fields = ["name", "description", "default_budget"]
-        widgets = {"description": forms.Textarea(attrs={"rows": 4})}
+        fields = ["name", "description"]
+        labels = {"name": "Название формата"}
+        widgets = {
+            "name": forms.TextInput(attrs={"placeholder": "Например, корпоратив"}),
+            "description": forms.Textarea(attrs={"rows": 4, "placeholder": "Для каких мероприятий используется этот формат"}),
+        }
 
 
 class VendorForm(BootstrapModelForm):

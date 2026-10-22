@@ -11,10 +11,6 @@ from core.models import (
     Event,
     EventExpense,
     EventFormat,
-    EventFormatBudgetTemplate,
-    EventFormatTaskTemplate,
-    EventFormatTimelineTemplate,
-    EventFormatVendorTemplate,
     EventOutcome,
     EventTask,
     EventTimelineItem,
@@ -96,163 +92,65 @@ def test_lead_does_not_need_response_after_contact():
 
 
 @pytest.mark.django_db
-def test_event_structure_is_created_only_when_requested():
-    """Новое мероприятие остаётся пустым до явного применения шаблона."""
+def test_selecting_event_format_does_not_create_operational_records():
+    """Формат задаёт тип мероприятия без создания рабочего наполнения."""
 
-    event_format = EventFormat.objects.create(name="Свадьба", default_budget=Decimal("500000.00"))
-    vendor = Vendor.objects.create(name="Visual Stories", roles="Фото")
-    EventFormatTaskTemplate.objects.create(
-        event_format=event_format,
-        title="Согласовать концепцию",
-        description="Moodboard и референсы",
-        deadline_offset_days=-10,
-    )
-    EventFormatTimelineTemplate.objects.create(
-        event_format=event_format,
-        time="15:00",
-        block="Сбор гостей",
-        description="Welcome drink",
-        responsible_label="Координатор",
-    )
-    EventFormatBudgetTemplate.objects.create(
-        event_format=event_format,
-        category="Фото",
-        vendor_name="Visual Stories",
-        amount=Decimal("120000.00"),
-    )
-    EventFormatVendorTemplate.objects.create(
-        event_format=event_format,
-        vendor=vendor,
-        role="Фотограф",
-        cost=Decimal("120000.00"),
-    )
+    event_format = EventFormat.objects.create(name="Свадьба", description="Частное торжество")
     client = Client.objects.create(name="Анна и Иван")
-    event_date = timezone.localdate() + timezone.timedelta(days=30)
-
     event = Event.objects.create(
         client=client,
         event_format=event_format,
         title="Свадьба Анны и Ивана",
-        date=event_date,
+        date=timezone.localdate(),
         city="Москва",
         planned_budget=Decimal("500000.00"),
     )
 
+    event.refresh_from_db()
+
+    assert event.event_format == event_format
+    assert event.planned_budget == Decimal("500000.00")
     assert event.tasks.count() == 0
     assert event.timeline_items.count() == 0
     assert event.expenses.count() == 0
     assert event.event_vendors.count() == 0
 
-    event.create_structure_from_format()
-
-    task = event.tasks.get(title="Согласовать концепцию")
-    timeline_item = event.timeline_items.get(block="Сбор гостей")
-    expense = event.expenses.get(category__name="Фото")
-    event_vendor = event.event_vendors.get(vendor=vendor)
-    assert task.description == "Moodboard и референсы"
-    assert task.deadline_offset_days == -10
-    assert task.deadline == event_date - timezone.timedelta(days=10)
-    assert timeline_item.responsible == "Координатор"
-    assert expense.vendor_name == "Visual Stories"
-    assert expense.amount == Decimal("120000.00")
-    assert expense.payment_status == EventExpense.PaymentStatus.PLANNED
-    assert event_vendor.role == "Фотограф"
-    assert event_vendor.cost == Decimal("120000.00")
-    assert event_vendor.status == EventVendor.Status.PROPOSED
-
 
 @pytest.mark.django_db
-def test_event_structure_creates_all_templates_from_format():
-    """Мероприятие создаёт все строки из нескольких шаблонов выбранного формата."""
+@pytest.mark.parametrize("action", ["change", "clear", "delete", "rename"])
+def test_event_format_changes_preserve_existing_operational_records(crm_objects, action):
+    """Справочник форматов не управляет содержимым и бюджетом мероприятия."""
 
-    event_format = EventFormat.objects.create(name="Конференция", default_budget=Decimal("800000.00"))
-    first_vendor = Vendor.objects.create(name="Light Crew", roles="Свет")
-    second_vendor = Vendor.objects.create(name="Sound Crew", roles="Звук")
-    EventFormatTaskTemplate.objects.create(event_format=event_format, title="Собрать программу")
-    EventFormatTaskTemplate.objects.create(event_format=event_format, title="Подтвердить спикеров")
-    EventFormatTimelineTemplate.objects.create(event_format=event_format, time="10:00", block="Регистрация")
-    EventFormatTimelineTemplate.objects.create(event_format=event_format, time="11:00", block="Открытие")
-    EventFormatBudgetTemplate.objects.create(
-        event_format=event_format,
-        category="Свет",
-        vendor_name="Light Crew",
-        amount=Decimal("70000.00"),
-    )
-    EventFormatBudgetTemplate.objects.create(
-        event_format=event_format,
-        category="Звук",
-        vendor_name="Sound Crew",
-        amount=Decimal("90000.00"),
-    )
-    EventFormatVendorTemplate.objects.create(
-        event_format=event_format,
-        vendor=first_vendor,
-        role="Свет",
-        cost=Decimal("70000.00"),
-    )
-    EventFormatVendorTemplate.objects.create(
-        event_format=event_format,
-        vendor=second_vendor,
-        role="Звук",
-        cost=Decimal("90000.00"),
-    )
-    client = Client.objects.create(name="TechConf")
+    event = crm_objects["event"]
+    event_format = crm_objects["event_format"]
+    EventTimelineItem.objects.create(event=event, time="18:00", block="Встреча гостей")
+    relations = ("tasks", "timeline_items", "expenses", "event_vendors")
+    before = {relation: list(getattr(event, relation).order_by("pk").values()) for relation in relations}
+    planned_budget = event.planned_budget
 
-    event = Event.objects.create(
-        client=client,
-        event_format=event_format,
-        title="TechConf 2026",
-        date=timezone.localdate(),
-        city="Москва",
-        planned_budget=Decimal("800000.00"),
-    )
+    if action == "change":
+        event.event_format = EventFormat.objects.create(name="Конференция")
+        event.save(update_fields=["event_format"])
+    elif action == "clear":
+        event.event_format = None
+        event.save(update_fields=["event_format"])
+    elif action == "delete":
+        event_format.delete()
+    else:
+        event_format.name = "Корпоративный выезд"
+        event_format.description = "Обновлённое описание типа мероприятия"
+        event_format.save()
+    event.refresh_from_db()
 
-    event.create_structure_from_format()
-
-    assert set(event.tasks.values_list("title", flat=True)) == {"Собрать программу", "Подтвердить спикеров"}
-    assert set(event.timeline_items.values_list("block", flat=True)) == {"Регистрация", "Открытие"}
-    assert set(event.expenses.values_list("category__name", flat=True)) == {"Свет", "Звук"}
-    assert set(event.event_vendors.values_list("role", flat=True)) == {"Свет", "Звук"}
-
-
-@pytest.mark.django_db
-def test_event_structure_does_not_duplicate_records_on_resave():
-    """Повторное применение шаблона не дублирует структуру мероприятия."""
-
-    event_format = EventFormat.objects.create(name="Презентация", default_budget=Decimal("300000.00"))
-    vendor = Vendor.objects.create(name="Presentation Team", roles="Техника")
-    EventFormatTaskTemplate.objects.create(event_format=event_format, title="Подготовить зал")
-    EventFormatTimelineTemplate.objects.create(event_format=event_format, time="18:00", block="Сбор гостей")
-    EventFormatBudgetTemplate.objects.create(
-        event_format=event_format,
-        category="Техника",
-        vendor_name="Presentation Team",
-        amount=Decimal("50000.00"),
-    )
-    EventFormatVendorTemplate.objects.create(
-        event_format=event_format,
-        vendor=vendor,
-        role="Техника",
-        cost=Decimal("50000.00"),
-    )
-    client = Client.objects.create(name="ООО Презентация")
-    event = Event.objects.create(
-        client=client,
-        event_format=event_format,
-        title="Запуск продукта",
-        date=timezone.localdate(),
-        city="Москва",
-    )
-
-    event.create_structure_from_format()
-    event.title = "Запуск продукта обновлён"
-    event.save()
-    event.create_structure_from_format()
-
-    assert event.tasks.count() == 1
-    assert event.timeline_items.count() == 1
-    assert event.expenses.count() == 1
-    assert event.event_vendors.count() == 1
+    assert event.planned_budget == planned_budget
+    for relation in relations:
+        assert list(getattr(event, relation).order_by("pk").values()) == before[relation]
+    if action in {"clear", "delete"}:
+        assert event.event_format_id is None
+    elif action == "change":
+        assert event.event_format.name == "Конференция"
+    else:
+        assert event.event_format.name == "Корпоративный выезд"
 
 
 @pytest.mark.django_db

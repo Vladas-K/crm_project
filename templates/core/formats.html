@@ -6,8 +6,8 @@
 <section class="format-workspace" aria-label="Форматы мероприятий">
     <header class="page-header workspace-page-header">
         <div class="workspace-page-header__content">
-            <svg class="workspace-page-header__icon" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8" y="10" width="19" height="19" rx="3"/><path d="M23 6H8a4 4 0 0 0-4 4v15M19 3H9a6 6 0 0 0-6 6M13 17h9M13 22h6"/></svg>
-            <div><h1>Форматы мероприятий</h1><p>Готовая основа подготовки: задачи, тайминг, бюджет и подрядчики.</p></div>
+            <svg class="workspace-page-header__icon" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" focusable="false"><rect x="4" y="4" width="9" height="9" rx="2.5"/><rect x="19" y="4" width="9" height="9" rx="2.5"/><rect x="4" y="19" width="9" height="9" rx="2.5"/><rect x="19" y="19" width="9" height="9" rx="2.5"/></svg>
+            <div><h1>Форматы мероприятий</h1><p>Типы мероприятий для организации и учёта.</p></div>
         </div>
         {% if crm_permissions.can_manage_system %}<a href="{% url 'core:format_create' %}" class="btn btn-primary">Добавить формат</a>{% endif %}
     </header>
@@ -28,15 +28,9 @@
                 {% endif %}
             </div>
             <p class="format-directory-card__description">{{ format.description|default:"Описание пока не заполнено." }}</p>
-            <dl class="format-directory-card__composition" aria-label="Состав шаблона">
-                <div><dt>Задачи</dt><dd>{{ format.task_templates.count }}</dd></div>
-                <div><dt>Блоки тайминга</dt><dd>{{ format.timeline_templates.count }}</dd></div>
-                <div><dt>Статьи бюджета</dt><dd>{{ format.budget_templates.count }}</dd></div>
-                <div><dt>Подрядчики</dt><dd>{{ format.vendor_templates.count }}</dd></div>
-            </dl>
         </article>
     {% empty %}
-        <div class="format-directory-empty"><h2>Форматы пока не добавлены</h2><p>{% if crm_permissions.can_manage_system %}Добавьте первый формат для подготовки мероприятий.{% else %}Здесь появятся настроенные форматы мероприятий.{% endif %}</p></div>
+        <div class="format-directory-empty"><h2>Форматы пока не добавлены</h2><p>{% if crm_permissions.can_manage_system %}Добавьте тип мероприятия, например корпоратив или свадьбу.{% else %}Здесь появятся доступные типы мероприятий.{% endif %}</p></div>
     {% endfor %}
     </div>
 </section>

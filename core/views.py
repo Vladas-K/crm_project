@@ -1182,7 +1182,7 @@ class TaskDetailView(CRMLoginRequiredMixin, DetailView):
 
 
 class EventFormatListView(CRMLoginRequiredMixin, ListView):
-    """Отображает список форматов мероприятий и их шаблонов."""
+    """Отображает справочник типов мероприятий."""
 
     model = EventFormat
     template_name = "core/formats.html"
@@ -2310,8 +2310,9 @@ class EventFormatCreateView(SystemAccessMixin, CRUDContextMixin, SuccessMessageM
 
     model = EventFormat
     form_class = EventFormatForm
-    template_name = "core/object_form.html"
+    template_name = "core/format_form.html"
     page_title = "Новый формат"
+    submit_label = "Создать формат"
     success_message = "Формат мероприятия создан."
     success_url = reverse_lazy("core:formats")
     cancel_url = reverse_lazy("core:formats")
@@ -2322,8 +2323,9 @@ class EventFormatUpdateView(SystemAccessMixin, CRUDContextMixin, SuccessMessageM
 
     model = EventFormat
     form_class = EventFormatForm
-    template_name = "core/object_form.html"
+    template_name = "core/format_form.html"
     page_title = "Редактирование формата"
+    submit_label = "Сохранить изменения"
     success_message = "Формат мероприятия обновлён."
     success_url = reverse_lazy("core:formats")
     cancel_url = reverse_lazy("core:formats")

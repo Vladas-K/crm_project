@@ -10,10 +10,6 @@ from core.models import (
     CRMRole,
     Event,
     EventFormat,
-    EventFormatBudgetTemplate,
-    EventFormatTaskTemplate,
-    EventFormatTimelineTemplate,
-    EventFormatVendorTemplate,
     Lead,
     TeamMemberProfile,
 )
@@ -329,19 +325,16 @@ def test_event_client_and_source_lead_remain_independent(
 
 
 @pytest.mark.parametrize("update", [False, True])
-def test_event_post_does_not_apply_selected_format_structure(
+def test_event_post_only_assigns_selected_format_without_changing_operational_records(
     client, event_operator, crm_objects, event_payload, update
 ):
-    event_format = EventFormat.objects.create(name="Формат с готовой структурой", default_budget=999999)
-    EventFormatTaskTemplate.objects.create(event_format=event_format, title="Задача из шаблона")
-    EventFormatTimelineTemplate.objects.create(event_format=event_format, time="12:00", block="Блок из шаблона")
-    EventFormatBudgetTemplate.objects.create(event_format=event_format, category="Расход из шаблона", amount=50000)
-    EventFormatVendorTemplate.objects.create(
-        event_format=event_format, vendor=crm_objects["vendor"], role="Роль из шаблона", cost=50000
-    )
+    event_format = EventFormat.objects.create(name="Корпоративный выезд", description="Тип мероприятия")
     original = crm_objects["event"]
     relations = ("tasks", "timeline_items", "expenses", "event_vendors")
-    expected_counts = [getattr(original, relation).count() for relation in relations] if update else [0] * 4
+    expected_records = [
+        list(getattr(original, relation).order_by("pk").values()) if update else []
+        for relation in relations
+    ]
 
     response = client.post(
         event_form_url(crm_objects, update=update), dict(event_payload, event_format=event_format.pk)
@@ -351,4 +344,4 @@ def test_event_post_does_not_apply_selected_format_structure(
     event = Event.objects.get(title=event_payload["title"])
     assert event.event_format == event_format
     assert event.planned_budget == Decimal(event_payload["planned_budget"])
-    assert [getattr(event, relation).count() for relation in relations] == expected_counts
+    assert [list(getattr(event, relation).order_by("pk").values()) for relation in relations] == expected_records

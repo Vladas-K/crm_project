@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | CRM{% endblock %}
+
+{% block content %}
+<div class="event-form-shell format-form-shell">
+    <header class="workspace-page-header">
+        <h1>{{ page_title }}</h1>
+        <p>Название и описание типа мероприятия.</p>
+    </header>
+    <a href="{{ cancel_url }}" class="event-form-back">← К форматам</a>
+    <form method="post" class="event-form" novalidate>
+        {% csrf_token %}
+        {% if form.errors %}
+            <div class="event-form-errors" role="alert">
+                <strong>Проверьте отмеченные поля</strong>
+                <ul>
+                    {% for field in form %}{% if field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ field.errors|join:' ' }}</a></li>{% endif %}{% endfor %}
+                    {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+        <div class="event-form-panel">
+            <p class="event-form-required-note"><span aria-hidden="true">*</span> Обязательное поле.</p>
+            <div class="event-form-grid">
+                {% include 'core/includes/event_form_field.html' with field=form.name wide=True %}
+                {% include 'core/includes/event_form_field.html' with field=form.description wide=True %}
+            </div>
+            <div class="event-form-actions">
+                <a href="{{ cancel_url }}" class="btn btn-outline-secondary">Отмена</a>
+                <button type="submit" class="btn btn-primary">{{ submit_label }}</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

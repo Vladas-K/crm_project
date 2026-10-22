@@ -9,10 +9,6 @@ from .models import (
     EventDocument,
     EventExpense,
     EventFormat,
-    EventFormatBudgetTemplate,
-    EventFormatTaskTemplate,
-    EventFormatTimelineTemplate,
-    EventFormatVendorTemplate,
     EventOutcome,
     EventRisk,
     EventTask,
@@ -114,7 +110,7 @@ class ClientAdmin(admin.ModelAdmin):
 
 @admin.register(EventFormat)
 class EventFormatAdmin(admin.ModelAdmin):
-    list_display = ("name", "default_budget")
+    list_display = ("name", "description")
     search_fields = ("name",)
 
 
@@ -187,23 +183,3 @@ class EventDocumentAdmin(admin.ModelAdmin):
 @admin.register(EventOutcome)
 class EventOutcomeAdmin(admin.ModelAdmin):
     list_display = ("event", "final_profit", "project_rating")
-
-
-@admin.register(EventFormatTaskTemplate)
-class EventFormatTaskTemplateAdmin(admin.ModelAdmin):
-    list_display = ("event_format", "title", "deadline_offset_days")
-
-
-@admin.register(EventFormatTimelineTemplate)
-class EventFormatTimelineTemplateAdmin(admin.ModelAdmin):
-    list_display = ("event_format", "time", "block", "responsible_label")
-
-
-@admin.register(EventFormatBudgetTemplate)
-class EventFormatBudgetTemplateAdmin(admin.ModelAdmin):
-    list_display = ("event_format", "category", "amount")
-
-
-@admin.register(EventFormatVendorTemplate)
-class EventFormatVendorTemplateAdmin(admin.ModelAdmin):
-    list_display = ("event_format", "vendor", "role", "cost")

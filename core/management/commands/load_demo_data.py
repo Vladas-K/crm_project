@@ -13,11 +13,10 @@ from core.models import (
     EventExpense,
     ExpenseCategory,
     EventFormat,
-    EventFormatBudgetTemplate,
-    EventFormatTaskTemplate,
-    EventFormatTimelineTemplate,
-    EventFormatVendorTemplate,
     EventOutcome,
+    EventTask,
+    EventTimelineItem,
+    EventVendor,
     Lead,
     PipelineStage,
     ServicePackage,
@@ -37,7 +36,7 @@ class Command(BaseCommand):
 
         users = self.create_users()
         stages = {stage.code: stage for stage in PipelineStage.objects.all()}
-        formats = self.create_formats_and_templates()
+        formats = self.create_formats()
         vendors = self.create_vendors(formats)
         self.create_packages(formats)
         leads = self.create_leads(users, stages, formats)
@@ -94,87 +93,24 @@ class Command(BaseCommand):
             users[username] = user
         return users
 
-    def create_formats_and_templates(self):
+    def create_formats(self):
         specs = [
-            {
-                "name": "Свадьба",
-                "description": "Полный цикл организации свадьбы с банкетом, церемонией и шоу-программой.",
-                "budget": Decimal("1200000.00"),
-                "tasks": [
-                    ("Подготовить концепцию", "Согласовать стиль и moodboard.", -45),
-                    ("Согласовать площадку", "Выбрать и забронировать локацию.", -40),
-                    ("Подтвердить подрядчиков", "Фотограф, ведущий, декор.", -30),
-                ],
-                "timeline": [
-                    ("15:00", "Сбор гостей", "Регистрация и welcome drink.", "Координатор"),
-                    ("16:00", "Церемония", "Официальная часть.", "Ведущий"),
-                    ("18:00", "Банкет", "Ужин и шоу-программа.", "Банкетный менеджер"),
-                ],
-                "budget_lines": [
-                    ("Площадка", "Loft Hall", Decimal("350000.00")),
-                    ("Декор", "Bloom Atelier", Decimal("220000.00")),
-                    ("Фото/видео", "Visual Stories", Decimal("180000.00")),
-                ],
-            },
-            {
-                "name": "Корпоратив",
-                "description": "Внутреннее или клиентское мероприятие компании с деловой и развлекательной частью.",
-                "budget": Decimal("800000.00"),
-                "tasks": [
-                    ("Собрать бриф", "Понять цели компании и KPI мероприятия.", -35),
-                    ("Согласовать технику", "Свет, звук, экран.", -20),
-                    ("Подготовить сценарий", "Тайминг блока выступлений.", -14),
-                ],
-                "timeline": [
-                    ("17:00", "Регистрация", "Встреча гостей.", "Администратор"),
-                    ("18:00", "Официальная часть", "Выступление руководства.", "Project Manager"),
-                    ("19:30", "Нетворкинг", "Фуршет и активности.", "Координатор"),
-                ],
-                "budget_lines": [
-                    ("Техника", "Stage Pro", Decimal("150000.00")),
-                    ("Кейтеринг", "Taste Factory", Decimal("210000.00")),
-                    ("Сцена", "Event Build", Decimal("120000.00")),
-                ],
-            },
+            (
+                "Свадьба",
+                "Семейное торжество с церемонией, банкетом и праздничной программой.",
+            ),
+            (
+                "Корпоратив",
+                "Мероприятие компании для сотрудников, клиентов или партнёров.",
+            ),
         ]
-
         formats = {}
-        for spec in specs:
+        for name, description in specs:
             event_format, _ = EventFormat.objects.update_or_create(
-                name=spec["name"],
-                defaults={
-                    "description": spec["description"],
-                    "default_budget": spec["budget"],
-                },
+                name=name,
+                defaults={"description": description},
             )
-            event_format.task_templates.all().delete()
-            event_format.timeline_templates.all().delete()
-            event_format.budget_templates.all().delete()
-            event_format.vendor_templates.all().delete()
-
-            for title, description, offset in spec["tasks"]:
-                EventFormatTaskTemplate.objects.create(
-                    event_format=event_format,
-                    title=title,
-                    description=description,
-                    deadline_offset_days=offset,
-                )
-            for time, block, description, responsible in spec["timeline"]:
-                EventFormatTimelineTemplate.objects.create(
-                    event_format=event_format,
-                    time=time,
-                    block=block,
-                    description=description,
-                    responsible_label=responsible,
-                )
-            for category, vendor_name, amount in spec["budget_lines"]:
-                EventFormatBudgetTemplate.objects.create(
-                    event_format=event_format,
-                    category=category,
-                    vendor_name=vendor_name,
-                    amount=amount,
-                )
-            formats[spec["name"]] = event_format
+            formats[name] = event_format
         return formats
 
     def create_vendors(self, formats):
@@ -268,30 +204,6 @@ class Command(BaseCommand):
             vendor.event_formats.set([formats[item] for item in format_names])
             vendors[name] = vendor
 
-        EventFormatVendorTemplate.objects.create(
-            event_format=formats["Свадьба"],
-            vendor=vendors["Bloom Atelier"],
-            role="Декор",
-            cost=Decimal("220000.00"),
-        )
-        EventFormatVendorTemplate.objects.create(
-            event_format=formats["Свадьба"],
-            vendor=vendors["Visual Stories"],
-            role="Фото/видео",
-            cost=Decimal("180000.00"),
-        )
-        EventFormatVendorTemplate.objects.create(
-            event_format=formats["Корпоратив"],
-            vendor=vendors["Stage Pro"],
-            role="Техника",
-            cost=Decimal("150000.00"),
-        )
-        EventFormatVendorTemplate.objects.create(
-            event_format=formats["Корпоратив"],
-            vendor=vendors["Taste Factory"],
-            role="Кейтеринг",
-            cost=Decimal("210000.00"),
-        )
         return vendors
 
     def create_packages(self, formats):
@@ -436,6 +348,25 @@ class Command(BaseCommand):
                     ("meeting", 2, "Очная встреча по сценарию и площадке."),
                     ("message", 1, "Отправили презентацию по декору."),
                 ],
+                "tasks": [
+                    ("Подготовить концепцию", "Согласовать стиль и moodboard.", -45),
+                    ("Согласовать площадку", "Выбрать и забронировать локацию.", -40),
+                    ("Подтвердить подрядчиков", "Фотограф, ведущий, декор.", -30),
+                ],
+                "timeline": [
+                    ("15:00", "Сбор гостей", "Регистрация и welcome drink.", "Координатор"),
+                    ("16:00", "Церемония", "Официальная часть.", "Ведущий"),
+                    ("18:00", "Банкет", "Ужин и шоу-программа.", "Банкетный менеджер"),
+                ],
+                "expenses": [
+                    ("Площадка", "Loft Hall", Decimal("350000.00")),
+                    ("Декор", "Bloom Atelier", Decimal("220000.00")),
+                    ("Фото/видео", "Visual Stories", Decimal("180000.00")),
+                ],
+                "vendors": [
+                    (vendors["Bloom Atelier"], "Декор", Decimal("220000.00")),
+                    (vendors["Visual Stories"], "Фото/видео", Decimal("180000.00")),
+                ],
                 "extra_expenses": [("Транспорт", "City Drive", Decimal("85000.00"), Decimal("30000.00"))],
                 "outcome": False,
             },
@@ -456,6 +387,25 @@ class Command(BaseCommand):
                 "communications": [
                     ("call", 4, "Созвон по техническому райдеру."),
                     ("message", 1, "Подтверждение меню фуршета."),
+                ],
+                "tasks": [
+                    ("Собрать бриф", "Понять цели компании и KPI мероприятия.", -35),
+                    ("Согласовать технику", "Свет, звук, экран.", -20),
+                    ("Подготовить сценарий", "Тайминг блока выступлений.", -14),
+                ],
+                "timeline": [
+                    ("17:00", "Регистрация", "Встреча гостей.", "Администратор"),
+                    ("18:00", "Официальная часть", "Выступление руководства.", "Project Manager"),
+                    ("19:30", "Нетворкинг", "Фуршет и активности.", "Координатор"),
+                ],
+                "expenses": [
+                    ("Техника", "Stage Pro", Decimal("150000.00")),
+                    ("Кейтеринг", "Taste Factory", Decimal("210000.00")),
+                    ("Сцена", "Event Build", Decimal("120000.00")),
+                ],
+                "vendors": [
+                    (vendors["Stage Pro"], "Техника", Decimal("150000.00")),
+                    (vendors["Taste Factory"], "Кейтеринг", Decimal("210000.00")),
                 ],
                 "extra_expenses": [("Полиграфия", "Print Lab", Decimal("45000.00"), Decimal("10000.00"))],
                 "outcome": False,
@@ -480,7 +430,42 @@ class Command(BaseCommand):
                     "manager": spec["manager"],
                 },
             )
-            event.create_structure_from_format()
+            for title, description, offset in spec["tasks"]:
+                EventTask.objects.get_or_create(
+                    event=event,
+                    title=title,
+                    defaults={
+                        "description": description,
+                        "deadline_offset_days": offset,
+                        "responsible": spec["manager"],
+                        "status": EventTask.Status.TODO,
+                    },
+                )
+            for time, block, description, responsible in spec["timeline"]:
+                EventTimelineItem.objects.get_or_create(
+                    event=event,
+                    time=time,
+                    block=block,
+                    defaults={"description": description, "responsible": responsible},
+                )
+            for category, vendor_name, amount in spec["expenses"]:
+                expense_category, _ = ExpenseCategory.objects.get_or_create(name=category)
+                EventExpense.objects.get_or_create(
+                    event=event,
+                    category=expense_category,
+                    vendor_name=vendor_name,
+                    defaults={
+                        "amount": amount,
+                        "payment_status": EventExpense.PaymentStatus.PLANNED,
+                    },
+                )
+            for vendor, role, cost in spec["vendors"]:
+                EventVendor.objects.get_or_create(
+                    event=event,
+                    vendor=vendor,
+                    role=role,
+                    defaults={"cost": cost, "status": EventVendor.Status.PROPOSED},
+                )
             for category, vendor_name, amount, paid_amount in spec["extra_expenses"]:
                 expense_category, _ = ExpenseCategory.objects.get_or_create(name=category)
                 EventExpense.objects.update_or_create(

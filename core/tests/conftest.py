@@ -21,7 +21,7 @@ from core.models import (
 @pytest.fixture
 def crm_objects(db):
     stage = PipelineStage.objects.create(name="Новый", code="new", order=1, probability=10)
-    event_format = EventFormat.objects.create(name="Корпоратив", default_budget=100000)
+    event_format = EventFormat.objects.create(name="Корпоратив")
     lead = Lead.objects.create(name="Иван Петров", stage=stage)
     client = Client.objects.create(name="ООО Ромашка", lead=lead)
     event = Event.objects.create(
