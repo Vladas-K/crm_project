@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="280" viewBox="0 0 480 280" fill="none">
+  <defs>
+    <linearGradient id="arch" x1="153" y1="43" x2="322" y2="225" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE3D4"/>
+      <stop offset="1" stop-color="#F4D5E6"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="161" y1="113" x2="249" y2="215" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E3AF63"/>
+      <stop offset="0.28" stop-color="#FFE8B6"/>
+      <stop offset="0.51" stop-color="#EAC480"/>
+      <stop offset="0.78" stop-color="#C59143"/>
+      <stop offset="1" stop-color="#FFE7AF"/>
+    </linearGradient>
+    <linearGradient id="roseGold" x1="236" y1="107" x2="318" y2="213" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#CB8872"/>
+      <stop offset="0.28" stop-color="#FFE2C8"/>
+      <stop offset="0.52" stop-color="#E4AA86"/>
+      <stop offset="0.79" stop-color="#C38462"/>
+      <stop offset="1" stop-color="#F9DCC3"/>
+    </linearGradient>
+    <linearGradient id="ribbon" x1="128" y1="187" x2="347" y2="252" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F9AEBC"/>
+      <stop offset="0.5" stop-color="#E784A2"/>
+      <stop offset="1" stop-color="#F6B0A5"/>
+    </linearGradient>
+    <linearGradient id="petal" x1="120" y1="79" x2="155" y2="119" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD9D1"/>
+      <stop offset="1" stop-color="#EC9BAE"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="239" cy="251" rx="113" ry="9" fill="#C595A5" opacity="0.1"/>
+  <path d="M144 226V125C144 71.9807 186.981 29 240 29C293.019 29 336 71.9807 336 125V226H144Z" fill="url(#arch)"/>
+  <path d="M160 219V125C160 80.8172 195.817 45 240 45C284.183 45 320 80.8172 320 125V219" stroke="white" stroke-opacity="0.6" stroke-width="2"/>
+  <ellipse cx="240" cy="227" rx="96" ry="15" fill="#F8DDE0"/>
+  <path d="M121 190C146 173 160 198 185 217C205 232 222 234 240 226C257 218 274 215 295 228C313 239 337 239 357 219L364 235C343 256 310 258 285 243C270 234 259 235 246 242C219 256 194 249 174 234C152 218 143 199 129 207L121 190Z" fill="url(#ribbon)"/>
+  <path d="M129 207L116 217L118 202L110 194L121 190L129 207Z" fill="#D987A0"/>
+  <path d="M364 235L374 225L361 227L357 219L364 235Z" fill="#D987A0"/>
+  <ellipse cx="209" cy="164" rx="48" ry="57" transform="rotate(-24 209 164)" stroke="#B38B52" stroke-opacity="0.16" stroke-width="17"/>
+  <ellipse cx="273" cy="164" rx="48" ry="57" transform="rotate(24 273 164)" stroke="#B38B52" stroke-opacity="0.13" stroke-width="17"/>
+  <ellipse cx="209" cy="159" rx="48" ry="57" transform="rotate(-24 209 159)" stroke="url(#gold)" stroke-width="16"/>
+  <ellipse cx="273" cy="159" rx="48" ry="57" transform="rotate(24 273 159)" stroke="url(#roseGold)" stroke-width="16"/>
+  <path d="M183 107C163 119 152 145 158 169" stroke="#FFF4D7" stroke-opacity="0.8" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M302 111C320 127 325 152 315 175" stroke="#FFF1DF" stroke-opacity="0.85" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M246 119C253 130 259 145 258 160" stroke="url(#gold)" stroke-width="16"/>
+  <path d="M241 116C247 126 251 137 252 145" stroke="#FFF1C9" stroke-opacity="0.85" stroke-width="2" stroke-linecap="round"/>
+  <path d="M123 103C117 91 123 80 135 83C141 74 154 78 154 91C153 101 144 111 134 118C130 112 126 107 123 103Z" fill="url(#petal)"/>
+  <path d="M347 105C343 96 347 89 355 91C359 84 368 87 368 95C367 102 361 109 354 113C352 109 350 107 347 105Z" fill="#F3AFB8"/>
+  <path d="M280 60L283 68L292 71L283 74L280 83L277 74L268 71L277 68L280 60Z" fill="#D7AA65"/>
+  <path d="M113 149L115 154L121 156L115 158L113 164L111 158L105 156L111 154L113 149Z" fill="#E5BD7F"/>
+  <circle cx="187" cy="50" r="4" fill="#EDB8B1"/>
+  <circle cx="350" cy="163" r="4" fill="#E6B6A4"/>
+  <path d="M331 55L337 47M337 61L347 59" stroke="#E7B6B4" stroke-width="3" stroke-linecap="round"/>
+</svg>

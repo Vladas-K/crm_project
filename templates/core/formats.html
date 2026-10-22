@@ -28,6 +28,9 @@
                 {% endif %}
             </div>
             <p class="format-directory-card__description">{{ format.description|default:"Описание пока не заполнено." }}</p>
+            <div class="format-directory-card__artwork" aria-hidden="true">
+                <img src="{% static_with_version format.artwork_path %}" alt="" width="480" height="280" decoding="async">
+            </div>
         </article>
     {% empty %}
         <div class="format-directory-empty"><h2>Форматы пока не добавлены</h2><p>{% if crm_permissions.can_manage_system %}Добавьте тип мероприятия, например корпоратив или свадьбу.{% else %}Здесь появятся доступные типы мероприятий.{% endif %}</p></div>

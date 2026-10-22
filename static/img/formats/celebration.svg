@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="280" viewBox="0 0 480 280" fill="none">
+  <defs>
+    <linearGradient id="ribbon" x1="142" y1="67" x2="317" y2="221" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#AC9AFF"/>
+      <stop offset="0.37" stop-color="#8772E8"/>
+      <stop offset="1" stop-color="#5865D9"/>
+    </linearGradient>
+    <linearGradient id="ribbonEdge" x1="159" y1="89" x2="321" y2="232" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C3B5FF"/>
+      <stop offset="1" stop-color="#8A9AFF"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="161" y1="182" x2="336" y2="103" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2E73DF"/>
+      <stop offset="0.53" stop-color="#489AFF"/>
+      <stop offset="1" stop-color="#9DCBFF"/>
+    </linearGradient>
+    <linearGradient id="star" x1="207" y1="87" x2="269" y2="178" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD5A2"/>
+      <stop offset="0.5" stop-color="#FFB273"/>
+      <stop offset="1" stop-color="#EE8C6F"/>
+    </linearGradient>
+    <linearGradient id="starEdge" x1="216" y1="111" x2="260" y2="176" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F2AA72"/>
+      <stop offset="1" stop-color="#DA7568"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="242" cy="249" rx="116" ry="10" fill="#6B79AE" opacity="0.08"/>
+  <path d="M160 202C108 152 125 70 186 51C229 38 269 53 292 88C316 125 320 172 295 206C265 246 199 240 160 202Z" fill="#EEEAFE"/>
+  <path d="M162 76C187 49 222 52 249 75C280 102 291 145 283 181C278 207 263 225 244 229L235 210C250 204 260 190 264 171C270 141 256 108 235 90C216 73 193 71 176 91L162 76Z" fill="url(#ribbon)"/>
+  <path d="M162 76L176 91C193 71 216 73 235 90" stroke="url(#ribbonEdge)" stroke-width="2" stroke-linecap="round"/>
+  <path d="M138 166C150 184 188 183 229 163C274 141 306 111 303 91L321 96C333 123 295 166 242 192C188 219 141 216 127 193L138 166Z" fill="url(#blue)"/>
+  <path d="M138 166C125 147 155 113 196 91L204 109C173 126 150 150 158 161C168 175 199 168 224 156L229 163C188 183 150 184 138 166Z" fill="#B3D6FF"/>
+  <path d="M138 166C150 184 188 183 229 163C274 141 306 111 303 91" stroke="#D7EBFF" stroke-opacity="0.8" stroke-width="2" stroke-linecap="round"/>
+  <path d="M242 87L256 113L285 117L264 139L270 168L243 155L216 169L220 139L198 119L228 114L242 87Z" fill="url(#starEdge)" transform="translate(0 6)"/>
+  <path d="M242 87L256 113L285 117L264 139L270 168L243 155L216 169L220 139L198 119L228 114L242 87Z" fill="url(#star)"/>
+  <path d="M242 92L254 116L278 120" stroke="#FFE9CC" stroke-opacity="0.8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M283 181C278 207 263 225 244 229C217 235 193 218 178 200L194 189C206 203 223 214 235 210C250 204 260 190 264 171L283 181Z" fill="url(#ribbon)"/>
+  <path d="M264 171C260 190 250 204 235 210C223 214 206 203 194 189" stroke="url(#ribbonEdge)" stroke-width="2" stroke-linecap="round"/>
+  <path d="M109 97L115 109L128 111L118 121L120 134L108 128L96 135L98 121L88 112L102 110L109 97Z" fill="#92BDF9"/>
+  <path d="M337 44L341 53L351 55L343 62L344 72L335 67L326 72L327 62L320 55L330 53L337 44Z" fill="#FDAE87"/>
+  <rect x="143" y="43" width="9" height="26" rx="4.5" transform="rotate(-26 143 43)" fill="#A596EC"/>
+  <rect x="348" y="175" width="9" height="27" rx="4.5" transform="rotate(27 348 175)" fill="#F5B38B"/>
+  <rect x="105" y="202" width="8" height="20" rx="4" transform="rotate(-35 105 202)" fill="#99B9F1"/>
+  <circle cx="285" cy="35" r="5" fill="#ACB8EF"/>
+  <circle cx="359" cy="121" r="5" fill="#A999E9"/>
+  <circle cx="307" cy="232" r="4" fill="#A9BDEB"/>
+  <path d="M369 83L379 80M366 76L371 67" stroke="#A8C9F9" stroke-width="3" stroke-linecap="round"/>
+</svg>

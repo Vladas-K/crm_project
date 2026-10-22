@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="280" viewBox="0 0 480 280" fill="none">
+  <defs>
+    <linearGradient id="screen" x1="137" y1="43" x2="345" y2="197" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3CBA8A"/>
+      <stop offset="0.55" stop-color="#18966B"/>
+      <stop offset="1" stop-color="#14754E"/>
+    </linearGradient>
+    <linearGradient id="screenEdge" x1="333" y1="52" x2="359" y2="194" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#24956D"/>
+      <stop offset="1" stop-color="#146143"/>
+    </linearGradient>
+    <linearGradient id="stage" x1="111" y1="214" x2="371" y2="247" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#84CEAD"/>
+      <stop offset="0.55" stop-color="#4EAF85"/>
+      <stop offset="1" stop-color="#2C8962"/>
+    </linearGradient>
+    <linearGradient id="stageTop" x1="136" y1="194" x2="350" y2="230" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E7F7EE"/>
+      <stop offset="1" stop-color="#BFE7D1"/>
+    </linearGradient>
+    <linearGradient id="lectern" x1="277" y1="163" x2="308" y2="227" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D9F0E3"/>
+      <stop offset="1" stop-color="#AAD8BF"/>
+    </linearGradient>
+    <clipPath id="screenMask">
+      <rect x="127" y="40" width="226" height="158" rx="20"/>
+    </clipPath>
+  </defs>
+  <ellipse cx="241" cy="252" rx="134" ry="8" fill="#628577" opacity="0.08"/>
+  <rect x="135" y="44" width="226" height="158" rx="20" fill="url(#screenEdge)"/>
+  <rect x="127" y="40" width="226" height="158" rx="20" fill="url(#screen)"/>
+  <g clip-path="url(#screenMask)">
+    <path d="M111 160C160 160 167 75 226 75C285 75 289 157 368 157" stroke="#CBF4DD" stroke-opacity="0.24" stroke-width="34"/>
+    <path d="M109 195C175 195 193 124 253 124C306 124 326 184 369 184" stroke="#B8E7C7" stroke-opacity="0.2" stroke-width="34"/>
+  </g>
+  <path d="M107 217V230C107 244.359 166.994 256 241 256C315.006 256 375 244.359 375 230V217H107Z" fill="url(#stage)"/>
+  <ellipse cx="241" cy="217" rx="134" ry="26" fill="url(#stageTop)"/>
+  <ellipse cx="296" cy="223" rx="32" ry="6" fill="#4E8E70" opacity="0.13"/>
+  <path d="M277 169L309 161L322 167V219C322 221.209 320.209 223 318 223H281C278.791 223 277 221.209 277 219V169Z" fill="url(#lectern)"/>
+  <path d="M309 161L322 167V219C322 221.209 320.209 223 318 223H309V161Z" fill="#8AC4A4"/>
+  <path d="M274 166L308 157C309.041 156.724 310.145 156.868 311.077 157.403L325 165L289 175L274 169V166Z" fill="#F2A196"/>
+  <path d="M274 166L289 172L325 163V168L289 178L274 171V166Z" fill="#E68C85"/>
+</svg>

@@ -1188,6 +1188,19 @@ class EventFormatListView(CRMLoginRequiredMixin, ListView):
     template_name = "core/formats.html"
     context_object_name = "formats"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        for event_format in context["formats"]:
+            name = event_format.name.strip().casefold()
+            if name.startswith("корпоратив"):
+                artwork = "corporate"
+            elif name.startswith(("свадьб", "свадеб")):
+                artwork = "wedding"
+            else:
+                artwork = "celebration"
+            event_format.artwork_path = f"img/formats/{artwork}.svg"
+        return context
+
 
 class VendorListView(CRMLoginRequiredMixin, ListView):
     """Отображает справочник подрядчиков с поиском и фильтрами."""
