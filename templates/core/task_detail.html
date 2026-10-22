@@ -4,7 +4,7 @@
 
 {% block content %}
 <section class="task-detail-workspace" aria-label="Карточка задачи">
-    <a href="{% if task_return_url %}{{ task_return_url }}{% else %}{% url 'core:tasks' %}{% endif %}" class="event-back-link">← К списку задач</a>
+    <a href="{% if task_event_return_url %}{{ task_event_return_url }}{% elif task_return_url %}{{ task_return_url }}{% else %}{% url 'core:tasks' %}{% endif %}" class="event-back-link">{% if task_event_return_url %}← К мероприятию{% else %}← К списку задач{% endif %}</a>
     <header class="workspace-page-header task-detail-header">
         <h1>{{ task.title }}</h1>
         <div class="task-detail-actions">
@@ -13,6 +13,7 @@
                     <form method="post" action="{% url 'core:task_status_update' task.pk %}">
                         {% csrf_token %}
                         <input type="hidden" name="return_task" value="1">
+                        {% if task_return_tab %}<input type="hidden" name="return_tab" value="{{ task_return_tab }}">{% endif %}
                         {% if task_return_url %}<input type="hidden" name="return_to" value="{{ task_return_url }}">{% endif %}
                         {% if task.status == 'todo' %}
                             <input type="hidden" name="status" value="in_progress">

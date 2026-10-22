@@ -1,5 +1,6 @@
 from datetime import timedelta
 from html.parser import HTMLParser
+from urllib.parse import urlencode
 
 import pytest
 from django.urls import reverse
@@ -48,7 +49,11 @@ def test_structured_task_form_and_return(client, form_operator, crm_objects, edi
     assert "Django admin" not in html
     assert html.index('id="id_title"') < html.index('id="id_event"') < html.index('id="id_description"') < html.index('id="id_deadline"')
     assert 'novalidate' in html
-    assert response.context["cancel_url"] == "/tasks/?filter=open&mine=1"
+    expected_cancel = "/tasks/?filter=open&mine=1"
+    if editing:
+        expected_cancel = reverse("core:task_detail", args=[task.pk]) + "?" + urlencode({"return_to": expected_cancel})
+    assert response.context["cancel_url"] == expected_cancel
+    assert ("← К задаче" if editing else "← К списку задач") in html
     assert 'name="return_to"' in html
     assert set(response.context["form"].fields) == {"title", "event", "responsible", "description", "deadline", "deadline_offset_days", "status"}
 
@@ -96,8 +101,8 @@ def test_blank_date_calculates_from_event_without_javascript(client, form_operat
     event = crm_objects["event"]
     response = client.post(reverse("core:task_create"), payload(event, deadline_offset_days="-7"))
     assert response.status_code == 302
-    assert response.url == reverse("core:tasks")
     task = EventTask.objects.get(title="Согласовать концепцию")
+    assert response.url == reverse("core:task_detail", args=[task.pk]) + "?" + urlencode({"return_to": "/tasks/"})
     assert task.deadline == event.date - timedelta(days=7)
     assert task.responsible is None
 
@@ -115,7 +120,7 @@ def test_explicit_date_keeps_priority_after_offset_edit(client, form_operator, c
     assert task.deadline_offset_days == -14
 
 
-def test_nested_form_keeps_event_fixed_and_returns_to_event(client, form_operator, crm_objects):
+def test_nested_creation_keeps_event_fixed_and_opens_task(client, form_operator, crm_objects):
     event = crm_objects["event"]
     url = reverse("core:event_task_create", kwargs={"event_pk": event.pk})
     response = client.get(url)
@@ -123,8 +128,9 @@ def test_nested_form_keeps_event_fixed_and_returns_to_event(client, form_operato
     assert response.context["cancel_url"] == reverse("core:event_detail", args=[event.pk]) + "?tab=tasks#event-tabs"
     response = client.post(url, payload(event, event="999999999"))
     assert response.status_code == 302
-    assert response.url == reverse("core:event_detail", args=[event.pk]) + "?tab=tasks#event-tabs"
-    assert EventTask.objects.get(title="Согласовать концепцию").event == event
+    task = EventTask.objects.get(title="Согласовать концепцию")
+    assert response.url == reverse("core:task_detail", args=[task.pk]) + "?return_tab=tasks"
+    assert task.event == event
 
 
 def test_create_form_is_clear_and_calculation_settings_start_closed(client, form_operator):
@@ -137,3 +143,45 @@ def test_create_form_is_clear_and_calculation_settings_start_closed(client, form
     assert not form.deadline_settings_open
     assert "Обязательные поля" in html
     assert "Указанная дата имеет приоритет" in html
+
+
+@pytest.mark.parametrize("origin", ["/tasks/?filter=open&mine=1&page=2", "https://evil.example/", ""])
+def test_edit_save_and_cancel_open_task_with_safe_list_context(client, form_operator, crm_objects, origin):
+    task = crm_objects["task"]
+    url = reverse("core:task_update", args=[task.pk])
+    safe_origin = origin if origin.startswith("/tasks/") else "/tasks/"
+    expected = reverse("core:task_detail", args=[task.pk]) + "?" + urlencode({"return_to": safe_origin})
+    response = client.get(url, {"return_to": origin})
+    assert response.context["cancel_url"] == expected
+    invalid = client.post(url, payload(task.event, title="", return_to=origin))
+    assert invalid.status_code == 200
+    assert invalid.context["cancel_url"] == expected
+    saved = client.post(url, payload(task.event, return_to=origin))
+    assert saved.url == expected
+    detail = client.get(saved.url)
+    assert detail.context["task_return_url"] == safe_origin
+    assert "← К списку задач" in detail.content.decode()
+
+
+def test_event_edit_cancel_and_save_stay_in_tasks_tab(client, form_operator, crm_objects):
+    task = crm_objects["task"]
+    url = reverse("core:task_update", args=[task.pk])
+    expected = reverse("core:event_detail", args=[task.event_id]) + "?tab=tasks#event-tabs"
+    response = client.get(url, {"return_tab": "tasks", "return_to": "/tasks/?mine=1"})
+    assert response.context["cancel_url"] == expected
+    assert response.context["cancel_label"] == "← К мероприятию"
+    saved = client.post(url, payload(task.event, return_tab="tasks", return_to="/tasks/?mine=1"))
+    assert saved.url == expected
+
+
+def test_task_created_from_event_keeps_event_context_through_status(client, form_operator, crm_objects):
+    task = crm_objects["task"]
+    detail_url = reverse("core:task_detail", args=[task.pk]) + "?return_tab=tasks"
+    response = client.get(detail_url)
+    html = response.content.decode()
+    assert response.context["task_event_return_url"] == reverse("core:event_detail", args=[task.event_id]) + "?tab=tasks#event-tabs"
+    assert "← К мероприятию" in html
+    assert '?return_tab=tasks" class="btn btn-outline-secondary"' in html
+    assert 'name="return_tab" value="tasks"' in html
+    changed = client.post(reverse("core:task_status_update", args=[task.pk]), {"return_task": "1", "return_tab": "tasks", "status": "in_progress"})
+    assert changed.url == detail_url

@@ -10,7 +10,7 @@
             <div><h1>{{ page_title }}</h1><p>{% if form.instance.pk %}Обновите задачу, ответственного и срок выполнения.{% else %}Укажите мероприятие, ответственного и срок.{% endif %}</p></div>
         </div>
     </header>
-    <a href="{{ cancel_url }}" class="event-form-back">{% if return_to %}← К списку задач{% else %}← К мероприятию{% endif %}</a>
+    <a href="{{ cancel_url }}" class="event-form-back">{{ cancel_label }}</a>
     <form method="post" class="event-form" novalidate>
         {% csrf_token %}
         {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}

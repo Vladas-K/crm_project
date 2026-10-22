@@ -1171,7 +1171,11 @@ class TaskDetailView(CRMLoginRequiredMixin, DetailView):
             self.object.deadline and self.object.deadline == today and self.object.status != EventTask.Status.DONE
         )
         return_url = safe_task_return_url(self.request.GET.get("return_to", ""))
-        if return_url:
+        if self.request.GET.get("return_tab") == "tasks":
+            context["task_return_tab"] = "tasks"
+            context["task_return_query"] = "return_tab=tasks"
+            context["task_event_return_url"] = f"{reverse('core:event_detail', args=[self.object.event_id])}?tab=tasks#event-tabs"
+        elif return_url:
             context["task_return_url"] = return_url
             context["task_return_query"] = urlencode({"return_to": return_url})
         return context
@@ -1854,7 +1858,39 @@ class TaskReturnMixin:
         return context
 
 
-class TaskCreateView(TaskReturnMixin, EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+class TaskFormReturnMixin(TaskReturnMixin):
+    """Открывает сохранённую задачу, сохраняя контекст списка или мероприятия."""
+
+    editing_task = False
+
+    def get_task_detail_url(self):
+        detail_url = reverse("core:task_detail", args=[self.object.pk])
+        return_url = self.get_task_list_url()
+        query = urlencode({"return_to": return_url}) if return_url else "return_tab=tasks"
+        return f"{detail_url}?{query}"
+
+    def get_success_url(self):
+        if self.editing_task and not self.get_task_list_url():
+            return super().get_success_url()
+        return self.get_task_detail_url()
+
+    def get_cancel_url(self):
+        if self.editing_task and self.get_task_list_url():
+            return self.get_task_detail_url()
+        return super().get_cancel_url()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["cancel_url"] = self.get_cancel_url()
+        context["cancel_label"] = (
+            "← К задаче" if self.editing_task and self.get_task_list_url()
+            else "← К списку задач" if self.get_task_list_url()
+            else "← К мероприятию"
+        )
+        return context
+
+
+class TaskCreateView(TaskFormReturnMixin, EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Создает задачу, отдельно или из карточки мероприятия."""
 
     model = EventTask
@@ -1868,7 +1904,7 @@ class TaskCreateView(TaskReturnMixin, EventManagementMixin, EventScopedFormMixin
     cancel_url = reverse_lazy("core:tasks")
 
 
-class TaskUpdateView(TaskReturnMixin, EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class TaskUpdateView(TaskFormReturnMixin, EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует задачу и возвращает пользователя в контекст мероприятия при необходимости."""
 
     model = EventTask
@@ -1877,6 +1913,7 @@ class TaskUpdateView(TaskReturnMixin, EventManagementMixin, EventScopedFormMixin
     return_tab = "tasks"
     page_title = "Редактирование задачи"
     submit_label = "Сохранить изменения"
+    editing_task = True
     success_message = "Задача обновлена."
     success_url = reverse_lazy("core:tasks")
     cancel_url = reverse_lazy("core:tasks")
@@ -2027,7 +2064,9 @@ class TaskStatusUpdateView(EventManagementMixin, View):
         return_url = safe_task_return_url(request.POST.get("return_to", ""))
         if request.POST.get("return_task") == "1":
             detail_url = reverse("core:task_detail", args=[task.pk])
-            if return_url:
+            if request.POST.get("return_tab") == "tasks":
+                detail_url += "?return_tab=tasks"
+            elif return_url:
                 detail_url += "?" + urlencode({"return_to": return_url})
             return redirect(detail_url)
         return redirect(return_url or f"{reverse('core:event_detail', kwargs={'pk': task.event.pk})}?tab=tasks#event-tabs")

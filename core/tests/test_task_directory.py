@@ -113,13 +113,23 @@ def test_list_actions_preserve_origin(client, operator, crm_objects, operation):
     if operation != "status":
         get = client.get(url, {"return_to": origin})
         assert get.status_code == 200
-        assert parse_qs(urlsplit(get.context["cancel_url"]).query)["page"] == ["2"]
+        cancel = get.context["cancel_url"]
+        if operation == "update":
+            assert urlsplit(cancel).path == reverse("core:task_detail", args=[task.pk])
+            cancel = parse_qs(urlsplit(cancel).query)["return_to"][0]
+        assert parse_qs(urlsplit(cancel).query)["page"] == ["2"]
         assert 'name="return_to"' in get.content.decode()
     payload = task_data(event, return_to=origin) if operation in {"create", "update"} else {"return_to": origin, "status": "done"}
     response = client.post(url, payload)
     assert response.status_code == 302
-    assert urlsplit(response.url).path == "/tasks/"
-    assert parse_qs(urlsplit(response.url).query) == parse_qs(urlsplit(origin).query)
+    if operation in {"create", "update"}:
+        saved_task = EventTask.objects.get(title="Новая задача")
+        assert urlsplit(response.url).path == reverse("core:task_detail", args=[saved_task.pk])
+        list_url = parse_qs(urlsplit(response.url).query)["return_to"][0]
+    else:
+        assert urlsplit(response.url).path == "/tasks/"
+        list_url = response.url
+    assert parse_qs(urlsplit(list_url).query) == parse_qs(urlsplit(origin).query)
     if operation == "status":
         task.refresh_from_db()
         assert task.status == "done"
@@ -185,7 +195,8 @@ def test_status_permission_is_checked_before_change(client, operator, crm_object
 def test_nested_event_return_has_priority_over_list_url(client, operator, crm_objects):
     event = crm_objects["event"]
     response = client.post(reverse("core:event_task_create", kwargs={"event_pk": event.pk}), task_data(event, return_to="/tasks/"))
-    assert response.url == reverse("core:event_detail", args=[event.pk]) + "?tab=tasks#event-tabs"
+    task = EventTask.objects.get(title="Новая задача")
+    assert response.url == reverse("core:task_detail", args=[task.pk]) + "?return_tab=tasks"
 
 
 def test_task_create_rejects_inactive_responsible_post(client, operator, crm_objects, django_user_model):

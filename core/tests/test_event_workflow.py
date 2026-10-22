@@ -34,8 +34,8 @@ def login_user(client, django_user_model, **profile_flags):
 
 
 @pytest.mark.django_db
-def test_nested_task_create_returns_to_tasks_tab(client, django_user_model, crm_objects):
-    """Создание задачи из карточки мероприятия возвращает на вкладку задач."""
+def test_nested_task_create_opens_task_with_event_context(client, django_user_model, crm_objects):
+    """Создание задачи открывает её карточку с возвратом в мероприятие."""
     login_user(client, django_user_model)
     event = crm_objects["event"]
     catering_category = ExpenseCategory.objects.create(name="Кейтеринг")
@@ -54,7 +54,7 @@ def test_nested_task_create_returns_to_tasks_tab(client, django_user_model, crm_
 
     assert task.event == event
     assert response.status_code == 302
-    assert response.url == f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab=tasks#event-tabs"
+    assert response.url == f"{reverse('core:task_detail', kwargs={'pk': task.pk})}?return_tab=tasks"
 
 
 @pytest.mark.django_db
