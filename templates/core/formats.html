@@ -3,36 +3,42 @@
 {% block title %}Форматы | CRM{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div>
-        <h1 class="h2 mb-1">Форматы мероприятий</h1>
-        <p class="text-secondary mb-0">Шаблоны задач, тайминга, бюджета и подрядчиков для подготовки мероприятий.</p>
-    </div>
-    {% if crm_permissions.can_manage_system %}<a href="{% url 'core:format_create' %}" class="btn btn-primary">Добавить формат</a>{% endif %}
-</div>
-
-<div class="row g-4">
-    {% for format in formats %}
-        <div class="col-md-6 col-xl-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <h2 class="h5">{{ format.name }}</h2>
-                    <p class="text-secondary">{{ format.description|default:"Описание пока не заполнено." }}</p>
-                    <div class="small text-secondary">
-                        Шаблоны: {{ format.task_templates.count }} задач, {{ format.timeline_templates.count }} блоков тайминга,
-                        {{ format.budget_templates.count }} статей бюджета, {{ format.vendor_templates.count }} подрядчиков
-                    </div>
-                    {% if crm_permissions.can_manage_system %}
-                        <div class="d-flex gap-2 mt-3">
-                            <a href="{% url 'core:format_update' format.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
-                            <a href="{% url 'core:format_delete' format.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
+<section class="format-workspace" aria-label="Форматы мероприятий">
+    <header class="page-header workspace-page-header">
+        <div class="workspace-page-header__content">
+            <svg class="workspace-page-header__icon" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8" y="10" width="19" height="19" rx="3"/><path d="M23 6H8a4 4 0 0 0-4 4v15M19 3H9a6 6 0 0 0-6 6M13 17h9M13 22h6"/></svg>
+            <div><h1>Форматы мероприятий</h1><p>Готовая основа подготовки: задачи, тайминг, бюджет и подрядчики.</p></div>
         </div>
+        {% if crm_permissions.can_manage_system %}<a href="{% url 'core:format_create' %}" class="btn btn-primary">Добавить формат</a>{% endif %}
+    </header>
+
+    <div class="format-directory-grid">
+    {% for format in formats %}
+        <article class="format-directory-card" aria-labelledby="format-title-{{ format.pk }}">
+            <div class="format-directory-card__header">
+                <h2 id="format-title-{{ format.pk }}">{{ format.name }}</h2>
+                {% if crm_permissions.can_manage_system %}
+                    <details class="item-action-menu">
+                        <summary aria-label="Действия с форматом {{ format.name }}"><span aria-hidden="true">•••</span></summary>
+                        <div class="item-action-menu__popover">
+                            <a href="{% url 'core:format_update' format.pk %}">Изменить</a>
+                            <a href="{% url 'core:format_delete' format.pk %}" class="item-action-menu__danger">Удалить</a>
+                        </div>
+                    </details>
+                {% endif %}
+            </div>
+            <p class="format-directory-card__description">{{ format.description|default:"Описание пока не заполнено." }}</p>
+            <dl class="format-directory-card__composition" aria-label="Состав шаблона">
+                <div><dt>Задачи</dt><dd>{{ format.task_templates.count }}</dd></div>
+                <div><dt>Блоки тайминга</dt><dd>{{ format.timeline_templates.count }}</dd></div>
+                <div><dt>Статьи бюджета</dt><dd>{{ format.budget_templates.count }}</dd></div>
+                <div><dt>Подрядчики</dt><dd>{{ format.vendor_templates.count }}</dd></div>
+            </dl>
+        </article>
     {% empty %}
-        <div class="col-12"><div class="card border-0 shadow-sm"><div class="card-body py-5 text-center text-secondary">Форматы пока не добавлены.</div></div></div>
+        <div class="format-directory-empty"><h2>Форматы пока не добавлены</h2><p>{% if crm_permissions.can_manage_system %}Добавьте первый формат для подготовки мероприятий.{% else %}Здесь появятся настроенные форматы мероприятий.{% endif %}</p></div>
     {% endfor %}
-</div>
+    </div>
+</section>
+{% include "core/partials/item_action_menus.html" %}
 {% endblock %}

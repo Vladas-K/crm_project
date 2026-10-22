@@ -3954,6 +3954,28 @@ a.lead-profile-contact:focus {
     .task-detail-panel { padding: 1.1rem; }
 }
 
+/* Event format directory. Cards describe composition; actions remain in the menu. */
+.format-directory-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+.format-directory-card { position: relative; display: flex; flex-direction: column; min-width: 0; padding: 1.5rem; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 1.25rem; background: #fff; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.035); }
+.format-directory-card:focus-within, .format-directory-card:has(.item-action-menu[open]) { z-index: 3; }
+.format-directory-card__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem; }
+.format-directory-card h2 { margin: 0; font-size: 1.25rem; font-weight: 650; letter-spacing: -0.025em; overflow-wrap: anywhere; }
+.format-directory-card .item-action-menu { flex-shrink: 0; }
+.format-directory-card__description { margin: 0 0 1.25rem; color: #526071; font-size: 0.9rem; line-height: 1.6; overflow-wrap: anywhere; }
+.format-directory-card__composition { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.5rem; margin: auto 0 0; padding-top: 1.1rem; border-top: 1px solid #e6ebf1; }
+.format-directory-card__composition dt { color: #526071; font-size: 0.82rem; font-weight: 400; overflow-wrap: anywhere; }
+.format-directory-card__composition dd { margin: 0.3rem 0 0; font-size: 1.3rem; font-weight: 550; font-variant-numeric: tabular-nums; }
+.format-directory-card summary:focus-visible { outline: 2px solid var(--crm-accent); outline-offset: 3px; }
+.format-directory-empty { grid-column: 1 / -1; padding: 2.5rem 1.5rem; border: 1px solid var(--crm-border); border-radius: 1.25rem; background: #fff; text-align: center; }
+.format-directory-empty h2 { font-size: 1.1rem; }
+.format-directory-empty p { margin: 0; color: #526071; }
+@media (max-width: 767.98px) {
+    .format-directory-grid { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+    .format-directory-card { padding: 1.1rem; }
+    .format-directory-card .item-action-menu summary { width: 44px; height: 44px; }
+    .format-directory-card__composition { gap: 0.85rem 1rem; }
+}
+
 /* Task forms reuse the structured event-form field and surface styles. */
 .task-form-shell { max-width: 56rem; }
 .task-form-header { margin-bottom: 0.25rem; }
