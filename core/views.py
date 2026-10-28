@@ -8,6 +8,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
+from django.db.models.deletion import ProtectedError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Avg, Case, Count, DecimalField, F, IntegerField, OuterRef, Prefetch, Q, Subquery, Sum, Value, When
@@ -2403,8 +2404,19 @@ class EventFormatDeleteView(SystemAccessMixin, DeleteView):
     """Удаляет формат мероприятия после подтверждения."""
 
     model = EventFormat
-    template_name = "core/object_confirm_delete.html"
+    template_name = "core/format_confirm_delete.html"
     success_url = reverse_lazy("core:formats")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["linked_packages"] = self.object.packages.order_by("name")
+        return context
+
+    def form_valid(self, form):
+        try:
+            return super().form_valid(form)
+        except ProtectedError:
+            return self.render_to_response(self.get_context_data(delete_blocked=True))
 
 
 class VendorReturnMixin:
@@ -2472,8 +2484,9 @@ class ServicePackageCreateView(SystemAccessMixin, CRUDContextMixin, SuccessMessa
 
     model = ServicePackage
     form_class = ServicePackageForm
-    template_name = "core/object_form.html"
+    template_name = "core/package_form.html"
     page_title = "Новый пакет"
+    submit_label = "Создать пакет"
     success_message = "Пакет услуг создан."
     success_url = reverse_lazy("core:packages")
     cancel_url = reverse_lazy("core:packages")
@@ -2484,8 +2497,9 @@ class ServicePackageUpdateView(SystemAccessMixin, CRUDContextMixin, SuccessMessa
 
     model = ServicePackage
     form_class = ServicePackageForm
-    template_name = "core/object_form.html"
+    template_name = "core/package_form.html"
     page_title = "Редактирование пакета"
+    submit_label = "Сохранить изменения"
     success_message = "Пакет услуг обновлён."
     success_url = reverse_lazy("core:packages")
     cancel_url = reverse_lazy("core:packages")

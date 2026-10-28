@@ -1,36 +1,33 @@
 {% extends "base.html" %}
-
 {% block title %}Пакеты | CRM{% endblock %}
-
 {% block content %}
-<div class="page-header">
-    <div>
-        <h1 class="h2 mb-1">Услуги и пакеты</h1>
-        <p class="text-secondary mb-0">Готовые пакеты для быстрого формирования коммерческого предложения.</p>
-    </div>
-    {% if crm_permissions.can_manage_system %}<a href="{% url 'core:package_create' %}" class="btn btn-primary">Добавить пакет</a>{% endif %}
-</div>
-
-<div class="row g-4">
-    {% for package in packages %}
-        <div class="col-md-6 col-xl-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="small text-secondary mb-2">{{ package.event_format }}</div>
-                    <h2 class="h5">{{ package.name }}</h2>
-                    <p class="text-secondary">{{ package.services }}</p>
-                    <div class="fs-5 fw-semibold">{{ package.price }} ₽</div>
-                    {% if crm_permissions.can_manage_system %}
-                        <div class="d-flex gap-2 mt-3">
-                            <a href="{% url 'core:package_update' package.pk %}" class="btn btn-sm btn-outline-primary">Изменить</a>
-                            <a href="{% url 'core:package_delete' package.pk %}" class="btn btn-sm btn-outline-danger">Удалить</a>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
+<section aria-label="Пакеты услуг">
+    <header class="page-header workspace-page-header">
+        <div class="workspace-page-header__content">
+            <svg class="workspace-page-header__icon" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="m16 3 12 7v13l-12 7L4 23V10Z M4 10l12 7 12-7M16 17v13M10 6l12 7"/></svg>
+            <div><h1>Пакеты услуг</h1><p>Наборы услуг и цены для предложений клиентам.</p></div>
         </div>
+        {% if crm_permissions.can_manage_system %}<a href="{% url 'core:package_create' %}" class="btn btn-primary">Добавить пакет</a>{% endif %}
+    </header>
+    <div class="package-directory-grid">
+    {% for package in packages %}
+        <article class="package-directory-card" aria-labelledby="package-title-{{ package.pk }}">
+            <div class="package-directory-card__header">
+                <div><span class="event-chip event-chip--soft">{{ package.event_format }}</span><h2 id="package-title-{{ package.pk }}">{{ package.name }}</h2></div>
+                {% if crm_permissions.can_manage_system %}
+                <details class="item-action-menu">
+                    <summary aria-label="Действия с пакетом {{ package.name }}"><span aria-hidden="true">•••</span></summary>
+                    <div class="item-action-menu__popover"><a href="{% url 'core:package_update' package.pk %}">Изменить</a><a href="{% url 'core:package_delete' package.pk %}" class="item-action-menu__danger">Удалить</a></div>
+                </details>
+                {% endif %}
+            </div>
+            <ul class="package-directory-card__services">{% for item in package.service_items %}<li>{{ item }}</li>{% endfor %}</ul>
+            <div class="package-directory-card__price"><span>Цена пакета</span><strong>{{ package.price|floatformat:"-2g" }} ₽</strong></div>
+        </article>
     {% empty %}
-        <div class="col-12"><div class="card border-0 shadow-sm"><div class="card-body py-5 text-center text-secondary">Пакеты пока не добавлены.</div></div></div>
+        <div class="format-directory-empty"><h2>Пакеты пока не добавлены</h2><p>Здесь появятся наборы услуг с составом и ценой.</p></div>
     {% endfor %}
-</div>
+    </div>
+</section>
+{% include "core/partials/item_action_menus.html" %}
 {% endblock %}

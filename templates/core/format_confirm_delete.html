@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Удаление формата | CRM{% endblock %}
+{% block content %}
+<div class="event-form-shell format-form-shell">
+    <header class="workspace-page-header"><h1>Удаление формата</h1></header>
+    <div class="event-form-panel">
+        <div class="event-form-section">
+        {% if linked_packages or delete_blocked %}
+            <div role="alert"><h2 class="h5">Формат «{{ object }}» используется в пакетах</h2><p>Сначала измените формат в этих пакетах или удалите ненужные пакеты. Затем можно будет удалить формат.</p></div>
+            <ul>{% for package in linked_packages %}<li><a href="{% url 'core:package_update' package.pk %}">{{ package.name }}</a></li>{% endfor %}</ul>
+            <a href="{% url 'core:formats' %}" class="btn btn-outline-secondary">К форматам</a>
+        {% else %}
+            <p>Удалить формат «{{ object }}»? Мероприятия сохранятся без этого формата.</p>
+            <form method="post" class="event-form-actions">{% csrf_token %}<a href="{% url 'core:formats' %}" class="btn btn-outline-secondary">Отмена</a><button class="btn btn-danger" type="submit">Удалить</button></form>
+        {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

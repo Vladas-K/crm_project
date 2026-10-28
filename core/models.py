@@ -533,20 +533,27 @@ class ServicePackage(models.Model):
     name = models.CharField("Название пакета", max_length=255)
     event_format = models.ForeignKey(
         EventFormat,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="packages",
         verbose_name="Формат мероприятия",
     )
     services = models.TextField("Список услуг")
-    price = models.DecimalField("Цена", max_digits=12, decimal_places=2)
+    price = models.DecimalField("Цена", max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
 
     class Meta:
         ordering = ("name",)
         verbose_name = "Пакет услуг"
         verbose_name_plural = "Пакеты услуг"
+        constraints = [models.CheckConstraint(condition=models.Q(price__gte=0), name="service_package_price_nonnegative")]
 
     def __str__(self) -> str:
         return self.name
+
+    @property
+    def service_items(self):
+        """Показывает строки услуг и поддерживает прежние списки через запятую."""
+        parts = self.services.splitlines() if "\n" in self.services or "\r" in self.services else self.services.split(",")
+        return [part.strip() for part in parts if part.strip()]
 
 
 class Event(models.Model):

@@ -135,6 +135,8 @@ def test_event_format_changes_preserve_existing_operational_records(crm_objects,
         event.event_format = None
         event.save(update_fields=["event_format"])
     elif action == "delete":
+        # Удаление формата разрешено после освобождения связанных пакетов.
+        event_format.packages.all().delete()
         event_format.delete()
     else:
         event_format.name = "Корпоративный выезд"

@@ -3976,6 +3976,31 @@ a.lead-profile-contact:focus {
     .vendor-filter-submit { min-height: 44px; }
 }
 
+/* Service package directory: offer contents and prices. */
+.package-directory-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+.package-directory-card { position: relative; display: flex; flex-direction: column; min-width: 0; padding: 1.5rem; border: 1px solid var(--crm-border); border-radius: 1.5rem; background: #fff; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.035); }
+.package-directory-card:focus-within, .package-directory-card:has(.item-action-menu[open]) { z-index: 3; }
+.package-directory-card__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.package-directory-card__header > div { min-width: 0; }
+.package-directory-card .event-chip { max-width: 100%; overflow-wrap: anywhere; }
+.package-directory-card h2 { margin: 0.75rem 0 0; font-size: 1.4rem; font-weight: 650; letter-spacing: -0.025em; overflow-wrap: anywhere; }
+.package-directory-card .item-action-menu { flex-shrink: 0; }
+.package-directory-card summary:focus-visible { outline: 2px solid var(--crm-accent); outline-offset: 3px; }
+.package-directory-card__services { display: grid; gap: 0.55rem; padding-left: 1.1rem; margin: 1.25rem 0 1.5rem; color: #526071; font-size: 0.95rem; line-height: 1.5; overflow-wrap: anywhere; }
+.package-directory-card__services li::marker { color: #8d9aab; }
+.package-directory-card__price { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.5rem 1rem; margin-top: auto; padding-top: 1rem; border-top: 1px solid #e6ebf1; }
+.package-directory-card__price span { color: #526071; font-size: 0.85rem; }
+.package-directory-card__price strong { font-size: 1.6rem; font-weight: 600; letter-spacing: -0.025em; overflow-wrap: anywhere; }
+.package-form-shell { max-width: 44rem; }
+@media (max-width: 767.98px) {
+    .package-directory-grid { grid-template-columns: minmax(0, 1fr); }
+    .package-directory-card { padding: 1.25rem; }
+    .package-directory-card summary { width: 44px; height: 44px; }
+    .package-form-shell .event-form-actions { flex-direction: column-reverse; }
+    .package-form-shell .event-form-actions .btn { width: 100%; }
+    .package-form-shell .form-control, .package-form-shell .form-select { font-size: 1rem; }
+}
+
 /* Event format directory: names and descriptions of event types. */
 .format-directory-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
 .format-directory-card { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 27rem; padding: 1.75rem 1.75rem 1rem; border: 1px solid rgba(15, 23, 42, 0.06); border-radius: 1.75rem; background: #fff; box-shadow: 0 6px 24px rgba(15, 23, 42, 0.035); }

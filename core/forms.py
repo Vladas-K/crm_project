@@ -402,6 +402,8 @@ class ServicePackageForm(BootstrapModelForm):
         model = ServicePackage
         fields = ["name", "event_format", "services", "price"]
         widgets = {"services": forms.Textarea(attrs={"rows": 4})}
+        labels = {"services": "Состав пакета", "price": "Цена, ₽"}
+        help_texts = {"services": "Каждую услугу укажите с новой строки.", "price": "Цена предложения клиенту. Ноль допустим."}
 
 
 class EventDirectoryFilterForm(forms.Form):
