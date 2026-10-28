@@ -15,16 +15,16 @@
     <button type="submit" class="btn btn-primary">Показать</button>
     {% if team_filters_active %}<a href="{% url 'core:team' %}" class="team-reset">Сбросить фильтры</a>{% endif %}
 </form>
-<p class="team-explanation">Роль обозначает обязанности сотрудника. Доступ задаётся отдельно в правах CRM. Данные и права редактируются в админке.</p>
+<p class="team-explanation">Роль обозначает обязанности сотрудника. Доступ задаётся отдельно в правах CRM. Роль и права настраиваются в CRM.</p>
 <section class="team-directory" aria-label="Сотрудники">
     {% for row in team_rows %}<article class="team-member" aria-labelledby="team-member-{{ row.user.pk }}">
         <div class="team-member__identity"><h2 id="team-member-{{ row.user.pk }}">{{ row.user.get_full_name|default:row.user.get_username }}{% if row.user.pk == request.user.pk %}<span class="team-member__you">Вы</span>{% endif %}</h2>{% if row.user.get_full_name %}<span>{{ row.user.get_username }}</span>{% endif %}{% if row.user.email %}<span>{{ row.user.email }}</span>{% endif %}</div>
         <div class="team-member__state"><span class="team-member__role">{{ row.role_label }}</span><span class="team-member__activity{% if not row.user.is_active %} team-member__activity--inactive{% endif %}">{% if row.user.is_active %}Активен{% else %}Отключён{% endif %}</span></div>
         <div class="team-member__access">
-            {% if row.profile %}<details class="team-rights"><summary>Права CRM: {{ row.rights_count }} из 7</summary><ul>{% for right in row.rights %}<li><span>{{ right.label }}</span><strong{% if not right.allowed %} class="team-rights__denied"{% endif %}>{{ right.allowed|yesno:"Да,Нет" }}</strong></li>{% endfor %}</ul>{% if not row.user.is_active %}<p>Учётная запись отключена. Указанные права не действуют.</p>{% endif %}{% if row.edit_profile_url %}<a href="{{ row.edit_profile_url }}">Изменить права в админке</a>{% endif %}</details>
-            {% else %}<p class="team-member__missing">Права CRM не настроены.</p>{% if row.add_profile_url %}<a href="{{ row.add_profile_url }}">Добавить CRM-профиль</a>{% endif %}{% endif %}
+            {% if row.profile %}<details class="team-rights"><summary>Права CRM: {{ row.rights_count }} из 7</summary><ul>{% for right in row.rights %}<li><span>{{ right.label }}</span><strong{% if not right.allowed %} class="team-rights__denied"{% endif %}>{{ right.allowed|yesno:"Да,Нет" }}</strong></li>{% endfor %}</ul>{% if not row.user.is_active %}<p>Учётная запись отключена. Указанные права не действуют.</p>{% endif %}</details>
+            {% else %}<p class="team-member__missing">Права CRM не настроены.</p>{% endif %}
         </div>
-        {% if row.edit_user_url %}<a href="{{ row.edit_user_url }}" class="team-member__edit">Изменить в админке <span aria-hidden="true">↗</span></a>{% endif %}
+        <div class="team-member__actions"><a href="{{ row.access_url }}" class="btn btn-outline-primary">Роль и права</a>{% if row.edit_user_url %}<a href="{{ row.edit_user_url }}">Учётная запись в админке <span aria-hidden="true">↗</span></a>{% endif %}</div>
     </article>{% empty %}<div class="team-empty"><h2>Пользователи не найдены</h2><p>{% if team_filters_active %}Измените поиск или фильтры.{% else %}Здесь появятся учётные записи сотрудников.{% endif %}</p></div>{% endfor %}
 </section>
 {% if is_paginated %}<nav class="client-pagination" aria-label="Страницы списка пользователей">{% if page_obj.has_previous %}<a class="btn btn-outline-secondary" href="?{{ pagination_query }}&amp;page={{ page_obj.previous_page_number }}">Назад</a>{% endif %}<span>Страница {{ page_obj.number }} из {{ paginator.num_pages }}</span>{% if page_obj.has_next %}<a class="btn btn-outline-secondary" href="?{{ pagination_query }}&amp;page={{ page_obj.next_page_number }}">Далее</a>{% endif %}</nav>{% endif %}

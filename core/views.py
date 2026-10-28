@@ -18,10 +18,13 @@ from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.http import urlencode
 from django.views import View
-from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
+from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView, TemplateView, UpdateView
 
 from .forms import (
     ClientForm,
+    TeamMemberAccessForm,
+    TEAM_ROLE_LABELS,
+    TEAM_PERMISSION_LABELS,
     EventCommunicationForm,
     EventDocumentForm,
     EventDirectoryFilterForm,
@@ -1595,16 +1598,8 @@ class TeamView(SystemAccessMixin, ListView):
     template_name = "core/team.html"
     context_object_name = "team_users"
     paginate_by = 20
-    role_labels = {
-        "sales_manager": "Менеджер по продажам", "project_manager": "Менеджер проектов",
-        "admin": "Администратор", "finance": "Финансист",
-    }
-    permission_labels = (
-        ("can_view_finance", "Просмотр финансов"), ("can_view_clients", "Просмотр клиентов"),
-        ("can_view_analytics", "Просмотр аналитики"), ("can_manage_leads", "Управление лидами"),
-        ("can_manage_clients", "Управление клиентами"), ("can_manage_events", "Управление мероприятиями"),
-        ("can_manage_system", "Управление системой"),
-    )
+    role_labels = TEAM_ROLE_LABELS
+    permission_labels = TEAM_PERMISSION_LABELS
 
     def get_queryset(self):
         self.search = self.request.GET.get("q", "").strip()
@@ -1630,8 +1625,11 @@ class TeamView(SystemAccessMixin, ListView):
         context = super().get_context_data(**kwargs)
         actor = self.request.user
         can_edit_users = actor.is_staff and actor.has_perm("auth.change_user")
-        can_edit_profiles = actor.is_staff and actor.has_perm("core.change_teammemberprofile")
-        can_add_profiles = actor.is_staff and actor.has_perm("core.add_teammemberprofile")
+        params = {key: value for key, value in (("q", self.search), ("role", self.role), ("activity", self.activity)) if value}
+        return_params = dict(params)
+        if context["page_obj"].number > 1:
+            return_params["page"] = context["page_obj"].number
+        return_url = reverse("core:team") + ("?" + urlencode(return_params) if return_params else "")
         rows = []
         for user in context["team_users"]:
             profile = getattr(user, "crm_profile", None)
@@ -1642,8 +1640,7 @@ class TeamView(SystemAccessMixin, ListView):
                 "role_label": self.role_labels.get(profile.role, profile.get_role_display()) if profile else "Без CRM-профиля",
                 "rights": rights, "rights_count": sum(right["allowed"] for right in rights),
                 "edit_user_url": reverse("admin:auth_user_change", args=[user.pk]) if can_edit_users else "",
-                "edit_profile_url": reverse("admin:core_teammemberprofile_change", args=[profile.pk]) if profile and can_edit_profiles else "",
-                "add_profile_url": reverse("admin:core_teammemberprofile_add") + "?" + urlencode({"user": user.pk}) if not profile and can_add_profiles else "",
+                "access_url": reverse("core:team_access_update", args=[user.pk]) + "?" + urlencode({"return_to": return_url}),
             })
         params = {key: value for key, value in (("q", self.search), ("role", self.role), ("activity", self.activity)) if value}
         context.update(
@@ -1651,6 +1648,77 @@ class TeamView(SystemAccessMixin, ListView):
             team_roles=self.role_labels.items(), team_filters_active=bool(params), pagination_query=urlencode(params),
             add_user_url=reverse("admin:auth_user_add") if actor.is_staff and actor.has_perm("auth.add_user") else "",
         )
+        return context
+
+
+def safe_team_return_url(value):
+    """Сохраняет только локальный список сотрудников и известные условия."""
+    try:
+        target = urlsplit(value)
+    except ValueError:
+        return None
+    if target.scheme or target.netloc or target.path != reverse("core:team"):
+        return None
+    raw = {key: values[-1] for key, values in parse_qs(target.query).items()}
+    params = {}
+    if raw.get("q", "").strip():
+        params["q"] = raw["q"].strip()
+    if raw.get("role") in {*TEAM_ROLE_LABELS, "without_profile"}:
+        params["role"] = raw["role"]
+    if raw.get("activity") in {"active", "inactive"}:
+        params["activity"] = raw["activity"]
+    page = raw.get("page", "")
+    if page.isascii() and page.isdigit() and len(page) < 10 and int(page) > 1:
+        params["page"] = int(page)
+    return reverse("core:team") + ("?" + urlencode(params) if params else "")
+
+
+class TeamMemberAccessUpdateView(SystemAccessMixin, FormView):
+    """Настройка роли и прав сотрудника без доступа к Django Admin."""
+
+    form_class = TeamMemberAccessForm
+    template_name = "core/team_access_form.html"
+
+    def get_target_user(self):
+        if not hasattr(self, "target_user"):
+            self.target_user = get_object_or_404(User.objects.select_related("crm_profile"), pk=self.kwargs["pk"])
+        return self.target_user
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        user = self.get_target_user()
+        kwargs.update(
+            actor=self.request.user, target_user=user,
+            instance=getattr(user, "crm_profile", None) or TeamMemberProfile(user=user),
+        )
+        return kwargs
+
+    def get_success_url(self):
+        raw = self.request.POST.get("return_to", self.request.GET.get("return_to", ""))
+        return safe_team_return_url(raw) or reverse("core:team")
+
+    def post(self, request, *args, **kwargs):
+        # Проверяем актуальные права и сохраняем под теми же блокировками.
+        with transaction.atomic():
+            list(TeamMemberProfile.objects.select_for_update().order_by("pk").values_list("pk", flat=True))
+            if not TeamMemberProfile.objects.filter(
+                user_id=request.user.pk, user__is_active=True, can_manage_system=True,
+            ).exists():
+                raise PermissionDenied("Недостаточно прав для настройки доступа.")
+            self.target_user = get_object_or_404(User.objects.select_for_update(), pk=kwargs["pk"])
+            return super().post(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.user = self.get_target_user()
+        form.save()
+        messages.success(self.request, "Роль и права сотрудника сохранены.")
+        return redirect(self.get_success_url())
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(target_user=self.get_target_user(), cancel_url=self.get_success_url())
+        context["view_fields"] = [context["form"][name] for name, _ in TEAM_PERMISSION_LABELS[:3]]
+        context["manage_fields"] = [context["form"][name] for name, _ in TEAM_PERMISSION_LABELS[3:]]
         return context
 
 

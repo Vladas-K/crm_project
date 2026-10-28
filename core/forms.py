@@ -25,6 +25,7 @@ from .models import (
     Lead,
     PipelineStage,
     ServicePackage,
+    TeamMemberProfile,
     Vendor,
     VendorRole,
     normalize_russian_phone,
@@ -52,6 +53,60 @@ class BootstrapModelForm(forms.ModelForm):
             widget.attrs["class"] = css_class
             if field.required:
                 widget.attrs["required"] = "required"
+
+
+TEAM_ROLE_LABELS = {
+    "sales_manager": "Менеджер по продажам", "project_manager": "Менеджер проектов",
+    "admin": "Администратор", "finance": "Финансист",
+}
+TEAM_PERMISSION_LABELS = (
+    ("can_view_finance", "Просмотр финансов"), ("can_view_clients", "Просмотр клиентов"),
+    ("can_view_analytics", "Просмотр аналитики"), ("can_manage_leads", "Управление лидами"),
+    ("can_manage_clients", "Управление клиентами"), ("can_manage_events", "Управление мероприятиями"),
+    ("can_manage_system", "Управление системой"),
+)
+
+
+class TeamMemberAccessForm(BootstrapModelForm):
+    """Меняет только роль и явные CRM-права закреплённого сервером сотрудника."""
+
+    class Meta:
+        model = TeamMemberProfile
+        fields = ["role", *(name for name, _ in TEAM_PERMISSION_LABELS)]
+        labels = dict(TEAM_PERMISSION_LABELS)
+        help_texts = {
+            "role": "Роль описывает обязанности. Выбор роли не меняет отмеченные ниже права.",
+            "can_manage_system": "Разрешает настраивать роли и права сотрудников, справочники и удалять основные записи CRM.",
+        }
+
+    def __init__(self, *args, actor=None, target_user=None, **kwargs):
+        self.actor = actor
+        self.target_user = target_user
+        super().__init__(*args, **kwargs)
+        self.fields["role"].choices = [("", "Выберите роль"), *TEAM_ROLE_LABELS.items()]
+        if not self.instance.pk:
+            for name, _ in TEAM_PERMISSION_LABELS:
+                self.initial[name] = False
+        for field in self:
+            described_by = [f"{field.auto_id}_helptext"] if field.help_text else []
+            if field.errors:
+                described_by.append(f"{field.auto_id}_error")
+                field.field.widget.attrs["aria-invalid"] = "true"
+            if described_by:
+                field.field.widget.attrs["aria-describedby"] = " ".join(described_by)
+
+    def clean_can_manage_system(self):
+        allowed = self.cleaned_data["can_manage_system"]
+        if not allowed:
+            if self.actor and self.target_user and self.actor.pk == self.target_user.pk:
+                raise forms.ValidationError("Нельзя снять у себя право управления системой. Попросите другого администратора изменить ваш доступ.")
+            if (self.instance.pk and TeamMemberProfile.objects.filter(
+                pk=self.instance.pk, can_manage_system=True, user__is_active=True,
+            ).exists() and not TeamMemberProfile.objects.filter(
+                can_manage_system=True, user__is_active=True,
+            ).exclude(pk=self.instance.pk).exists()):
+                raise forms.ValidationError("В CRM должен оставаться хотя бы один активный сотрудник с правом управления системой.")
+        return allowed
 
 
 class LeadForm(BootstrapModelForm):

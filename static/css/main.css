@@ -4129,3 +4129,24 @@ a.lead-profile-contact:focus {
     .team-rights[open] summary::before { content: '▾'; }
     .team-member a { min-height: 44px; padding: .6rem 0; }
 }
+
+/* Native CRM role and access settings. */
+.team-member__actions { grid-column: 1 / -1; display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 1.25rem; }
+.team-member__actions .btn { min-height: 44px; margin: 0; }
+.team-access-form { max-width: 48rem; }
+.team-access-notice { padding: 1rem; color: #526071; border-radius: 1rem; background: #edf4ff; }
+.team-access-group { min-width: 0; }
+.team-access-group legend { float: none; width: auto; padding: 0; margin: 0 0 .5rem; font-size: 1.15rem; font-weight: 650; letter-spacing: -.025em; }
+.team-access-group > p { color: #626e7d; font-size: .85rem; margin-bottom: 1rem; }
+.team-access-option + .team-access-option { border-top: 1px solid #edf0f4; }
+.team-access-option label { display: flex; align-items: flex-start; gap: .85rem; padding: .9rem 0; min-height: 44px; cursor: pointer; }
+.team-access-option .form-check-input { flex-shrink: 0; width: 1.15rem; height: 1.15rem; margin: .15rem 0 0; }
+.team-access-option label > span { min-width: 0; }
+.team-access-option strong { display: block; font-size: .95rem; font-weight: 600; }
+.team-access-option .event-form-field__help { display: block; margin-top: .35rem; }
+.team-access-option input:focus-visible { outline: 2px solid var(--crm-accent); outline-offset: 3px; }
+@media (max-width: 767.98px) {
+    .team-access-form .form-select { font-size: 16px; }
+    .team-access-form .event-form-actions { flex-direction: column-reverse; }
+    .team-access-form .event-form-actions .btn, .team-member__actions .btn { width: 100%; }
+}

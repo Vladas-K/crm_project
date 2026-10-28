@@ -49,7 +49,7 @@ def test_team_search_and_filters(client, team_operator, django_user_model):
 
 def test_team_admin_links_require_staff_and_relevant_permissions(client, team_operator, django_user_model):
     user = django_user_model.objects.create_user(username="target")
-    profile = TeamMemberProfile.objects.create(user=user, role="finance")
+    TeamMemberProfile.objects.create(user=user, role="finance")
     permissions = Permission.objects.filter(codename__in=["change_user", "add_user", "change_teammemberprofile", "add_teammemberprofile"])
     team_operator.user_permissions.set(permissions)
     assert not client.get(reverse("core:team")).context["add_user_url"]
@@ -59,10 +59,10 @@ def test_team_admin_links_require_staff_and_relevant_permissions(client, team_op
     row = next(row for row in response.context["team_rows"] if row["user"].pk == user.pk)
     assert response.context["add_user_url"] == reverse("admin:auth_user_add")
     assert row["edit_user_url"] == reverse("admin:auth_user_change", args=[user.pk])
-    assert row["edit_profile_url"] == reverse("admin:core_teammemberprofile_change", args=[profile.pk])
+    assert row["access_url"].startswith(reverse("core:team_access_update", args=[user.pk]))
     bare = django_user_model.objects.create_user(username="bare")
     rows = client.get(reverse("core:team")).context["team_rows"]
-    assert next(row for row in rows if row["user"].pk == bare.pk)["add_profile_url"].endswith(f"?user={bare.pk}")
+    assert next(row for row in rows if row["user"].pk == bare.pk)["access_url"].startswith(reverse("core:team_access_update", args=[bare.pk]))
 
 
 def test_team_pagination_is_stable_and_keeps_filters(client, team_operator, django_user_model):

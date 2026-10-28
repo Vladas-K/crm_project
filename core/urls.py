@@ -65,6 +65,7 @@ from .views import (
     EventTimelineItemDeleteView,
     EventTimelineItemUpdateView,
     TeamView,
+    TeamMemberAccessUpdateView,
     VendorListView,
     VendorAutocompleteView,
     VendorCreateView,
@@ -159,4 +160,5 @@ urlpatterns = [
     path("calendar/", CalendarView.as_view(), name="calendar"),
     path("analytics/", AnalyticsView.as_view(), name="analytics"),
     path("team/", TeamView.as_view(), name="team"),
+    path("team/<int:pk>/access/", TeamMemberAccessUpdateView.as_view(), name="team_access_update"),
 ]
