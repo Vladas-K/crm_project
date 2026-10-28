@@ -42,6 +42,51 @@ def test_lead_assigns_sales_manager_with_lowest_load():
 
 
 @pytest.mark.django_db
+def test_lead_assignment_skips_inactive_sales_manager_with_lower_load():
+    inactive = User.objects.create_user(username="inactive_sales", is_active=False)
+    active = User.objects.create_user(username="active_sales")
+    for manager in (inactive, active):
+        TeamMemberProfile.objects.create(user=manager, role=CRMRole.SALES_MANAGER)
+    Lead.objects.create(name="Текущая нагрузка", manager=active)
+
+    lead = Lead.objects.create(name="Новый лид")
+
+    assert lead.manager == active
+    assert not inactive.assigned_leads.exists()
+
+
+@pytest.mark.django_db
+def test_lead_stays_unassigned_without_active_sales_managers():
+    inactive = User.objects.create_user(username="inactive_sales", is_active=False)
+    TeamMemberProfile.objects.create(user=inactive, role=CRMRole.SALES_MANAGER)
+    other_role = User.objects.create_user(username="active_project_manager")
+    TeamMemberProfile.objects.create(user=other_role, role=CRMRole.PROJECT_MANAGER)
+
+    lead = Lead.objects.create(name="Без доступного менеджера")
+    lead.refresh_from_db()
+
+    assert lead.manager is None
+
+
+@pytest.mark.django_db
+def test_lead_keeps_existing_manager_after_deactivation():
+    manager = User.objects.create_user(username="original_sales")
+    TeamMemberProfile.objects.create(user=manager, role=CRMRole.SALES_MANAGER)
+    lead = Lead.objects.create(name="Прежний лид")
+    manager.is_active = False
+    manager.save(update_fields=["is_active"])
+    replacement = User.objects.create_user(username="available_sales")
+    TeamMemberProfile.objects.create(user=replacement, role=CRMRole.SALES_MANAGER)
+
+    lead.name = "Прежний лид после редактирования"
+    lead.save()
+    lead.refresh_from_db()
+
+    assert lead.manager == manager
+    assert Lead.objects.create(name="Новый лид").manager == replacement
+
+
+@pytest.mark.django_db
 def test_lost_lead_requires_loss_reason():
     """Потерянный лид нельзя сохранить без причины отказа."""
 

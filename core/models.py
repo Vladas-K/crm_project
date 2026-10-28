@@ -284,11 +284,11 @@ class Lead(ContactMixin):
         return social_profile_url(self.vk, "vk.com")
 
     def save(self, *args, **kwargs):
-        """Назначает sales manager и подтягивает вероятность из этапа перед сохранением."""
+        """Выбирает активного sales manager и подтягивает вероятность из этапа."""
 
         if not self.manager:
             self.manager = (
-                User.objects.filter(crm_profile__role=CRMRole.SALES_MANAGER)
+                User.objects.filter(is_active=True, crm_profile__role=CRMRole.SALES_MANAGER)
                 .annotate(models.Count("assigned_leads"))
                 .order_by("assigned_leads__count", "id")
                 .first()
