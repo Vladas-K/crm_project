@@ -1,4 +1,5 @@
 import calendar
+from datetime import date
 from decimal import Decimal
 from itertools import islice
 from urllib.parse import parse_qs, urlsplit
@@ -1410,12 +1411,72 @@ class PackageListView(CRMLoginRequiredMixin, ListView):
 
 
 class CalendarView(CRMLoginRequiredMixin, ListView):
-    """Показывает календарный список мероприятий."""
+    """Календарь месяца с одинаковыми данными для сетки и мобильной повестки."""
 
     model = Event
     template_name = "core/calendar.html"
     context_object_name = "events"
-    queryset = Event.objects.select_related("client", "manager").order_by("date")
+
+    def get_queryset(self):
+        self.today = timezone.localdate()
+        try:
+            self.month = date.fromisoformat(self.request.GET.get("month", "") + "-01")
+            if not 2 <= self.month.year <= 9998:
+                raise ValueError
+        except ValueError:
+            self.month = self.today.replace(day=1)
+        self.status = self.request.GET.get("status", "")
+        if self.status not in dict(Event.Status.choices):
+            self.status = ""
+        self.managers = User.objects.filter(managed_events__isnull=False).distinct().order_by("first_name", "username", "pk")
+        self.manager = self.request.GET.get("manager", "")
+        if self.manager != "unassigned" and self.manager not in {str(user.pk) for user in self.managers}:
+            self.manager = ""
+        queryset = Event.objects.select_related("client", "manager", "event_format").filter(
+            date__year=self.month.year, date__month=self.month.month,
+        ).order_by("date", "pk")
+        if self.status:
+            queryset = queryset.filter(status=self.status)
+        if self.manager == "unassigned":
+            queryset = queryset.filter(manager__isnull=True)
+        elif self.manager:
+            queryset = queryset.filter(manager_id=int(self.manager))
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        by_day = {}
+        for event in context["events"]:
+            by_day.setdefault(event.date, []).append(event)
+        weeks = []
+        for week in calendar.Calendar(firstweekday=0).monthdatescalendar(self.month.year, self.month.month):
+            weeks.append([{
+                "date": day, "in_month": day.month == self.month.month,
+                "today": day == self.today, "events": by_day.get(day, []),
+            } for day in week])
+
+        def month_url(month):
+            params = {"month": month.isoformat()[:7]}
+            if self.status:
+                params["status"] = self.status
+            if self.manager:
+                params["manager"] = self.manager
+            return "?" + urlencode(params)
+
+        year, month = self.month.year, self.month.month
+        previous = date(year - (month == 1), 12 if month == 1 else month - 1, 1)
+        following = date(year + (month == 12), 1 if month == 12 else month + 1, 1)
+        context.update(
+            calendar_month=self.month, month_value=self.month.isoformat()[:7],
+            calendar_weeks=weeks,
+            agenda_days=[{"date": day, "today": day == self.today, "events": events} for day, events in by_day.items()],
+            previous_url=month_url(previous), next_url=month_url(following),
+            today_url=month_url(self.today.replace(day=1)),
+            reset_url=month_url(self.month).split("&")[0],
+            calendar_status=self.status, calendar_manager=self.manager,
+            calendar_statuses=Event.Status.choices, calendar_managers=self.managers,
+        )
+        return context
 
 
 class AnalyticsView(AnalyticsAccessMixin, TemplateView):

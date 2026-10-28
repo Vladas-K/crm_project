@@ -1,0 +1,6 @@
+<a class="calendar-event calendar-event--{{ event.status }}" href="{% url 'core:event_detail' event.pk %}">
+    <strong>{{ event }}</strong>
+    <span class="calendar-event__status">{{ event.get_status_display }}</span>
+    <span>{{ event.city|default:"Город не указан" }}</span>
+    <span>{% if event.manager %}{{ event.manager.get_full_name|default:event.manager.get_username }}{% else %}Без ответственного{% endif %}</span>
+</a>

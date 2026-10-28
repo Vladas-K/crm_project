@@ -4041,3 +4041,53 @@ a.lead-profile-contact:focus {
     .task-form-shell .event-form-actions { flex-direction: column-reverse; }
     .task-form-shell .event-form-actions .btn { width: 100%; }
 }
+
+/* Calendar: monthly workspace and the same events as a mobile agenda. */
+.calendar-workspace { min-width: 0; padding: 1.5rem; background: #fff; border: 1px solid var(--crm-border); border-radius: 1.5rem; box-shadow: 0 4px 20px rgba(15,23,42,.035); }
+.calendar-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.calendar-toolbar h2 { margin: 0; font-size: 1.5rem; font-weight: 650; text-transform: capitalize; letter-spacing: -.025em; }
+.calendar-navigation { display: flex; gap: .5rem; }
+.calendar-navigation .btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.calendar-navigation .calendar-arrow { width: 44px; padding: 0; font-size: 1.5rem; }
+.calendar-filters { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.4fr) minmax(0,1.2fr) auto; align-items: end; gap: 1rem; padding: 1.5rem 0; }
+.calendar-filters > div { min-width: 0; }
+.calendar-filters .form-label { color: #526071; font-size: .85rem; }
+.calendar-filters .btn { min-height: 44px; }
+.calendar-reset { grid-column: 1 / -1; font-size: .9rem; width: fit-content; padding: .25rem 0; }
+.calendar-weekdays, .calendar-week { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); }
+.calendar-weekdays { color: #626e7d; font-size: .8rem; text-align: right; border-bottom: 1px solid var(--crm-border); }
+.calendar-weekdays span { padding: .5rem; }
+.calendar-day { min-width: 0; min-height: 6.5rem; padding: .45rem; border-bottom: 1px solid #e6ebf1; border-right: 1px solid #e6ebf1; }
+.calendar-day:last-child { border-right: 0; }
+.calendar-day--outside { background: #fafbfc; color: #8c96a4; }
+.calendar-day > time { display: flex; align-items: center; justify-content: center; margin: 0 0 .5rem auto; width: 28px; height: 28px; font-size: .8rem; border-radius: 50%; }
+.calendar-day--today > time { color: #fff; background: var(--crm-accent); font-weight: 600; }
+.calendar-event { display: flex; flex-direction: column; gap: .2rem; min-width: 0; margin-bottom: .5rem; padding: .6rem; border-radius: .75rem; color: #273444; background: #f3f5f8; text-decoration: none; overflow-wrap: anywhere; font-size: .75rem; line-height: 1.4; transition: background .15s ease; }
+.calendar-event strong { font-size: .8rem; font-weight: 600; }
+.calendar-event > span { color: #526071; }
+.calendar-event .calendar-event__status { font-weight: 600; }
+.calendar-event--in_progress { background: #edf4ff; }
+.calendar-event--in_progress .calendar-event__status { color: #1956ad; }
+.calendar-event--completed .calendar-event__status { color: #187149; }
+.calendar-event--cancelled .calendar-event__status { color: #626e7d; }
+.calendar-event:hover { color: #273444; background: #e8edf4; }
+.calendar-event:focus-visible { outline: 2px solid var(--crm-accent); outline-offset: 2px; }
+.calendar-empty { margin: 0 0 1rem; padding: 1rem; color: #526071; background: #f6f8fb; border-radius: 1rem; }
+.calendar-agenda { display: none; }
+@media (max-width: 1199.98px) {
+    .calendar-month-grid { display: none; }
+    .calendar-agenda { display: block; }
+    .calendar-agenda-day + .calendar-agenda-day { margin-top: 1.5rem; }
+    .calendar-agenda-day h3 { font-size: .95rem; color: #526071; margin-bottom: .75rem; }
+    .calendar-agenda-day [aria-current="date"] { color: var(--crm-accent); }
+    .calendar-agenda .calendar-event { padding: 1rem; font-size: .85rem; gap: .35rem; }
+    .calendar-agenda .calendar-event strong { font-size: 1rem; }
+}
+@media (max-width: 767.98px) {
+    .calendar-workspace { padding: 1rem; border-radius: 1.25rem; }
+    .calendar-toolbar { align-items: flex-start; }
+    .calendar-toolbar h2 { width: 100%; }
+    .calendar-filters { grid-template-columns: minmax(0,1fr); gap: .85rem; }
+    .calendar-filters input, .calendar-filters select { font-size: 16px; max-width: 100%; min-width: 0; }
+    .calendar-filters .btn { width: 100%; }
+}
