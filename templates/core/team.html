@@ -1,44 +1,31 @@
 {% extends "base.html" %}
-
 {% block title %}Пользователи и роли | CRM{% endblock %}
-
 {% block content %}
-<div class="page-header">
-    <div>
-        <h1 class="h2 mb-1">Пользователи и роли</h1>
-        <p class="text-secondary mb-0">Sales Manager, Project Manager, Admin, Finance и ограничения по доступу.</p>
+<header class="page-header workspace-page-header">
+    <div class="workspace-page-header__content">
+        <svg class="workspace-page-header__icon" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="10" r="4"/><path d="M3 27v-3a9 9 0 0 1 18 0v3M22 6a4 4 0 0 1 0 8M25 18a7 7 0 0 1 4 6v3"/></svg>
+        <div><h1>Пользователи и роли</h1><p>Сотрудники, учётные записи и права доступа.</p></div>
     </div>
-    <a href="/admin/core/teammemberprofile/add/" class="btn btn-primary">Добавить профиль</a>
-</div>
-
-<div class="card border-0 shadow-sm">
-    <div class="table-responsive">
-        <table class="table align-middle mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>Пользователь</th>
-                    <th>Роль</th>
-                    <th>Финансы</th>
-                    <th>Клиенты</th>
-                    <th>Аналитика</th>
-                    <th>Система</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for profile in profiles %}
-                    <tr>
-                        <td class="fw-semibold">{{ profile.user.get_username }}</td>
-                        <td>{{ profile.get_role_display }}</td>
-                        <td>{{ profile.can_view_finance|yesno:"Да,Нет" }}</td>
-                        <td>{{ profile.can_view_clients|yesno:"Да,Нет" }}</td>
-                        <td>{{ profile.can_view_analytics|yesno:"Да,Нет" }}</td>
-                        <td>{{ profile.can_manage_system|yesno:"Да,Нет" }}</td>
-                    </tr>
-                {% empty %}
-                    <tr><td colspan="6" class="text-center text-secondary py-4">Профили сотрудников пока не созданы.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
+    {% if add_user_url %}<a href="{{ add_user_url }}" class="btn btn-primary">Добавить пользователя</a>{% endif %}
+</header>
+<form method="get" class="team-filters">
+    <div><label for="team-search" class="form-label">Поиск</label><input id="team-search" type="search" name="q" value="{{ team_search }}" class="form-control" placeholder="Имя, логин или email"></div>
+    <div><label for="team-role" class="form-label">Роль</label><select id="team-role" name="role" class="form-select"><option value="">Все роли</option>{% for value, label in team_roles %}<option value="{{ value }}"{% if team_role == value %} selected{% endif %}>{{ label }}</option>{% endfor %}<option value="without_profile"{% if team_role == 'without_profile' %} selected{% endif %}>Без CRM-профиля</option></select></div>
+    <div><label for="team-activity" class="form-label">Учётная запись</label><select id="team-activity" name="activity" class="form-select"><option value="">Все записи</option><option value="active"{% if team_activity == 'active' %} selected{% endif %}>Активные</option><option value="inactive"{% if team_activity == 'inactive' %} selected{% endif %}>Отключённые</option></select></div>
+    <button type="submit" class="btn btn-primary">Показать</button>
+    {% if team_filters_active %}<a href="{% url 'core:team' %}" class="team-reset">Сбросить фильтры</a>{% endif %}
+</form>
+<p class="team-explanation">Роль обозначает обязанности сотрудника. Доступ задаётся отдельно в правах CRM. Данные и права редактируются в админке.</p>
+<section class="team-directory" aria-label="Сотрудники">
+    {% for row in team_rows %}<article class="team-member" aria-labelledby="team-member-{{ row.user.pk }}">
+        <div class="team-member__identity"><h2 id="team-member-{{ row.user.pk }}">{{ row.user.get_full_name|default:row.user.get_username }}{% if row.user.pk == request.user.pk %}<span class="team-member__you">Вы</span>{% endif %}</h2>{% if row.user.get_full_name %}<span>{{ row.user.get_username }}</span>{% endif %}{% if row.user.email %}<span>{{ row.user.email }}</span>{% endif %}</div>
+        <div class="team-member__state"><span class="team-member__role">{{ row.role_label }}</span><span class="team-member__activity{% if not row.user.is_active %} team-member__activity--inactive{% endif %}">{% if row.user.is_active %}Активен{% else %}Отключён{% endif %}</span></div>
+        <div class="team-member__access">
+            {% if row.profile %}<details class="team-rights"><summary>Права CRM: {{ row.rights_count }} из 7</summary><ul>{% for right in row.rights %}<li><span>{{ right.label }}</span><strong{% if not right.allowed %} class="team-rights__denied"{% endif %}>{{ right.allowed|yesno:"Да,Нет" }}</strong></li>{% endfor %}</ul>{% if not row.user.is_active %}<p>Учётная запись отключена. Указанные права не действуют.</p>{% endif %}{% if row.edit_profile_url %}<a href="{{ row.edit_profile_url }}">Изменить права в админке</a>{% endif %}</details>
+            {% else %}<p class="team-member__missing">Права CRM не настроены.</p>{% if row.add_profile_url %}<a href="{{ row.add_profile_url }}">Добавить CRM-профиль</a>{% endif %}{% endif %}
+        </div>
+        {% if row.edit_user_url %}<a href="{{ row.edit_user_url }}" class="team-member__edit">Изменить в админке <span aria-hidden="true">↗</span></a>{% endif %}
+    </article>{% empty %}<div class="team-empty"><h2>Пользователи не найдены</h2><p>{% if team_filters_active %}Измените поиск или фильтры.{% else %}Здесь появятся учётные записи сотрудников.{% endif %}</p></div>{% endfor %}
+</section>
+{% if is_paginated %}<nav class="client-pagination" aria-label="Страницы списка пользователей">{% if page_obj.has_previous %}<a class="btn btn-outline-secondary" href="?{{ pagination_query }}&amp;page={{ page_obj.previous_page_number }}">Назад</a>{% endif %}<span>Страница {{ page_obj.number }} из {{ paginator.num_pages }}</span>{% if page_obj.has_next %}<a class="btn btn-outline-secondary" href="?{{ pagination_query }}&amp;page={{ page_obj.next_page_number }}">Далее</a>{% endif %}</nav>{% endif %}
 {% endblock %}

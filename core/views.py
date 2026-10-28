@@ -1589,12 +1589,69 @@ class AnalyticsView(AnalyticsAccessMixin, TemplateView):
 
 
 class TeamView(SystemAccessMixin, ListView):
-    """Отображает пользователей CRM, роли и флаги доступа."""
+    """Список учётных записей с CRM-профилями и явными правами."""
 
-    model = TeamMemberProfile
+    model = User
     template_name = "core/team.html"
-    context_object_name = "profiles"
-    queryset = TeamMemberProfile.objects.select_related("user")
+    context_object_name = "team_users"
+    paginate_by = 20
+    role_labels = {
+        "sales_manager": "Менеджер по продажам", "project_manager": "Менеджер проектов",
+        "admin": "Администратор", "finance": "Финансист",
+    }
+    permission_labels = (
+        ("can_view_finance", "Просмотр финансов"), ("can_view_clients", "Просмотр клиентов"),
+        ("can_view_analytics", "Просмотр аналитики"), ("can_manage_leads", "Управление лидами"),
+        ("can_manage_clients", "Управление клиентами"), ("can_manage_events", "Управление мероприятиями"),
+        ("can_manage_system", "Управление системой"),
+    )
+
+    def get_queryset(self):
+        self.search = self.request.GET.get("q", "").strip()
+        self.role = self.request.GET.get("role", "")
+        if self.role not in {*self.role_labels, "without_profile"}:
+            self.role = ""
+        self.activity = self.request.GET.get("activity", "")
+        if self.activity not in {"active", "inactive"}:
+            self.activity = ""
+        users = User.objects.select_related("crm_profile").order_by("username", "pk")
+        for word in self.search.split():
+            users = users.filter(Q(username__icontains=word) | Q(first_name__icontains=word)
+                                 | Q(last_name__icontains=word) | Q(email__icontains=word))
+        if self.role == "without_profile":
+            users = users.filter(crm_profile__isnull=True)
+        elif self.role:
+            users = users.filter(crm_profile__role=self.role)
+        if self.activity:
+            users = users.filter(is_active=self.activity == "active")
+        return users
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        actor = self.request.user
+        can_edit_users = actor.is_staff and actor.has_perm("auth.change_user")
+        can_edit_profiles = actor.is_staff and actor.has_perm("core.change_teammemberprofile")
+        can_add_profiles = actor.is_staff and actor.has_perm("core.add_teammemberprofile")
+        rows = []
+        for user in context["team_users"]:
+            profile = getattr(user, "crm_profile", None)
+            rights = [{"label": label, "allowed": bool(profile and getattr(profile, field))}
+                      for field, label in self.permission_labels]
+            rows.append({
+                "user": user, "profile": profile,
+                "role_label": self.role_labels.get(profile.role, profile.get_role_display()) if profile else "Без CRM-профиля",
+                "rights": rights, "rights_count": sum(right["allowed"] for right in rights),
+                "edit_user_url": reverse("admin:auth_user_change", args=[user.pk]) if can_edit_users else "",
+                "edit_profile_url": reverse("admin:core_teammemberprofile_change", args=[profile.pk]) if profile and can_edit_profiles else "",
+                "add_profile_url": reverse("admin:core_teammemberprofile_add") + "?" + urlencode({"user": user.pk}) if not profile and can_add_profiles else "",
+            })
+        params = {key: value for key, value in (("q", self.search), ("role", self.role), ("activity", self.activity)) if value}
+        context.update(
+            team_rows=rows, team_search=self.search, team_role=self.role, team_activity=self.activity,
+            team_roles=self.role_labels.items(), team_filters_active=bool(params), pagination_query=urlencode(params),
+            add_user_url=reverse("admin:auth_user_add") if actor.is_staff and actor.has_perm("auth.add_user") else "",
+        )
+        return context
 
 
 class CRUDContextMixin(CRMLoginRequiredMixin):
