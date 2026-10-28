@@ -9,7 +9,7 @@
         <h1 class="h2 mb-1">Подрядчики</h1>
         <p class="text-secondary mb-0">Подберите исполнителя по специализации, формату и рабочим показателям.</p>
     </div>
-    {% if crm_permissions.can_manage_system %}<a href="{% url 'core:vendor_create' %}" class="btn btn-primary">Добавить подрядчика</a>{% endif %}
+    {% if crm_permissions.can_manage_system %}<a href="{% url 'core:vendor_create' %}?{{ vendor_return_query }}" class="btn btn-primary">Добавить подрядчика</a>{% endif %}
 </div>
 
 <form method="get" class="vendor-filter-panel mb-4">
@@ -17,7 +17,7 @@
         <div class="vendor-filter-field vendor-filter-field--search">
             <label for="vendor-search" class="form-label">Поиск</label>
             <div class="crm-search-autocomplete" data-autocomplete-url="{% url 'core:vendor_autocomplete' %}">
-                <input id="vendor-search" type="search" name="q" value="{{ vendor_search_query }}" class="form-control" placeholder="Имя, контакт, регион" autocomplete="off">
+                <input id="vendor-search" type="search" name="q" maxlength="200" value="{{ vendor_search_query }}" class="form-control" placeholder="Имя, контакт, регион" autocomplete="off">
                 <div class="crm-suggestions" role="listbox" hidden></div>
             </div>
         </div>
@@ -30,36 +30,41 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="vendor-filter-field">
-            <label for="vendor-format" class="form-label">Формат</label>
-            <select id="vendor-format" name="event_format" class="form-select">
-                <option value="">Все форматы</option>
-                {% for format in vendor_formats %}
-                    <option value="{{ format.pk }}"{% if vendor_format_filter == format.pk|stringformat:"s" %} selected{% endif %}>{{ format.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="vendor-filter-field">
-            <label for="vendor-blacklist" class="form-label">Статус</label>
-            <select id="vendor-blacklist" name="blacklisted" class="form-select">
-                <option value="">Все статусы</option>
-                <option value="no"{% if vendor_blacklist_filter == "no" %} selected{% endif %}>Активные</option>
-                <option value="yes"{% if vendor_blacklist_filter == "yes" %} selected{% endif %}>Чёрный список</option>
-            </select>
-        </div>
-        <div class="vendor-filter-field">
-            <label for="vendor-sort" class="form-label">Сортировка</label>
-            <select id="vendor-sort" name="sort" class="form-select">
-                <option value="name"{% if vendor_sort == "name" %} selected{% endif %}>По названию</option>
-                <option value="rating"{% if vendor_sort == "rating" %} selected{% endif %}>Сначала высокий рейтинг</option>
-                <option value="reliability"{% if vendor_sort == "reliability" %} selected{% endif %}>Сначала надёжные</option>
-                {% if crm_permissions.can_view_finance %}<option value="cost"{% if vendor_sort == "cost" %} selected{% endif %}>Сначала доступные</option>{% endif %}
-            </select>
-        </div>
+        <details class="vendor-filter-extra" open data-active="{{ vendor_extra_filters_active|yesno:'true,false' }}">
+            <summary>Дополнительные фильтры{% if vendor_extra_filters_active %}<span class="vendor-filter-extra__active"> · Применены</span>{% endif %}</summary>
+            <div class="vendor-filter-extra__grid">
+                <div class="vendor-filter-field">
+                    <label for="vendor-format" class="form-label">Формат</label>
+                    <select id="vendor-format" name="event_format" class="form-select">
+                        <option value="">Все форматы</option>
+                        {% for format in vendor_formats %}
+                            <option value="{{ format.pk }}"{% if vendor_format_filter == format.pk|stringformat:"s" %} selected{% endif %}>{{ format.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="vendor-filter-field">
+                    <label for="vendor-blacklist" class="form-label">Статус</label>
+                    <select id="vendor-blacklist" name="blacklisted" class="form-select">
+                        <option value="">Все статусы</option>
+                        <option value="no"{% if vendor_blacklist_filter == "no" %} selected{% endif %}>Активные</option>
+                        <option value="yes"{% if vendor_blacklist_filter == "yes" %} selected{% endif %}>Чёрный список</option>
+                    </select>
+                </div>
+                <div class="vendor-filter-field">
+                    <label for="vendor-sort" class="form-label">Сортировка</label>
+                    <select id="vendor-sort" name="sort" class="form-select">
+                        <option value="name"{% if vendor_sort == "name" %} selected{% endif %}>По названию</option>
+                        <option value="rating"{% if vendor_sort == "rating" %} selected{% endif %}>Сначала высокий рейтинг</option>
+                        <option value="reliability"{% if vendor_sort == "reliability" %} selected{% endif %}>Сначала надёжные</option>
+                        {% if crm_permissions.can_view_finance %}<option value="cost"{% if vendor_sort == "cost" %} selected{% endif %}>Сначала доступные</option>{% endif %}
+                    </select>
+                </div>
+            </div>
+        </details>
         <button type="submit" class="btn btn-primary vendor-filter-submit">Показать</button>
     </div>
 
-    {% if vendor_search_query or vendor_blacklist_filter or vendor_format_filter or vendor_role_filter %}
+    {% if vendor_search_query or vendor_blacklist_filter or vendor_format_filter or vendor_role_filter or vendor_sort != 'name' %}
         <div class="vendor-active-filters" aria-label="Активные фильтры">
             <span class="vendor-active-filters__label">Выбрано:</span>
             {% if vendor_search_query %}<span class="event-chip event-chip--soft">«{{ vendor_search_query }}»</span>{% endif %}
@@ -67,6 +72,7 @@
             {% if vendor_selected_format %}<span class="event-chip event-chip--soft">{{ vendor_selected_format.name }}</span>{% endif %}
             {% if vendor_blacklist_filter == "no" %}<span class="event-chip event-chip--success">Активные</span>{% endif %}
             {% if vendor_blacklist_filter == "yes" %}<span class="event-chip event-chip--danger">Чёрный список</span>{% endif %}
+            {% if vendor_sort != "name" %}<span class="event-chip event-chip--soft">{{ vendor_sort_label }}</span>{% endif %}
             <a href="{% url 'core:vendors' %}" class="vendor-filter-reset">Сбросить всё</a>
         </div>
     {% endif %}
@@ -91,10 +97,10 @@
 
     <div class="vendor-directory__list">
         {% for vendor in vendors %}
-            <article class="vendor-card" data-profile-url="{% url 'core:vendor_detail' vendor.pk %}" tabindex="0" aria-label="Открыть профиль подрядчика {{ vendor.name }}">
+            <article class="vendor-card" data-profile-url="{% url 'core:vendor_detail' vendor.pk %}?{{ vendor_return_query }}" tabindex="0" aria-label="Открыть профиль подрядчика {{ vendor.name }}">
                 <div class="vendor-card__identity">
                     <span class="vendor-card__mobile-label">Подрядчик</span>
-                    <a href="{% url 'core:vendor_detail' vendor.pk %}" class="vendor-card__name">{{ vendor.name }}</a>
+                    <a href="{% url 'core:vendor_detail' vendor.pk %}?{{ vendor_return_query }}" class="vendor-card__name">{{ vendor.name }}</a>
                     {% if vendor.contact_person %}
                         <span class="vendor-card__contact">{{ vendor.contact_person }}{% if vendor.contact_position %} · {{ vendor.contact_position }}{% endif %}</span>
                     {% elif vendor.contact_summary %}
@@ -155,13 +161,13 @@
                         <details class="item-action-menu">
                             <summary aria-label="Действия с подрядчиком {{ vendor.name }}"><span aria-hidden="true">•••</span></summary>
                             <div class="item-action-menu__popover">
-                                <a href="{% url 'core:vendor_detail' vendor.pk %}">Открыть профиль</a>
-                                <a href="{% url 'core:vendor_update' vendor.pk %}">Изменить</a>
-                                <a href="{% url 'core:vendor_delete' vendor.pk %}" class="item-action-menu__danger">Удалить</a>
+                                <a href="{% url 'core:vendor_detail' vendor.pk %}?{{ vendor_return_query }}">Открыть профиль</a>
+                                <a href="{% url 'core:vendor_update' vendor.pk %}?{{ vendor_return_query }}">Изменить</a>
+                                <a href="{% url 'core:vendor_delete' vendor.pk %}?{{ vendor_return_query }}" class="item-action-menu__danger">Удалить</a>
                             </div>
                         </details>
                     {% else %}
-                        <a href="{% url 'core:vendor_detail' vendor.pk %}" class="vendor-card__open" aria-label="Открыть профиль {{ vendor.name }}">→</a>
+                        <a href="{% url 'core:vendor_detail' vendor.pk %}?{{ vendor_return_query }}" class="vendor-card__open" aria-label="Открыть профиль {{ vendor.name }}">→</a>
                     {% endif %}
                 </div>
             </article>
@@ -251,4 +257,5 @@
 </script>
 {% include "core/partials/item_action_menus.html" %}
 {% include "core/partials/clickable_profile_cards.html" %}
+<script src="{% static_with_version 'js/vendor_directory.js' %}" defer></script>
 {% endblock %}

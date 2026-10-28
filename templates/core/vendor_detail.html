@@ -27,9 +27,9 @@
                 </p>
             </div>
             <div class="event-actions align-self-start">
-                <a href="{% url 'core:vendors' %}" class="btn btn-outline-secondary">К списку</a>
+                <a href="{{ vendor_return_url }}" class="btn btn-outline-secondary">К списку</a>
                 {% if crm_permissions.can_manage_system %}
-                    <a href="{% url 'core:vendor_update' vendor.pk %}" class="btn btn-primary">Редактировать</a>
+                    <a href="{% url 'core:vendor_update' vendor.pk %}?{{ vendor_return_query }}" class="btn btn-primary">Редактировать</a>
                 {% endif %}
             </div>
         </div>

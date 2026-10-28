@@ -1202,6 +1202,51 @@ class EventFormatListView(CRMLoginRequiredMixin, ListView):
         return context
 
 
+VENDOR_SORTS = {
+    "name": "По названию", "rating": "Сначала высокий рейтинг",
+    "reliability": "Сначала надёжные", "cost": "Сначала доступные",
+}
+
+
+def vendor_list_params(query):
+    """Оставляет только поддерживаемые параметры каталога подрядчиков."""
+    params = {}
+    search = query.get("q", "").strip()[:200]
+    if search:
+        params["q"] = search
+    for key in ("role", "event_format"):
+        value = query.get(key, "")
+        if value.isascii() and value.isdecimal() and len(value) <= 18 and int(value) > 0:
+            params[key] = str(int(value))
+    if query.get("blacklisted") in {"yes", "no"}:
+        params["blacklisted"] = query["blacklisted"]
+    sort = query.get("sort", "name")
+    if sort in VENDOR_SORTS and sort != "name":
+        params["sort"] = sort
+    return params
+
+
+def vendor_list_url(params):
+    query = urlencode(params)
+    return reverse("core:vendors") + (f"?{query}" if query else "")
+
+
+def safe_vendor_return_url(value):
+    """Разрешает возврат только в локальный каталог подрядчиков."""
+    try:
+        target = urlsplit(value)
+    except ValueError:
+        return None
+    if target.scheme or target.netloc or target.path != reverse("core:vendors"):
+        return None
+    query = {key: values[-1] for key, values in parse_qs(target.query).items()}
+    return vendor_list_url(vendor_list_params(query))
+
+
+def vendor_profile_url(pk, return_url):
+    return reverse("core:vendor_detail", args=[pk]) + "?" + urlencode({"return_to": return_url})
+
+
 class VendorListView(CRMLoginRequiredMixin, ListView):
     """Отображает справочник подрядчиков с поиском и фильтрами."""
 
@@ -1213,11 +1258,12 @@ class VendorListView(CRMLoginRequiredMixin, ListView):
         """Фильтрует и сортирует подрядчиков для рабочего каталога."""
 
         queryset = Vendor.objects.prefetch_related("event_formats", "role_categories")
-        search_query = self.request.GET.get("q", "").strip()
-        blacklist_filter = self.request.GET.get("blacklisted", "")
-        format_filter = self.request.GET.get("event_format", "")
-        role_filter = self.request.GET.get("role", "")
-        requested_sort = self.request.GET.get("sort", "name")
+        self.params = vendor_list_params(self.request.GET)
+        search_query = self.params.get("q", "")
+        blacklist_filter = self.params.get("blacklisted", "")
+        format_filter = self.params.get("event_format", "")
+        role_filter = self.params.get("role", "")
+        requested_sort = self.params.get("sort", "name")
 
         if blacklist_filter in {"yes", "no"}:
             queryset = queryset.filter(blacklisted=blacklist_filter == "yes")
@@ -1238,6 +1284,7 @@ class VendorListView(CRMLoginRequiredMixin, ListView):
             can_view_finance = False
         if requested_sort == "cost" and not can_view_finance:
             requested_sort = "name"
+            self.params.pop("sort", None)
         self.vendor_sort = requested_sort if requested_sort in ordering else "name"
         queryset = queryset.order_by(*ordering[self.vendor_sort])
         if search_query:
@@ -1249,11 +1296,17 @@ class VendorListView(CRMLoginRequiredMixin, ListView):
         """Передаёт в шаблон значения фильтров и доступные форматы."""
 
         context = super().get_context_data(**kwargs)
-        context["vendor_search_query"] = self.request.GET.get("q", "")
-        context["vendor_blacklist_filter"] = self.request.GET.get("blacklisted", "")
-        context["vendor_format_filter"] = self.request.GET.get("event_format", "")
-        context["vendor_role_filter"] = self.request.GET.get("role", "")
+        context["vendor_search_query"] = self.params.get("q", "")
+        context["vendor_blacklist_filter"] = self.params.get("blacklisted", "")
+        context["vendor_format_filter"] = self.params.get("event_format", "")
+        context["vendor_role_filter"] = self.params.get("role", "")
         context["vendor_sort"] = getattr(self, "vendor_sort", "name")
+        context["vendor_sort_label"] = VENDOR_SORTS[context["vendor_sort"]]
+        context["vendor_extra_filters_active"] = bool(
+            context["vendor_format_filter"] or context["vendor_blacklist_filter"] or context["vendor_sort"] != "name"
+        )
+        context["vendor_return_url"] = vendor_list_url(self.params)
+        context["vendor_return_query"] = urlencode({"return_to": context["vendor_return_url"]})
         context["vendor_formats"] = EventFormat.objects.order_by("name")
         context["vendor_roles"] = VendorRole.objects.filter(is_active=True).order_by("order", "name")
         context["vendor_selected_format"] = EventFormat.objects.filter(
@@ -1277,6 +1330,8 @@ class VendorDetailView(CRMLoginRequiredMixin, DetailView):
         """Собирает показатели и историю сотрудничества с учётом финансового доступа."""
 
         context = super().get_context_data(**kwargs)
+        context["vendor_return_url"] = safe_vendor_return_url(self.request.GET.get("return_to", "")) or reverse("core:vendors")
+        context["vendor_return_query"] = urlencode({"return_to": context["vendor_return_url"]})
         assignments = self.object.event_assignments.select_related(
             "event",
             "event__client",
@@ -2352,7 +2407,32 @@ class EventFormatDeleteView(SystemAccessMixin, DeleteView):
     success_url = reverse_lazy("core:formats")
 
 
-class VendorCreateView(SystemAccessMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+class VendorReturnMixin:
+    """Сохраняет фильтры каталога и возвращает из формы в профиль."""
+
+    return_to_profile = True
+
+    def get_vendor_list_url(self):
+        value = self.request.POST.get("return_to") or self.request.GET.get("return_to", "")
+        return safe_vendor_return_url(value) or reverse("core:vendors")
+
+    def get_success_url(self):
+        if self.return_to_profile:
+            return vendor_profile_url(self.object.pk, self.get_vendor_list_url())
+        return self.get_vendor_list_url()
+
+    def get_cancel_url(self):
+        if getattr(self, "object", None):
+            return vendor_profile_url(self.object.pk, self.get_vendor_list_url())
+        return self.get_vendor_list_url()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(return_to=self.get_vendor_list_url(), cancel_url=self.get_cancel_url())
+        return context
+
+
+class VendorCreateView(VendorReturnMixin, SystemAccessMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Создает подрядчика в справочнике."""
 
     model = Vendor
@@ -2365,7 +2445,7 @@ class VendorCreateView(SystemAccessMixin, CRUDContextMixin, SuccessMessageMixin,
     cancel_url = reverse_lazy("core:vendors")
 
 
-class VendorUpdateView(SystemAccessMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class VendorUpdateView(VendorReturnMixin, SystemAccessMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует подрядчика в справочнике."""
 
     model = Vendor
@@ -2378,12 +2458,13 @@ class VendorUpdateView(SystemAccessMixin, CRUDContextMixin, SuccessMessageMixin,
     cancel_url = reverse_lazy("core:vendors")
 
 
-class VendorDeleteView(SystemAccessMixin, DeleteView):
+class VendorDeleteView(VendorReturnMixin, SystemAccessMixin, DeleteView):
     """Удаляет подрядчика после подтверждения."""
 
     model = Vendor
     template_name = "core/object_confirm_delete.html"
     success_url = reverse_lazy("core:vendors")
+    return_to_profile = False
 
 
 class ServicePackageCreateView(SystemAccessMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):

@@ -1876,6 +1876,9 @@ a.lead-profile-contact:focus {
     gap: 0.85rem;
 }
 
+.vendor-filter-extra { grid-column: 3 / 6; }
+.vendor-filter-extra > summary { display: none; }
+.vendor-filter-extra__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem; }
 .vendor-filter-field {
     min-width: 0;
 }
@@ -3952,6 +3955,25 @@ a.lead-profile-contact:focus {
     .task-detail-summary > div + div { padding-top: 1rem; border-top: 1px solid #d5e1f3; }
     .task-detail-actions { width: 100%; }
     .task-detail-panel { padding: 1.1rem; }
+}
+
+/* Vendor filters: preserve the desktop layout and disclose secondary fields on phones. */
+@media (min-width: 768px) and (max-width: 1399.98px) {
+    .vendor-filter-extra { grid-column: 1 / -1; grid-row: 2; }
+    .vendor-filter-extra__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .vendor-filter-submit { grid-column: 2; grid-row: 2; align-self: end; }
+}
+@media (max-width: 767.98px) {
+    .vendor-filter-grid { display: flex; flex-direction: column; align-items: stretch; }
+    .vendor-directory__list { grid-template-columns: minmax(0, 1fr); }
+    .vendor-directory .vendor-card, .vendor-directory--financial .vendor-card { min-width: 0; grid-template-columns: minmax(0, 1fr); }
+    .vendor-filter-extra { order: 1; border-top: 1px solid var(--crm-border); }
+    .vendor-filter-extra > summary { display: list-item; padding: 0.85rem 0 0.2rem; min-height: 44px; color: #526071; font-size: 0.88rem; cursor: pointer; }
+    .vendor-filter-extra > summary:focus-visible { outline: 2px solid var(--crm-accent); outline-offset: 3px; }
+    .vendor-filter-extra__grid { grid-template-columns: minmax(0, 1fr); padding-top: 0.75rem; }
+    .vendor-filter-extra__active { color: var(--crm-accent); }
+    .vendor-filter-field .form-control, .vendor-filter-field .form-select { font-size: 1rem; min-height: 44px; }
+    .vendor-filter-submit { min-height: 44px; }
 }
 
 /* Event format directory: names and descriptions of event types. */
