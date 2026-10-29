@@ -1610,16 +1610,26 @@ class TeamView(SystemAccessMixin, ListView):
         if self.activity not in {"active", "inactive"}:
             self.activity = ""
         users = User.objects.select_related("crm_profile").order_by("username", "pk")
-        for word in self.search.split():
-            users = users.filter(Q(username__icontains=word) | Q(first_name__icontains=word)
-                                 | Q(last_name__icontains=word) | Q(email__icontains=word))
         if self.role == "without_profile":
             users = users.filter(crm_profile__isnull=True)
         elif self.role:
             users = users.filter(crm_profile__role=self.role)
         if self.activity:
             users = users.filter(is_active=self.activity == "active")
+        if self.search:
+            # SQLite LIKE не сопоставляет регистр кириллицы: сравниваем Unicode в Python.
+            words = self.search.casefold().split()
+            matches = [pk for pk, *values in users.values_list("pk", "username", "first_name", "last_name", "email")
+                       if all(any(word in value.casefold() for value in values) for word in words)]
+            users = users.filter(pk__in=matches)
         return users
+
+    def paginate_queryset(self, queryset, page_size):
+        """После смены роли последняя страница фильтра может исчезнуть."""
+        paginator = self.get_paginator(queryset, page_size, allow_empty_first_page=True)
+        number = self.request.GET.get(self.page_kwarg) or 1
+        page = paginator.get_page(paginator.num_pages if number == "last" else number)
+        return paginator, page, page.object_list, page.has_other_pages()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1638,13 +1648,14 @@ class TeamView(SystemAccessMixin, ListView):
             rows.append({
                 "user": user, "profile": profile,
                 "role_label": self.role_labels.get(profile.role, profile.get_role_display()) if profile else "Без CRM-профиля",
-                "rights": rights, "rights_count": sum(right["allowed"] for right in rights),
+                "rights": rights,
                 "edit_user_url": reverse("admin:auth_user_change", args=[user.pk]) if can_edit_users else "",
                 "access_url": reverse("core:team_access_update", args=[user.pk]) + "?" + urlencode({"return_to": return_url}),
             })
         context.update(
             team_rows=rows, team_search=self.search, team_role=self.role, team_activity=self.activity,
             team_roles=self.role_labels.items(), team_filters_active=bool(params), pagination_query=urlencode(params),
+            team_advanced_active=bool(self.role or self.activity),
             add_user_url=reverse("admin:auth_user_add") if actor.is_staff and actor.has_perm("auth.add_user") else "",
         )
         return context

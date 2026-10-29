@@ -4093,14 +4093,24 @@ a.lead-profile-contact:focus {
 }
 
 /* Team directory: account state and explicit CRM rights. */
-.team-filters { display: grid; grid-template-columns: minmax(0,1.5fr) minmax(0,1.3fr) minmax(0,1fr) auto; gap: 1rem; align-items: end; padding: 1.5rem; background: #fff; border: 1px solid var(--crm-border); border-radius: 1.5rem; }
-.team-filters > div { min-width: 0; }
+.team-filters { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1.5fr) auto; gap: 1rem; align-items: end; padding: 1.25rem 1.5rem; background: #fff; border: 1px solid var(--crm-border); border-radius: 1.5rem; }
+.team-filter-primary { min-width: 0; grid-column: 1; grid-row: 1; }
+.team-filters > .btn { grid-column: 3; grid-row: 1; }
+.team-filter-primary > div, .team-filter-extra__fields > div { min-width: 0; }
+.team-filter-extra { min-width: 0; grid-column: 2; grid-row: 1; }
+.team-filter-extra summary { padding: .5rem 0; min-height: 44px; cursor: pointer; color: #526071; font-size: .85rem; }
+.team-filter-extra summary > span { margin-left: .65rem; color: var(--crm-accent); font-size: .75rem; }
+.team-filter-extra__fields { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); gap: 1rem; }
+.team-filter-extra:not(.is-enhanced) > summary { display: none; }
+@media (min-width: 768px) {
+    .team-filter-extra > summary { display: none; }
+}
 .team-filters .form-label { color: #526071; font-size: .85rem; }
 .team-filters .btn { min-height: 44px; }
 .team-reset { grid-column: 1 / -1; width: fit-content; font-size: .9rem; }
-.team-explanation { margin: 1rem 0 1.5rem; color: #626e7d; font-size: .85rem; line-height: 1.6; }
+.team-explanation { margin: .75rem 0 1rem; color: #626e7d; font-size: .85rem; line-height: 1.6; }
 .team-directory { display: grid; gap: .85rem; }
-.team-member { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,1fr) minmax(0,1.3fr); align-items: start; gap: 1rem 1.5rem; padding: 1.5rem; background: #fff; border: 1px solid var(--crm-border); border-radius: 1.25rem; box-shadow: 0 4px 16px rgba(15,23,42,.025); overflow-wrap: anywhere; }
+.team-member { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr) auto; align-items: start; gap: 1rem; padding: 1.15rem 1.5rem; background: #fff; border: 1px solid var(--crm-border); border-radius: 1.25rem; box-shadow: 0 4px 16px rgba(15,23,42,.025); overflow-wrap: anywhere; }
 .team-member__identity, .team-member__state { display: flex; flex-direction: column; align-items: flex-start; gap: .4rem; min-width: 0; }
 .team-member h2 { font-size: 1.05rem; font-weight: 650; margin: 0; line-height: 1.5; }
 .team-member__identity > span { color: #626e7d; font-size: .85rem; }
@@ -4121,9 +4131,14 @@ a.lead-profile-contact:focus {
 .team-empty h2 { font-size: 1.1rem; }
 .team-empty p { color: #626e7d; margin: 0; }
 @media (max-width: 767.98px) {
-    .team-filters { grid-template-columns: minmax(0,1fr); padding: 1.25rem; }
+    .team-filters { grid-template-columns: minmax(0,1fr) auto; padding: 1rem 1.25rem; gap: .5rem .65rem; }
+    .team-filters > .btn { grid-column: 2; }
+    .team-filter-extra { grid-column: 1 / -1; grid-row: 2; }
+    .team-filter-extra__fields { grid-template-columns: minmax(0,1fr); padding: .5rem 0; }
+    .team-explanation { font-size: .8rem; margin: .75rem 0; }
     .team-filters .form-control, .team-filters .form-select { font-size: 16px; }
     .team-member { grid-template-columns: minmax(0,1fr); padding: 1.25rem; }
+    .team-member__actions { grid-column: 1 / -1; }
     .team-rights summary { display: flex; align-items: center; min-height: 44px; }
     .team-rights summary::before { content: '▸'; margin-right: .5rem; }
     .team-rights[open] summary::before { content: '▾'; }
@@ -4131,7 +4146,7 @@ a.lead-profile-contact:focus {
 }
 
 /* Native CRM role and access settings. */
-.team-member__actions { grid-column: 1 / -1; display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 1.25rem; }
+.team-member__actions { display: flex; align-items: stretch; flex-direction: column; gap: .5rem; }
 .team-member__actions .btn { min-height: 44px; margin: 0; }
 .team-access-form { max-width: 48rem; }
 .team-access-notice { padding: 1rem; color: #526071; border-radius: 1rem; background: #edf4ff; }
