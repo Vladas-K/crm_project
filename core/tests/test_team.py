@@ -52,13 +52,18 @@ def test_team_admin_links_require_staff_and_relevant_permissions(client, team_op
     TeamMemberProfile.objects.create(user=user, role="finance")
     permissions = Permission.objects.filter(codename__in=["change_user", "add_user", "change_teammemberprofile", "add_teammemberprofile"])
     team_operator.user_permissions.set(permissions)
-    assert not client.get(reverse("core:team")).context["add_user_url"]
+    no_staff = client.get(reverse("core:team"))
+    assert not no_staff.context["add_user_url"]
+    assert "Другие действия с пользователем target" not in no_staff.content.decode()
     team_operator.is_staff = True
     team_operator.save()
     response = client.get(reverse("core:team"))
     row = next(row for row in response.context["team_rows"] if row["user"].pk == user.pk)
     assert response.context["add_user_url"] == reverse("admin:auth_user_add")
     assert row["edit_user_url"] == reverse("admin:auth_user_change", args=[user.pk])
+    html = response.content.decode()
+    assert "Другие действия с пользователем target" in html
+    assert row["edit_user_url"] in html
     assert row["access_url"].startswith(reverse("core:team_access_update", args=[user.pk]))
     bare = django_user_model.objects.create_user(username="bare")
     rows = client.get(reverse("core:team")).context["team_rows"]

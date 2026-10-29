@@ -4110,15 +4110,21 @@ a.lead-profile-contact:focus {
 .team-reset { grid-column: 1 / -1; width: fit-content; font-size: .9rem; }
 .team-explanation { margin: .75rem 0 1rem; color: #626e7d; font-size: .85rem; line-height: 1.6; }
 .team-directory { display: grid; gap: .85rem; }
-.team-member { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr) auto; align-items: start; gap: 1rem; padding: 1.15rem 1.5rem; background: #fff; border: 1px solid var(--crm-border); border-radius: 1.25rem; box-shadow: 0 4px 16px rgba(15,23,42,.025); overflow-wrap: anywhere; }
+.team-member { position: relative; display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr) auto; align-items: start; gap: .85rem; padding: 1rem 1.25rem; background: #fff; border: 1px solid var(--crm-border); border-radius: 1.25rem; box-shadow: 0 4px 16px rgba(15,23,42,.025); overflow-wrap: anywhere; }
 .team-member__identity, .team-member__state { display: flex; flex-direction: column; align-items: flex-start; gap: .4rem; min-width: 0; }
 .team-member h2 { font-size: 1.05rem; font-weight: 650; margin: 0; line-height: 1.5; }
 .team-member__identity > span { color: #626e7d; font-size: .85rem; }
+.team-member__identity > .team-member__login { color: #6c7785; font-size: .78rem; }
+.team-member:has(.item-action-menu[open]) { z-index: 3; }
 .team-member__you { margin-left: .5rem; color: #626e7d; font-size: .75rem; font-weight: 400; }
 .team-member__role { color: #384456; font-size: .9rem; }
 .team-member__activity { display: inline-flex; padding: .25rem .6rem; border-radius: 999px; font-size: .75rem; background: #edf7f1; color: #187149; }
 .team-member__activity--inactive { background: #f1f3f6; color: #626e7d; }
-.team-rights summary { padding: .2rem 0; color: #384456; font-size: .9rem; cursor: pointer; }
+.team-rights summary { display: flex; align-items: center; gap: .4rem; list-style: none; padding: .2rem 0; color: #384456; font-size: .9rem; cursor: pointer; }
+.team-rights summary::-webkit-details-marker { display: none; }
+.team-rights__chevron { flex-shrink: 0; transition: transform .16s ease; }
+.team-rights[open] .team-rights__chevron { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .team-rights__chevron { transition: none; } }
 .team-rights summary:focus-visible { outline: 2px solid var(--crm-accent); outline-offset: 3px; border-radius: .25rem; }
 .team-rights ul { margin: .65rem 0 0; padding: 0; list-style: none; }
 .team-rights li { display: flex; justify-content: space-between; gap: .7rem; padding: .45rem 0; border-bottom: 1px solid #edf0f4; color: #526071; font-size: .8rem; }
@@ -4140,13 +4146,13 @@ a.lead-profile-contact:focus {
     .team-member { grid-template-columns: minmax(0,1fr); padding: 1.25rem; }
     .team-member__actions { grid-column: 1 / -1; }
     .team-rights summary { display: flex; align-items: center; min-height: 44px; }
-    .team-rights summary::before { content: '▸'; margin-right: .5rem; }
-    .team-rights[open] summary::before { content: '▾'; }
     .team-member a { min-height: 44px; padding: .6rem 0; }
 }
 
 /* Native CRM role and access settings. */
-.team-member__actions { display: flex; align-items: stretch; flex-direction: column; gap: .5rem; }
+.team-member__actions { display: flex; align-items: center; gap: .5rem; }
+.team-member__actions .item-action-menu { flex-shrink: 0; }
+.team-member__actions .item-action-menu a { margin-top: 0; padding: .55rem .65rem; }
 .team-member__actions .btn { min-height: 44px; margin: 0; }
 .team-access-form { max-width: 48rem; }
 .team-access-notice { padding: 1rem; color: #526071; border-radius: 1rem; background: #edf4ff; }
@@ -4163,5 +4169,7 @@ a.lead-profile-contact:focus {
 @media (max-width: 767.98px) {
     .team-access-form .form-select { font-size: 16px; }
     .team-access-form .event-form-actions { flex-direction: column-reverse; }
-    .team-access-form .event-form-actions .btn, .team-member__actions .btn { width: 100%; }
+    .team-access-form .event-form-actions .btn { width: 100%; }
+    .team-member__actions .btn { flex: 1; min-width: 0; }
+    .team-member__actions .item-action-menu > summary { width: 44px; height: 44px; }
 }
