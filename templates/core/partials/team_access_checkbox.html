@@ -1,4 +1,4 @@
 <div class="team-access-option">
-    <label for="{{ field.id_for_label }}">{{ field }}<span><strong>{{ field.label }}</strong>{% if field.help_text %}<span class="event-form-field__help" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</span>{% endif %}</span></label>
+    <label for="{{ field.id_for_label }}">{{ field }}<span><strong id="{{ field.auto_id }}_label">{{ field.label }}</strong>{% if field.help_text %}<span class="event-form-field__help" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</span>{% endif %}</span></label>
     {% if field.errors %}<div id="{{ field.auto_id }}_error">{% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}</div>{% endif %}
 </div>

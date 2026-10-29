@@ -88,6 +88,8 @@ class TeamMemberAccessForm(BootstrapModelForm):
             for name, _ in TEAM_PERMISSION_LABELS:
                 self.initial[name] = False
         for field in self:
+            if isinstance(field.field.widget, forms.CheckboxInput):
+                field.field.widget.attrs["aria-labelledby"] = f"{field.auto_id}_label"
             described_by = [f"{field.auto_id}_helptext"] if field.help_text else []
             if field.errors:
                 described_by.append(f"{field.auto_id}_error")

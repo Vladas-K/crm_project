@@ -1642,7 +1642,6 @@ class TeamView(SystemAccessMixin, ListView):
                 "edit_user_url": reverse("admin:auth_user_change", args=[user.pk]) if can_edit_users else "",
                 "access_url": reverse("core:team_access_update", args=[user.pk]) + "?" + urlencode({"return_to": return_url}),
             })
-        params = {key: value for key, value in (("q", self.search), ("role", self.role), ("activity", self.activity)) if value}
         context.update(
             team_rows=rows, team_search=self.search, team_role=self.role, team_activity=self.activity,
             team_roles=self.role_labels.items(), team_filters_active=bool(params), pagination_query=urlencode(params),
