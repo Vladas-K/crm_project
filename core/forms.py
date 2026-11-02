@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from django import forms
 from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import UserCreationForm
 from django.core.validators import MinValueValidator
 from django.db.models import Max, Q
 
@@ -109,6 +110,57 @@ class TeamMemberAccessForm(BootstrapModelForm):
             ).exclude(pk=self.instance.pk).exists()):
                 raise forms.ValidationError("В CRM должен оставаться хотя бы один активный сотрудник с правом управления системой.")
         return allowed
+
+
+class TeamMemberAccountForm(BootstrapModelForm):
+    """Основные данные учётной записи без технических Django-разрешений."""
+
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name", "username", "email", "is_active"]
+        labels = {"username": "Логин", "email": "Email", "is_active": "Доступ включён"}
+        help_texts = {
+            "is_active": "Отключённый сотрудник не сможет войти в CRM и получать новые лиды. Прежние назначения сохранятся.",
+        }
+
+    def __init__(self, *args, actor=None, **kwargs):
+        self.actor = actor
+        super().__init__(*args, **kwargs)
+        for field in self:
+            if isinstance(field.field.widget, forms.CheckboxInput):
+                field.field.widget.attrs["aria-labelledby"] = f"{field.auto_id}_label"
+            described_by = [f"{field.auto_id}_helptext"] if field.help_text else []
+            if field.errors:
+                described_by.append(f"{field.auto_id}_error")
+                field.field.widget.attrs["aria-invalid"] = "true"
+            if described_by:
+                field.field.widget.attrs["aria-describedby"] = " ".join(described_by)
+
+    def clean_is_active(self):
+        active = self.cleaned_data["is_active"]
+        if not active and self.instance.pk:
+            if self.actor and self.actor.pk == self.instance.pk:
+                raise forms.ValidationError("Нельзя отключить свою учётную запись. Попросите другого администратора.")
+            if (TeamMemberProfile.objects.filter(user_id=self.instance.pk, user__is_active=True, can_manage_system=True).exists()
+                    and not TeamMemberProfile.objects.filter(user__is_active=True, can_manage_system=True)
+                    .exclude(user_id=self.instance.pk).exists()):
+                raise forms.ValidationError("В CRM должен оставаться хотя бы один активный сотрудник с правом управления системой.")
+        return active
+
+    def save(self, commit=True):
+        # При редактировании не перезаписываем пароль и технические права даже
+        # при одновременном изменении этой учётной записи через Django Admin.
+        user = super().save(commit=False)
+        if commit:
+            user.save(update_fields=self.Meta.fields if user.pk else None)
+        return user
+
+
+class TeamMemberCreateForm(TeamMemberAccountForm, UserCreationForm):
+    """Создаёт пользователя со стандартной проверкой и хешированием пароля Django."""
+
+    class Meta(TeamMemberAccountForm.Meta):
+        fields = [*TeamMemberAccountForm.Meta.fields, "password1", "password2"]
 
 
 class LeadForm(BootstrapModelForm):

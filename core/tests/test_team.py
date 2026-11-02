@@ -28,7 +28,7 @@ def test_team_shows_unprofiled_and_inactive_accounts_with_all_rights(client, tea
     for text in ("Анна Петрова", "anna@example.test", "Отключён", "Управление мероприятиями", "Без CRM-профиля"):
         assert text in html
     assert 'aria-current="page">Пользователи и роли</a>' in html
-    assert not response.context["add_user_url"]
+    assert response.context["add_user_url"].startswith(reverse("core:team_create"))
     assert not rows[user.pk]["edit_user_url"]
 
 
@@ -53,13 +53,13 @@ def test_team_admin_links_require_staff_and_relevant_permissions(client, team_op
     permissions = Permission.objects.filter(codename__in=["change_user", "add_user", "change_teammemberprofile", "add_teammemberprofile"])
     team_operator.user_permissions.set(permissions)
     no_staff = client.get(reverse("core:team"))
-    assert not no_staff.context["add_user_url"]
-    assert "Другие действия с пользователем target" not in no_staff.content.decode()
+    assert no_staff.context["add_user_url"].startswith(reverse("core:team_create"))
+    assert reverse("admin:auth_user_change", args=[user.pk]) not in no_staff.content.decode()
     team_operator.is_staff = True
     team_operator.save()
     response = client.get(reverse("core:team"))
     row = next(row for row in response.context["team_rows"] if row["user"].pk == user.pk)
-    assert response.context["add_user_url"] == reverse("admin:auth_user_add")
+    assert response.context["add_user_url"].startswith(reverse("core:team_create"))
     assert row["edit_user_url"] == reverse("admin:auth_user_change", args=[user.pk])
     html = response.content.decode()
     assert "Другие действия с пользователем target" in html

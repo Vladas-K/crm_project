@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{% if creating %}Новый сотрудник{% else %}Данные сотрудника{% endif %} | CRM{% endblock %}
+{% block content %}
+<div class="event-form-shell team-access-form">
+    <header class="workspace-page-header"><h1>{% if creating %}Новый сотрудник{% else %}Данные сотрудника{% endif %}</h1><p>{% if creating %}Создайте учётную запись и настройте доступ к CRM.{% else %}{{ target_user.get_full_name|default:target_user.get_username }}{% endif %}</p></header>
+    <a href="{{ cancel_url }}" class="event-form-back">← К пользователям</a>
+    <form method="post" novalidate>
+        {% csrf_token %}<input type="hidden" name="return_to" value="{{ cancel_url }}">
+        {% if form.errors or access_form.errors %}<div class="event-form-errors" role="alert"><strong>Проверьте данные сотрудника</strong><ul>
+            {% for field in form %}{% for error in field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>{% endfor %}{% endfor %}
+            {% for field in access_form %}{% for error in field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>{% endfor %}{% endfor %}
+            {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}{% for error in access_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        </ul></div>{% endif %}
+        <div class="event-form-panel">
+            <section class="event-form-section"><div class="event-form-section__header"><h2>Основные данные</h2></div>
+                <div class="event-form-grid">
+                    {% include 'core/includes/event_form_field.html' with field=form.first_name %}
+                    {% include 'core/includes/event_form_field.html' with field=form.last_name %}
+                    {% include 'core/includes/event_form_field.html' with field=form.username %}
+                    {% include 'core/includes/event_form_field.html' with field=form.email %}
+                </div>
+            </section>
+            {% if creating %}<section class="event-form-section"><div class="event-form-section__header"><h2>Начальный пароль</h2><p>Передайте его сотруднику лично.</p></div>
+                <div class="event-form-grid">
+                    {% include 'core/includes/event_form_field.html' with field=form.password1 %}
+                    {% include 'core/includes/event_form_field.html' with field=form.password2 %}
+                </div>
+            </section>{% endif %}
+            <section class="event-form-section"><div class="event-form-section__header"><h2>Вход в CRM</h2></div>{% include 'core/partials/team_access_checkbox.html' with field=form.is_active %}</section>
+            {% if creating %}
+            <section class="event-form-section"><div class="event-form-section__header"><h2>Роль сотрудника</h2><p>Выберите обязанности сотрудника, затем отметьте нужные права.</p></div>{% include 'core/includes/event_form_field.html' with field=access_form.role wide=True %}</section>
+            <fieldset class="event-form-section team-access-group"><legend>Просмотр данных</legend><p>Отметьте разделы, которые сотрудник сможет просматривать.</p>{% for field in view_fields %}{% include 'core/partials/team_access_checkbox.html' %}{% endfor %}</fieldset>
+            <fieldset class="event-form-section team-access-group"><legend>Управление</legend><p>Разрешения на изменение данных и настройку CRM.</p>{% for field in manage_fields %}{% include 'core/partials/team_access_checkbox.html' %}{% endfor %}</fieldset>
+            {% endif %}
+            <div class="event-form-actions"><a href="{{ cancel_url }}" class="btn btn-outline-secondary">Отмена</a><button type="submit" class="btn btn-primary">{% if creating %}Добавить сотрудника{% else %}Сохранить изменения{% endif %}</button></div>
+        </div>
+    </form>
+</div>
+{% endblock %}

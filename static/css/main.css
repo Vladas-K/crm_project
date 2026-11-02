@@ -4109,8 +4109,9 @@ a.lead-profile-contact:focus {
 .team-filters .btn { min-height: 44px; }
 .team-reset { grid-column: 1 / -1; width: fit-content; font-size: .9rem; }
 .team-explanation { margin: .75rem 0 1rem; color: #626e7d; font-size: .85rem; line-height: 1.6; }
-.team-directory { display: grid; gap: .85rem; }
-.team-member { position: relative; display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr) auto; align-items: start; gap: .85rem; padding: 1rem 1.25rem; background: #fff; border: 1px solid var(--crm-border); border-radius: 1.25rem; box-shadow: 0 4px 16px rgba(15,23,42,.025); overflow-wrap: anywhere; }
+.team-directory { background: #fff; border: 1px solid var(--crm-border); border-radius: 1.5rem; box-shadow: 0 4px 20px rgba(15,23,42,.025); }
+.team-member { position: relative; display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr) auto; align-items: start; gap: .85rem; margin: 0 1.25rem; padding: 1.25rem 0; overflow-wrap: anywhere; }
+.team-member + .team-member { border-top: 1px solid #edf0f4; }
 .team-member__identity, .team-member__state { display: flex; flex-direction: column; align-items: flex-start; gap: .4rem; min-width: 0; }
 .team-member h2 { font-size: 1.05rem; font-weight: 650; margin: 0; line-height: 1.5; }
 .team-member__identity > span { color: #626e7d; font-size: .85rem; }
@@ -4133,7 +4134,7 @@ a.lead-profile-contact:focus {
 .team-rights p, .team-member__missing { color: #626e7d; font-size: .85rem; margin: .5rem 0; }
 .team-member a { display: inline-block; font-size: .85rem; margin-top: .5rem; }
 .team-member__edit { grid-column: 1 / -1; justify-self: start; }
-.team-empty { padding: 2rem; border: 1px solid var(--crm-border); border-radius: 1.25rem; background: #fff; text-align: center; }
+.team-empty { padding: 2rem; text-align: center; }
 .team-empty h2 { font-size: 1.1rem; }
 .team-empty p { color: #626e7d; margin: 0; }
 @media (max-width: 767.98px) {
@@ -4143,7 +4144,7 @@ a.lead-profile-contact:focus {
     .team-filter-extra__fields { grid-template-columns: minmax(0,1fr); padding: .5rem 0; }
     .team-explanation { font-size: .8rem; margin: .75rem 0; }
     .team-filters .form-control, .team-filters .form-select { font-size: 16px; }
-    .team-member { grid-template-columns: minmax(0,1fr); padding: 1.25rem; }
+    .team-member { grid-template-columns: minmax(0,1fr); padding: 1.25rem 0; margin: 0 1.25rem; }
     .team-member__actions { grid-column: 1 / -1; }
     .team-rights summary { display: flex; align-items: center; min-height: 44px; }
     .team-member a { min-height: 44px; padding: .6rem 0; }
@@ -4167,7 +4168,7 @@ a.lead-profile-contact:focus {
 .team-access-option .event-form-field__help { display: block; margin-top: .35rem; }
 .team-access-option input:focus-visible { outline: 2px solid var(--crm-accent); outline-offset: 3px; }
 @media (max-width: 767.98px) {
-    .team-access-form .form-select { font-size: 16px; }
+    .team-access-form .form-select, .team-access-form .form-control { font-size: 16px; }
     .team-access-form .event-form-actions { flex-direction: column-reverse; }
     .team-access-form .event-form-actions .btn { width: 100%; }
     .team-member__actions .btn { flex: 1; min-width: 0; }

@@ -6,7 +6,7 @@
         <svg class="workspace-page-header__icon" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="10" r="4"/><path d="M3 27v-3a9 9 0 0 1 18 0v3M22 6a4 4 0 0 1 0 8M25 18a7 7 0 0 1 4 6v3"/></svg>
         <div><h1>Пользователи и роли</h1><p>Сотрудники, учётные записи и права доступа.</p></div>
     </div>
-    {% if add_user_url %}<a href="{{ add_user_url }}" class="btn btn-primary">Добавить пользователя <span aria-hidden="true">↗</span></a>{% endif %}
+    <a href="{{ add_user_url }}" class="btn btn-primary">Добавить сотрудника</a>
 </header>
 <form method="get" class="team-filters">
     <div class="team-filter-primary">
@@ -31,7 +31,7 @@
             {% if row.profile %}<details class="team-rights"><summary><svg class="team-rights__chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 3 5 5-5 5"/></svg>Посмотреть права</summary><ul>{% for right in row.rights %}<li><span>{{ right.label }}</span><strong{% if not right.allowed %} class="team-rights__denied"{% endif %}>{{ right.allowed|yesno:"Да,Нет" }}</strong></li>{% endfor %}</ul>{% if not row.user.is_active %}<p>Учётная запись отключена. Указанные права не действуют.</p>{% endif %}</details>
             {% else %}<p class="team-member__missing">Права CRM не настроены.</p>{% endif %}
         </div>
-        <div class="team-member__actions"><a href="{{ row.access_url }}" class="btn btn-outline-primary">Изменить доступ</a>{% if row.edit_user_url %}<details class="item-action-menu"><summary aria-label="Другие действия с пользователем {{ row.user.get_username }}"><span aria-hidden="true">•••</span></summary><div class="item-action-menu__popover"><a href="{{ row.edit_user_url }}">Учётная запись в админке <span aria-hidden="true">↗</span></a></div></details>{% endif %}</div>
+        <div class="team-member__actions"><a href="{{ row.access_url }}" class="btn btn-outline-primary">Изменить доступ</a><details class="item-action-menu"><summary aria-label="Другие действия с пользователем {{ row.user.get_username }}"><span aria-hidden="true">•••</span></summary><div class="item-action-menu__popover"><a href="{{ row.account_url }}">Изменить данные</a>{% if row.edit_user_url %}<a href="{{ row.edit_user_url }}">Учётная запись в админке <span aria-hidden="true">↗</span></a>{% endif %}</div></details></div>
     </article>{% empty %}<div class="team-empty"><h2>Пользователи не найдены</h2><p>{% if team_filters_active %}Измените поиск или фильтры.{% else %}Здесь появятся учётные записи сотрудников.{% endif %}</p></div>{% endfor %}
 </section>
 {% if is_paginated %}<nav class="client-pagination" aria-label="Страницы списка пользователей">{% if page_obj.has_previous %}<a class="btn btn-outline-secondary" href="?{{ pagination_query }}&amp;page={{ page_obj.previous_page_number }}">Назад</a>{% endif %}<span>Страница {{ page_obj.number }} из {{ paginator.num_pages }}</span>{% if page_obj.has_next %}<a class="btn btn-outline-secondary" href="?{{ pagination_query }}&amp;page={{ page_obj.next_page_number }}">Далее</a>{% endif %}</nav>{% endif %}

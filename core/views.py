@@ -23,6 +23,8 @@ from django.views.generic import CreateView, DeleteView, DetailView, FormView, L
 from .forms import (
     ClientForm,
     TeamMemberAccessForm,
+    TeamMemberAccountForm,
+    TeamMemberCreateForm,
     TEAM_ROLE_LABELS,
     TEAM_PERMISSION_LABELS,
     EventCommunicationForm,
@@ -1651,12 +1653,13 @@ class TeamView(SystemAccessMixin, ListView):
                 "rights": rights,
                 "edit_user_url": reverse("admin:auth_user_change", args=[user.pk]) if can_edit_users else "",
                 "access_url": reverse("core:team_access_update", args=[user.pk]) + "?" + urlencode({"return_to": return_url}),
+                "account_url": reverse("core:team_account_update", args=[user.pk]) + "?" + urlencode({"return_to": return_url}),
             })
         context.update(
             team_rows=rows, team_search=self.search, team_role=self.role, team_activity=self.activity,
             team_roles=self.role_labels.items(), team_filters_active=bool(params), pagination_query=urlencode(params),
             team_advanced_active=bool(self.role or self.activity),
-            add_user_url=reverse("admin:auth_user_add") if actor.is_staff and actor.has_perm("auth.add_user") else "",
+            add_user_url=reverse("core:team_create") + "?" + urlencode({"return_to": return_url}),
         )
         return context
 
@@ -1683,25 +1686,8 @@ def safe_team_return_url(value):
     return reverse("core:team") + ("?" + urlencode(params) if params else "")
 
 
-class TeamMemberAccessUpdateView(SystemAccessMixin, FormView):
-    """Настройка роли и прав сотрудника без доступа к Django Admin."""
-
-    form_class = TeamMemberAccessForm
-    template_name = "core/team_access_form.html"
-
-    def get_target_user(self):
-        if not hasattr(self, "target_user"):
-            self.target_user = get_object_or_404(User.objects.select_related("crm_profile"), pk=self.kwargs["pk"])
-        return self.target_user
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        user = self.get_target_user()
-        kwargs.update(
-            actor=self.request.user, target_user=user,
-            instance=getattr(user, "crm_profile", None) or TeamMemberProfile(user=user),
-        )
-        return kwargs
+class TeamWriteMixin(SystemAccessMixin):
+    """Единый порядок блокировок для смены прав и активности сотрудников."""
 
     def get_success_url(self):
         raw = self.request.POST.get("return_to", self.request.GET.get("return_to", ""))
@@ -1715,8 +1701,30 @@ class TeamMemberAccessUpdateView(SystemAccessMixin, FormView):
                 user_id=request.user.pk, user__is_active=True, can_manage_system=True,
             ).exists():
                 raise PermissionDenied("Недостаточно прав для настройки доступа.")
-            self.target_user = get_object_or_404(User.objects.select_for_update(), pk=kwargs["pk"])
+            if "pk" in kwargs:
+                self.target_user = get_object_or_404(User.objects.select_for_update(), pk=kwargs["pk"])
             return super().post(request, *args, **kwargs)
+
+    def get_target_user(self):
+        if not hasattr(self, "target_user"):
+            self.target_user = get_object_or_404(User.objects.select_related("crm_profile"), pk=self.kwargs["pk"])
+        return self.target_user
+
+
+class TeamMemberAccessUpdateView(TeamWriteMixin, FormView):
+    """Настройка роли и прав сотрудника без доступа к Django Admin."""
+
+    form_class = TeamMemberAccessForm
+    template_name = "core/team_access_form.html"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        user = self.get_target_user()
+        kwargs.update(
+            actor=self.request.user, target_user=user,
+            instance=getattr(user, "crm_profile", None) or TeamMemberProfile(user=user),
+        )
+        return kwargs
 
     def form_valid(self, form):
         form.instance.user = self.get_target_user()
@@ -1729,6 +1737,59 @@ class TeamMemberAccessUpdateView(SystemAccessMixin, FormView):
         context.update(target_user=self.get_target_user(), cancel_url=self.get_success_url())
         context["view_fields"] = [context["form"][name] for name, _ in TEAM_PERMISSION_LABELS[:3]]
         context["manage_fields"] = [context["form"][name] for name, _ in TEAM_PERMISSION_LABELS[3:]]
+        return context
+
+
+class TeamMemberAccountUpdateView(TeamWriteMixin, FormView):
+    form_class = TeamMemberAccountForm
+    template_name = "core/team_account_form.html"
+
+    def get_form_kwargs(self):
+        return {**super().get_form_kwargs(), "actor": self.request.user, "instance": self.get_target_user()}
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, "Данные сотрудника сохранены.")
+        return redirect(self.get_success_url())
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(target_user=self.get_target_user(), cancel_url=self.get_success_url(), creating=False)
+        return context
+
+
+class TeamMemberCreateView(TeamWriteMixin, FormView):
+    form_class = TeamMemberCreateForm
+    template_name = "core/team_account_form.html"
+
+    def get_access_form(self):
+        if not hasattr(self, "access_form"):
+            self.access_form = TeamMemberAccessForm(
+                self.request.POST if self.request.method == "POST" else None,
+                prefix="access", actor=self.request.user,
+            )
+        return self.access_form
+
+    def form_valid(self, form):
+        access_form = self.get_access_form()
+        if not access_form.is_valid():
+            return self.form_invalid(form)
+        user = form.save()
+        access_form.instance.user = user
+        access_form.save()
+        messages.success(self.request, "Сотрудник добавлен. Роль и права сохранены.")
+        return redirect(self.get_success_url())
+
+    def form_invalid(self, form):
+        self.get_access_form().is_valid()
+        return super().form_invalid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        access_form = self.get_access_form()
+        context.update(creating=True, cancel_url=self.get_success_url(), access_form=access_form)
+        context["view_fields"] = [access_form[name] for name, _ in TEAM_PERMISSION_LABELS[:3]]
+        context["manage_fields"] = [access_form[name] for name, _ in TEAM_PERMISSION_LABELS[3:]]
         return context
 
 
