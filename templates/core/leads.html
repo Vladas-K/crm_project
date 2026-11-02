@@ -90,7 +90,9 @@
         <button type="submit" class="btn btn-primary lead-filter-submit">Показать</button>
     </div>
 
-    {% if search_query or stage_filter or manager_filter or source_filter or attention_filter %}
+    {% include 'core/partials/lead_date_filter.html' %}
+    {% if source_empty %}<label class="d-flex align-items-center gap-2 py-3"><input type="checkbox" class="form-check-input m-0" name="source_empty" value="1" checked> Только лиды без источника</label>{% endif %}
+    {% if search_query or stage_filter or manager_filter or source_filter or source_empty or attention_filter or lead_date_active or lead_date_form.errors %}
         <div class="lead-active-filters" aria-label="Активные фильтры">
             <span class="lead-active-filters__label">Выбрано:</span>
             {% if search_query %}<span class="event-chip event-chip--soft">«{{ search_query }}»</span>{% endif %}
@@ -100,6 +102,8 @@
             {% if manager_filter == 'unassigned' %}<span class="event-chip event-chip--soft">Без менеджера</span>{% endif %}
             {% if source_filter %}<span class="event-chip event-chip--soft">{{ source_filter }}</span>{% endif %}
             {% if attention_filter == "needs_response" %}<span class="event-chip event-chip--danger">Требуют ответа</span>{% endif %}
+            {% if lead_date_form.cleaned_data.date_from %}<span class="event-chip event-chip--soft">Созданы с {{ lead_date_form.cleaned_data.date_from|date:"d.m.Y" }}</span>{% endif %}
+            {% if lead_date_form.cleaned_data.date_to %}<span class="event-chip event-chip--soft">По {{ lead_date_form.cleaned_data.date_to|date:"d.m.Y" }}</span>{% endif %}
             <a href="{% url 'core:leads' %}" class="lead-filter-reset">Сбросить всё</a>
         </div>
         {% if attention_filter == "needs_response" %}<p class="lead-attention-note mb-0">Показаны лиды без ответа более 24 часов.</p>{% endif %}

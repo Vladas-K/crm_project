@@ -1,6 +1,7 @@
 import pytest
 from datetime import timedelta
 from decimal import Decimal
+from urllib.parse import parse_qs, urlsplit
 
 from django.utils.formats import localize
 from django.utils import timezone
@@ -245,7 +246,9 @@ def test_analytics_contains_monthly_event_chart_data(client, django_user_model, 
     assert response.status_code == 200
     matching_month = next(item for item in response.context["monthly_chart"] if item["label"].endswith("2026"))
     assert matching_month["total"] == 1
-    assert matching_month["url"].endswith(f"?scope=all&month={timezone.localdate():%Y-%m}")
+    assert parse_qs(urlsplit(matching_month["url"]).query) == {
+        "scope": ["all"], "status": ["not_cancelled"], "month": [f"{timezone.localdate():%Y-%m}"],
+    }
 
 
 @pytest.mark.django_db
@@ -268,7 +271,7 @@ def test_analytics_contains_team_chart_data(client, django_user_model, crm_objec
         {
             "label": "project_manager",
             "total": 1,
-            "url": f"{reverse('core:events')}?scope=all&manager={manager.pk}",
+            "url": f"{reverse('core:events')}?scope=active&manager={manager.pk}",
         }
     ]
 
@@ -340,8 +343,10 @@ def test_analytics_period_filters_leads_events_and_finance(client, django_user_m
     assert response.status_code == 200
     assert response.context["analytics_period"] == "6m"
     assert {item["label"] for item in response.context["source_chart"]} == {"Не указан"}
-    assert all(item["label"] != old_date.strftime("%Y-%m") for item in response.context["monthly_chart"])
-    assert all(item["label"] != old_date.strftime("%Y-%m") for item in response.context["finance_monthly_chart"])
+    assert all(parse_qs(urlsplit(item["url"]).query)["month"] != [old_date.strftime("%Y-%m")]
+               for item in response.context["monthly_chart"])
+    assert all(parse_qs(urlsplit(item["url"]).query)["month"] != [old_date.strftime("%Y-%m")]
+               for item in response.context["finance_monthly_chart"])
     assert old_event.planned_budget not in [item["budget"] for item in response.context["finance_monthly_chart"]]
     assert 'name="period"' in response.content.decode()
 
@@ -707,8 +712,8 @@ def test_analytics_hides_financial_indicators_without_finance_access(client, dja
     html = response.content.decode()
 
     assert response.status_code == 200
-    assert "Средний чек" not in html
-    assert "Прибыль" not in html
+    assert "Средний плановый бюджет" not in html
+    assert "Расчётная прибыль" not in html
     assert "Источник → деньги" not in html
     assert "Источники лидов" in html
 

@@ -39,6 +39,7 @@ from .forms import (
     EventTimelineItemForm,
     EventVendorForm,
     LeadForm,
+    LeadDateFilterForm,
     LeadStageForm,
     PipelineStageForm,
     ServicePackageForm,
@@ -380,7 +381,29 @@ class DashboardView(CRMLoginRequiredMixin, TemplateView):
         return context
 
 
-class LeadListView(CRMLoginRequiredMixin, ListView):
+class LeadDateFilterMixin:
+    def get_date_filter(self):
+        if not hasattr(self, "date_filter"):
+            self.date_filter = LeadDateFilterForm(self.request.GET)
+        return self.date_filter
+
+    def filter_lead_dates(self, queryset):
+        form = self.get_date_filter()
+        if not form.is_valid():
+            return queryset.none()
+        if form.cleaned_data["date_from"]:
+            queryset = queryset.filter(created_at__date__gte=form.cleaned_data["date_from"])
+        if form.cleaned_data["date_to"]:
+            queryset = queryset.filter(created_at__date__lte=form.cleaned_data["date_to"])
+        return queryset
+
+    def lead_date_params(self):
+        form = self.get_date_filter()
+        form.is_valid()
+        return {name: value.isoformat() for name, value in form.cleaned_data.items() if value}
+
+
+class LeadListView(LeadDateFilterMixin, CRMLoginRequiredMixin, ListView):
     """Отображает список лидов с поиском и фильтрами по этапу и менеджеру."""
 
     model = Lead
@@ -389,7 +412,7 @@ class LeadListView(CRMLoginRequiredMixin, ListView):
     def get_queryset(self):
         """Фильтрует лиды по поисковому запросу, этапу и ответственному."""
 
-        queryset = Lead.objects.select_related("stage", "manager", "preliminary_event_format")
+        queryset = self.filter_lead_dates(Lead.objects.select_related("stage", "manager", "preliminary_event_format"))
         search_query = self.request.GET.get("q", "").strip()
         stage_filter = self.request.GET.get("stage", "")
         manager_filter = self.request.GET.get("manager", "")
@@ -405,7 +428,9 @@ class LeadListView(CRMLoginRequiredMixin, ListView):
             queryset = queryset.filter(manager_id=manager_filter)
         elif manager_filter == "unassigned":
             queryset = queryset.filter(manager__isnull=True)
-        if source_filter:
+        if self.request.GET.get("source_empty") == "1":
+            queryset = queryset.filter(source="")
+        elif source_filter:
             queryset = queryset.filter(source=source_filter)
         if attention_filter == "needs_response":
             queryset = queryset.filter(
@@ -442,7 +467,10 @@ class LeadListView(CRMLoginRequiredMixin, ListView):
         context["search_query"] = self.request.GET.get("q", "")
         context["stage_filter"] = self.request.GET.get("stage", "")
         context["manager_filter"] = self.request.GET.get("manager", "")
-        context["source_filter"] = self.request.GET.get("source", "")
+        context["source_empty"] = self.request.GET.get("source_empty") == "1"
+        context["source_filter"] = "" if context["source_empty"] else self.request.GET.get("source", "")
+        context["lead_date_form"] = self.get_date_filter()
+        context["lead_date_active"] = bool(self.request.GET.get("date_from") or self.request.GET.get("date_to"))
         context["attention_filter"] = self.request.GET.get("attention", "")
         context["lead_sort"] = self.request.GET.get("sort", "newest")
         if context["lead_sort"] not in {"newest", "oldest", "probability", "attention"}:
@@ -513,7 +541,7 @@ class LeadAutocompleteView(CRMLoginRequiredMixin, View):
         )
 
 
-class PipelineView(CRMLoginRequiredMixin, TemplateView):
+class PipelineView(LeadDateFilterMixin, CRMLoginRequiredMixin, TemplateView):
     """Обзор лидов по этапам с ограниченными превью и полными списками."""
 
     template_name = "core/pipeline.html"
@@ -532,7 +560,7 @@ class PipelineView(CRMLoginRequiredMixin, TemplateView):
             manager_filter = ""
         if attention != "needs_response":
             attention = ""
-        leads = Lead.objects.select_related("manager", "stage")
+        leads = self.filter_lead_dates(Lead.objects.select_related("manager", "stage"))
         if stage_filter == "unassigned":
             leads = leads.filter(stage__isnull=True)
         elif stage_filter:
@@ -557,7 +585,7 @@ class PipelineView(CRMLoginRequiredMixin, TemplateView):
             stages = stages.none()
         elif stage_filter:
             stages = stages.filter(pk=stage_filter)
-        filters = {"q": query, "manager": manager_filter, "attention": attention}
+        filters = {"q": query, "manager": manager_filter, "attention": attention, **self.lead_date_params()}
 
         def all_leads_url(stage_key):
             return f"{reverse('core:leads')}?{urlencode({key: value for key, value in dict(filters, stage=stage_key).items() if value})}"
@@ -578,7 +606,10 @@ class PipelineView(CRMLoginRequiredMixin, TemplateView):
             "stages": stage_list, "pipeline_stages": all_stages, "pipeline_groups": groups,
             "search_query": query, "stage_filter": stage_filter, "manager_filter": manager_filter,
             "attention_filter": attention, "has_filters": bool(params), "pipeline_query": urlencode(params),
+            "filtered_leads_url": all_leads_url(stage_filter),
             "selected_stage": selected_stage,
+            "lead_date_form": self.get_date_filter(),
+            "lead_date_active": bool(self.request.GET.get("date_from") or self.request.GET.get("date_to")),
             "selected_manager": User.objects.filter(pk=manager_filter).first() if manager_filter.isdigit() else None,
             "pipeline_managers": User.objects.filter(assigned_leads__isnull=False).distinct().order_by("username"),
             "filtered_count": leads.count(),
@@ -733,7 +764,9 @@ class EventListView(CRMLoginRequiredMixin, ListView):
             queryset = queryset.filter(status__in=self.active_statuses)
         elif self.scope == "archive":
             queryset = queryset.filter(status__in=(Event.Status.COMPLETED, Event.Status.CANCELLED))
-        if filters["status"]:
+        if filters["status"] == "not_cancelled":
+            queryset = queryset.exclude(status=Event.Status.CANCELLED)
+        elif filters["status"]:
             queryset = queryset.filter(status=filters["status"])
         if filters["event_format"]:
             queryset = queryset.filter(event_format_id=filters["event_format"])
@@ -835,7 +868,7 @@ class EventListView(CRMLoginRequiredMixin, ListView):
             "event_period": self.period,
             "event_sort": self.sort,
             "event_managers": self.filter_form.event_managers,
-            "event_statuses": [
+            "event_statuses": ([("not_cancelled", "Кроме отменённых")] if self.scope == "all" else []) + [
                 (value, label) for value, label in Event.Status.choices
                 if self.scope == "all" or (value in self.active_statuses) == (self.scope == "active")
             ],
@@ -1485,111 +1518,155 @@ class CalendarView(CRMLoginRequiredMixin, ListView):
 
 
 class AnalyticsView(AnalyticsAccessMixin, TemplateView):
-    """Показывает базовую аналитику по продажам, прибыли, источникам и команде."""
+    """Отчёт по лидам и мероприятиям и отдельная текущая загрузка команды."""
 
     template_name = "core/analytics.html"
+    month_names = (
+        "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+        "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
+    )
 
     def get_context_data(self, **kwargs):
-        """Собирает агрегированные показатели для аналитического дашборда."""
-
         context = super().get_context_data(**kwargs)
         period = self.request.GET.get("period", "all")
         if period not in {"all", "6m", "12m"}:
             period = "all"
         period_start, period_end = analytics_period_bounds(period)
+        date_params = ({"date_from": period_start.isoformat(), "date_to": period_end.isoformat()}
+                       if period_start else {})
+
+        def list_url(name, params):
+            url = reverse(f"core:{name}")
+            return f"{url}?{urlencode(params)}" if params else url
 
         leads = Lead.objects.all()
-        clients = Client.objects.all()
-        events = Event.objects.all()
-        if period_start and period_end:
+        # Отменённые проекты не формируют объём работ и плановые финансовые показатели отчёта.
+        events = Event.objects.exclude(status=Event.Status.CANCELLED)
+        if period_start:
             leads = leads.filter(created_at__date__range=(period_start, period_end))
-            clients = clients.filter(created_at__date__range=(period_start, period_end))
             events = events.filter(date__range=(period_start, period_end))
+        total_leads = leads.count()
+        converted_leads = leads.filter(client__isnull=False).count()
+        total_events = events.count()
 
-        total_leads = leads.count() or 1
-        qualified_clients = clients.count()
-        total_revenue = events.aggregate(total=Sum("planned_budget"))["total"] or 0
-        can_view_finance = self.request.user.crm_profile.can_view_finance
-        stage_totals = dict(leads.values("stage_id").annotate(total=Count("id")).values_list("stage_id", "total"))
-        pipeline_chart = [
-            {
-                "label": stage.name,
-                "total": stage_totals.get(stage.pk, 0),
-                "color": pipeline_stage_color(stage),
-                "url": f"{reverse('core:pipeline')}?stage={stage.pk}",
-            }
-            for stage in PipelineStage.objects.order_by("order", "name")
-        ]
-        source_chart = [
-            {
-                "label": source["source"] or "Не указан",
-                "total": source["total"],
-                "url": f"{reverse('core:leads')}?{urlencode({'source': source['source']})}" if source["source"] else reverse("core:leads"),
-            }
-            for source in leads.values("source").annotate(total=Count("id")).order_by("-total", "source")
-        ]
-        month_names = (
-            "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
-            "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
-        )
+        stage_totals = dict(leads.order_by().values("stage_id").annotate(total=Count("id")).values_list("stage_id", "total"))
+        pipeline_chart = [{
+            "label": stage.name, "total": stage_totals.get(stage.pk, 0),
+            "color": pipeline_stage_color(stage),
+            "url": list_url("pipeline", {"stage": stage.pk, **date_params}),
+        } for stage in PipelineStage.objects.order_by("order", "pk")] if total_leads else []
+        if stage_totals.get(None):
+            pipeline_chart.append({
+                "label": "Без этапа", "total": stage_totals[None], "color": "rgba(100, 116, 139, 0.78)",
+                "url": list_url("pipeline", {"stage": "unassigned", **date_params}),
+            })
+        source_totals = list(leads.values("source").annotate(total=Count("id")).order_by("-total", "source"))
+        source_chart = [{
+            "label": item["source"] or "Не указан", "total": item["total"],
+            "url": list_url("leads", {
+                **({"source": item["source"]} if item["source"] else {"source_empty": "1"}), **date_params,
+            }),
+        } for item in source_totals]
+
         monthly_totals = {}
         for event_date in events.values_list("date", flat=True):
-            month_key = event_date.strftime("%Y-%m")
-            monthly_totals[month_key] = monthly_totals.get(month_key, 0) + 1
-        monthly_chart = [
-            {
-                "label": f"{month_names[int(month_key[5:7]) - 1]} {month_key[:4]}",
-                "total": total,
-                "url": f"{reverse('core:events')}?scope=all&month={month_key}",
-            }
-            for month_key, total in sorted(monthly_totals.items())
-        ]
-        manager_totals = list(
-            events.values("manager_id")
-            .exclude(manager_id=None)
-            .annotate(total=Count("id"))
-            .order_by("-total", "manager_id")[:8]
-        )
-        managers = User.objects.in_bulk(item["manager_id"] for item in manager_totals)
-        team_chart = [
-            {
-                "label": managers[item["manager_id"]].get_username(),
-                "total": item["total"],
-                "url": f"{reverse('core:events')}?scope=all&manager={item['manager_id']}",
-            }
-            for item in manager_totals
-        ]
+            month = event_date.replace(day=1)
+            monthly_totals[month] = monthly_totals.get(month, 0) + 1
+        month_keys = sorted(monthly_totals)
+        monthly_gaps_omitted = False
+        if period_start:
+            first_month, last_month = period_start, period_end.replace(day=1)
+        elif month_keys:
+            first_month, last_month = month_keys[0], month_keys[-1]
+        else:
+            first_month = last_month = None
+        if first_month:
+            month_count = (last_month.year - first_month.year) * 12 + last_month.month - first_month.month + 1
+            # Не создаём тысячи пустых строк из-за ошибочно указанной даты проекта.
+            if month_count <= 120:
+                month_keys = [shift_months(first_month, index) for index in range(month_count)]
+            else:
+                monthly_gaps_omitted = True
+
+        def month_label(month):
+            return f"{self.month_names[month.month - 1]} {month.year}"
+
+        def event_url(month=None):
+            params = {"scope": "all", "status": "not_cancelled"}
+            if month:
+                params["month"] = month.isoformat()[:7]
+            if period_start:
+                start, end = period_start, period_end
+                if month:
+                    start = max(start, month)
+                    end = min(end, month.replace(day=calendar.monthrange(month.year, month.month)[1]))
+                params.update(period="custom", date_from=start.isoformat(), date_to=end.isoformat())
+            return list_url("events", params)
+
+        monthly_chart = [{
+            "label": month_label(month), "total": monthly_totals.get(month, 0), "url": event_url(month),
+        } for month in month_keys]
+
+        # Текущая загрузка не ограничена историческим периодом отчёта: будущие
+        # активные проекты также требуют работы, завершённые и отменённые — нет.
+        manager_totals = list(Event.objects.filter(
+            status__in=(Event.Status.PLANNING, Event.Status.IN_PROGRESS),
+        ).order_by().values("manager_id").annotate(total=Count("id")).order_by("-total", "manager_id"))
+        managers = User.objects.in_bulk(item["manager_id"] for item in manager_totals if item["manager_id"])
+        team_chart = [{
+            "label": (managers[item["manager_id"]].get_full_name() or managers[item["manager_id"]].get_username())
+                     if item["manager_id"] else "Без ответственного",
+            "total": item["total"],
+            "url": list_url("events", {"scope": "active", "manager": item["manager_id"] or "unassigned"}),
+        } for item in manager_totals]
+
+        can_view_finance = self.request.user.crm_profile.can_view_finance
         finance_monthly_chart = []
+        average_check = profit = None
         if can_view_finance:
+            total_budget = Decimal("0")
+            total_expenses = Decimal("0")
             finance_totals = {}
             for event in events.prefetch_related("expenses"):
-                month_key = event.date.strftime("%Y-%m")
-                month_data = finance_totals.setdefault(month_key, {"budget": 0, "expenses": 0})
-                month_data["budget"] += float(event.planned_budget)
-                month_data["expenses"] += float(event.total_expenses)
-            finance_monthly_chart = [
-                {
-                    "label": f"{month_names[int(month_key[5:7]) - 1]} {month_key[:4]}",
-                    "budget": values["budget"],
-                    "expenses": values["expenses"],
-                    "url": f"{reverse('core:events')}?scope=all&month={month_key}",
-                }
-                for month_key, values in sorted(finance_totals.items())
-            ]
-        context["metrics"] = {
-            "conversion": round((qualified_clients / total_leads) * 100, 1),
-            "average_check": round(total_revenue / max(events.count(), 1), 2),
-            "profit": sum(event.profit for event in events.prefetch_related("expenses")),
-            "sources": leads.values("source").annotate(total=Count("id")).order_by("-total"),
-            "team_load": team_chart,
-        }
-        context["analytics_period"] = period
-        context["analytics_period_choices"] = (("all", "Весь период"), ("6m", "Последние 6 месяцев"), ("12m", "Последние 12 месяцев"))
-        context["pipeline_chart"] = pipeline_chart
-        context["source_chart"] = source_chart
-        context["monthly_chart"] = monthly_chart
-        context["team_chart"] = team_chart
-        context["finance_monthly_chart"] = finance_monthly_chart
+                month = event.date.replace(day=1)
+                row = finance_totals.setdefault(month, {"budget": Decimal("0"), "expenses": Decimal("0")})
+                expenses = event.total_expenses
+                row["budget"] += event.planned_budget
+                row["expenses"] += expenses
+                total_budget += event.planned_budget
+                total_expenses += expenses
+            if total_events:
+                average_check = (total_budget / total_events).quantize(Decimal("0.01"))
+                profit = total_budget - total_expenses
+            finance_monthly_chart = [{
+                "label": month_label(month),
+                "budget": finance_totals.get(month, {}).get("budget", Decimal("0")),
+                "expenses": finance_totals.get(month, {}).get("expenses", Decimal("0")),
+                "url": event_url(month),
+            } for month in month_keys]
+
+        context.update(
+            metrics={
+                "conversion": round(converted_leads / total_leads * 100, 1) if total_leads else None,
+                "average_check": average_check, "profit": profit,
+                "total_leads": total_leads, "converted_leads": converted_leads, "total_events": total_events,
+                "sources": source_totals, "team_load": team_chart,
+            },
+            total_leads=total_leads, converted_leads=converted_leads, total_events=total_events,
+            analytics_period=period,
+            analytics_period_choices=(("all", "Весь период"), ("6m", "Последние 6 месяцев"), ("12m", "Последние 12 месяцев")),
+            analytics_period_start=period_start, analytics_period_end=period_end,
+            analytics_excludes_cancelled=True,
+            pipeline_url=list_url("pipeline", date_params), events_url=event_url(),
+            pipeline_chart=pipeline_chart, source_chart=source_chart,
+            monthly_chart=monthly_chart, team_chart=team_chart, finance_monthly_chart=finance_monthly_chart,
+            pipeline_max=max((item["total"] for item in pipeline_chart), default=1) or 1,
+            source_max=max((item["total"] for item in source_chart), default=1) or 1,
+            team_max=max((item["total"] for item in team_chart), default=1) or 1,
+            monthly_max=max((item["total"] for item in monthly_chart), default=1) or 1,
+            finance_max=max((max(item["budget"], item["expenses"]) for item in finance_monthly_chart), default=1) or 1,
+            monthly_gaps_omitted=monthly_gaps_omitted,
+        )
         return context
 
 

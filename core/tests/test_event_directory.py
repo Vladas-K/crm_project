@@ -399,7 +399,7 @@ def test_event_autocomplete_links_archived_suggestions_directly_to_detail(
     [
         ("active", [Event.Status.PLANNING, Event.Status.IN_PROGRESS]),
         ("archive", [Event.Status.COMPLETED, Event.Status.CANCELLED]),
-        ("all", Event.Status.values),
+        ("all", ["not_cancelled", *Event.Status.values]),
     ],
 )
 def test_event_directory_status_options_match_selected_scope(
@@ -410,7 +410,7 @@ def test_event_directory_status_options_match_selected_scope(
     assert [value for value, label in response.context["event_statuses"]] == statuses
 
 
-@pytest.mark.parametrize("chart_name", ["monthly_chart", "team_chart", "finance_monthly_chart"])
+@pytest.mark.parametrize("chart_name", ["monthly_chart", "finance_monthly_chart"])
 def test_analytics_event_chart_links_include_matching_archived_projects(
     client, directory_viewer, event_factory, chart_name
 ):
@@ -428,6 +428,7 @@ def test_analytics_event_chart_links_include_matching_archived_projects(
     directory = client.get(chart_item["url"])
 
     assert params["scope"] == ["all"]
+    assert params["status"] == ["not_cancelled"]
     assert directory.status_code == 200
     assert list(directory.context["events"]) == [archived]
     if chart_name != "finance_monthly_chart":

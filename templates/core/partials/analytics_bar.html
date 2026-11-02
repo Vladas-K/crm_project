@@ -1,0 +1,4 @@
+<li><a href="{{ item.url }}" class="analytics-bar-row">
+    <span class="analytics-bar-row__label">{{ item.label }}</span><strong>{{ item.total }}</strong>
+    <span class="analytics-bar-track" aria-hidden="true"><span style="width: {% widthratio item.total maximum 100 %}%"></span></span>
+</a></li>

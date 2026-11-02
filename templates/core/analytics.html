@@ -3,311 +3,98 @@
 {% block title %}Аналитика | CRM{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div>
-        <h1 class="h2 mb-1">Аналитика</h1>
-        <p class="text-secondary mb-0">
-            {% if crm_permissions.can_view_finance %}
-                Конверсия, средний чек, прибыль, источники и загрузка команды.
-            {% else %}
-                Конверсия, источники и загрузка команды.
-            {% endif %}
-        </p>
-    </div>
-    <form method="get" class="analytics-period-filter">
-        <label for="analytics-period" class="visually-hidden">Период аналитики</label>
-        <select id="analytics-period" name="period" class="form-select">
-            {% for value, label in analytics_period_choices %}
-                <option value="{{ value }}" {% if analytics_period == value %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit" class="btn btn-primary">Применить</button>
-    </form>
-</div>
-
-<div class="row g-4 mb-4">
-    <div class="col-md-4"><div class="metric-card metric-card--large"><span>Конверсия</span><strong>{{ metrics.conversion }}%</strong></div></div>
-    {% if crm_permissions.can_view_finance %}
-        <div class="col-md-4"><div class="metric-card metric-card--large"><span>Средний чек</span><strong>{{ metrics.average_check }} ₽</strong></div></div>
-        <div class="col-md-4"><div class="metric-card metric-card--large"><span>Прибыль</span><strong>{{ metrics.profit|floatformat:2 }} ₽</strong></div></div>
-    {% endif %}
-</div>
-
-<div class="row g-4">
-    <div class="col-12">
-        <div class="premium-panel analytics-chart-panel">
-            <div class="premium-panel__header">
-                <div>
-                    <h2 class="premium-panel__title">Воронка продаж</h2>
-                    <p class="premium-panel__subtitle">Количество лидов на каждом этапе.</p>
-                </div>
-                <a href="{% url 'core:pipeline' %}" class="text-decoration-none">Открыть воронку</a>
-            </div>
-            {% if pipeline_chart %}
-                <div class="analytics-chart-wrap">
-                    <canvas id="pipeline-chart" aria-label="График воронки продаж"></canvas>
-                </div>
-                {{ pipeline_chart|json_script:"pipeline-chart-data" }}
-            {% else %}
-                <p class="text-secondary mb-0">Данных для графика пока нет.</p>
-            {% endif %}
+<div class="analytics-workspace">
+    <header class="page-header workspace-page-header analytics-header">
+        <div class="workspace-page-header__content">
+            <svg class="workspace-page-header__icon" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 5v22h23M11 21v-6M18 21V9M25 21v-9"/></svg>
+            <div><h1>Аналитика</h1><p>Продажи, мероприятия и работа команды.</p></div>
         </div>
+        <form method="get" class="analytics-period-filter">
+            <div><label for="analytics-period">Период отчёта</label><select id="analytics-period" name="period" class="form-select">
+                {% for value, label in analytics_period_choices %}<option value="{{ value }}"{% if analytics_period == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select></div>
+            <button type="submit" class="btn btn-primary">Применить</button>
+        </form>
+    </header>
+
+    <div class="analytics-scope">
+        <strong>{% if analytics_period_start %}{{ analytics_period_start|date:"d.m.Y" }} — {{ analytics_period_end|date:"d.m.Y" }}{% else %}Весь период{% endif %}</strong>
+        <span>Лиды — по дате создания. Мероприятия — по дате проведения, без отменённых.</span>
     </div>
-    <div class="col-lg-6">
-        <div class="premium-panel analytics-chart-panel">
-            <div class="premium-panel__header">
-                <div>
-                    <h2 class="premium-panel__title">Источники лидов</h2>
-                    <p class="premium-panel__subtitle">Распределение входящих обращений по каналам.</p>
-                </div>
-            </div>
+
+    <section class="analytics-summary{% if not crm_permissions.can_view_finance %} analytics-summary--single{% endif %}" aria-label="Показатели отчёта">
+        <div class="analytics-summary__item">
+            <span class="analytics-summary__label">Конверсия в клиента</span>
+            <strong>{% if metrics.conversion != None %}{{ metrics.conversion|floatformat:1 }}%{% else %}—{% endif %}</strong>
+            <span class="analytics-summary__note">{% if total_leads %}Стали клиентами: {{ converted_leads }} из {{ total_leads }} лидов.{% else %}За этот период нет лидов.{% endif %}</span>
+        </div>
+        {% if crm_permissions.can_view_finance %}
+        <div class="analytics-summary__item">
+            <span class="analytics-summary__label">Средний плановый бюджет</span>
+            <strong>{% if total_events %}{{ metrics.average_check|floatformat:"-2g" }} ₽{% else %}—{% endif %}</strong>
+            <span class="analytics-summary__note">Мероприятий в расчёте: {{ total_events }}.</span>
+        </div>
+        <div class="analytics-summary__item">
+            <span class="analytics-summary__label">Расчётная прибыль</span>
+            <strong>{% if total_events %}{{ metrics.profit|floatformat:"-2g" }} ₽{% else %}—{% endif %}</strong>
+            <span class="analytics-summary__note">Плановые бюджеты минус внесённые расходы.</span>
+        </div>
+        {% endif %}
+    </section>
+
+    <div class="analytics-grid{% if crm_permissions.can_view_finance %} analytics-grid--finance{% endif %}">
+        <section class="analytics-panel analytics-panel--pipeline" aria-labelledby="analytics-pipeline-title">
+            <header class="analytics-panel__header"><div><h2 id="analytics-pipeline-title">Воронка продаж</h2><p>Текущие этапы лидов выбранного периода.</p></div><a href="{{ pipeline_url }}" class="analytics-panel__link">Все лиды <span aria-hidden="true">↗</span></a></header>
+            {% if total_leads %}
+                <ul id="pipeline-chart" class="analytics-bars analytics-bars--pipeline" aria-label="Лиды по этапам">
+                    {% for item in pipeline_chart %}{% include "core/partials/analytics_bar.html" with maximum=pipeline_max %}{% endfor %}
+                </ul>
+            {% else %}<p class="analytics-empty">За этот период лидов нет. Выберите другой период.</p>{% endif %}
+        </section>
+
+        <section class="analytics-panel analytics-panel--sources" aria-labelledby="analytics-sources-title">
+            <header class="analytics-panel__header"><div><h2 id="analytics-sources-title">Источники лидов</h2><p>Откуда приходят обращения.</p></div></header>
             {% if source_chart %}
-                <div class="analytics-chart-wrap analytics-chart-wrap--sources">
-                    <canvas id="source-chart" aria-label="График источников лидов"></canvas>
-                </div>
-                {{ source_chart|json_script:"source-chart-data" }}
-            {% else %}
-                <p class="text-secondary mb-0">Данных пока нет.</p>
-            {% endif %}
-        </div>
-    </div>
-    <div class="col-lg-6">
-        <div class="premium-panel analytics-chart-panel">
-            <div class="premium-panel__header">
-                <div>
-                    <h2 class="premium-panel__title">Загрузка команды</h2>
-                    <p class="premium-panel__subtitle">Количество мероприятий в работе у каждого менеджера.</p>
-                </div>
-            </div>
+                <ul id="source-chart" class="analytics-bars analytics-bars--sources" aria-label="Количество лидов по источникам">
+                    {% for item in source_chart %}{% include "core/partials/analytics_bar.html" with maximum=source_max %}{% endfor %}
+                </ul>
+            {% else %}<p class="analytics-empty">За этот период обращений нет.</p>{% endif %}
+        </section>
+
+        <section class="analytics-panel analytics-panel--team" aria-labelledby="analytics-team-title">
+            <header class="analytics-panel__header"><div><h2 id="analytics-team-title">Загрузка команды</h2><p>Все активные мероприятия, включая будущие. Не зависит от периода отчёта.</p></div><a href="{% url 'core:events' %}?scope=active" class="analytics-panel__link">В работе <span aria-hidden="true">↗</span></a></header>
             {% if team_chart %}
-                <div class="analytics-chart-wrap analytics-chart-wrap--team">
-                    <canvas id="team-chart" aria-label="Загрузка команды"></canvas>
-                </div>
-                {{ team_chart|json_script:"team-chart-data" }}
-            {% else %}
-                <p class="text-secondary mb-0">Данных пока нет.</p>
-            {% endif %}
-        </div>
-    </div>
-    <div class="col-12">
-        <div class="premium-panel analytics-chart-panel">
-            <div class="premium-panel__header">
-                <div>
-                    <h2 class="premium-panel__title">Динамика мероприятий</h2>
-                    <p class="premium-panel__subtitle">Количество мероприятий по месяцам.</p>
-                </div>
-                <a href="{% url 'core:events' %}?scope=all" class="text-decoration-none">Открыть мероприятия</a>
-            </div>
+                <ul id="team-chart" class="analytics-bars analytics-bars--team" aria-label="Активные мероприятия по ответственным">
+                    {% for item in team_chart %}{% include "core/partials/analytics_bar.html" with maximum=team_max %}{% endfor %}
+                </ul>
+            {% else %}<p class="analytics-empty">Активных мероприятий пока нет.</p>{% endif %}
+        </section>
+
+        <section class="analytics-panel analytics-panel--monthly" aria-labelledby="analytics-monthly-title">
+            <header class="analytics-panel__header"><div><h2 id="analytics-monthly-title">Динамика мероприятий</h2><p>По дате проведения.{% if monthly_gaps_omitted %} Показаны месяцы с мероприятиями.{% else %} Включены месяцы без мероприятий.{% endif %}</p></div><a href="{{ events_url }}" class="analytics-panel__link">Мероприятия <span aria-hidden="true">↗</span></a></header>
             {% if monthly_chart %}
-                <div class="analytics-chart-wrap">
-                    <canvas id="monthly-chart" aria-label="Динамика мероприятий по месяцам"></canvas>
-                </div>
-                {{ monthly_chart|json_script:"monthly-chart-data" }}
-            {% else %}
-                <p class="text-secondary mb-0">Данных для графика пока нет.</p>
-            {% endif %}
-        </div>
+                <ul id="monthly-chart" class="analytics-bars analytics-bars--monthly" aria-label="Количество мероприятий по месяцам">
+                    {% for item in monthly_chart %}{% include "core/partials/analytics_bar.html" with maximum=monthly_max %}{% endfor %}
+                </ul>
+            {% else %}<p class="analytics-empty">Мероприятий пока нет.</p>{% endif %}
+        </section>
+
+        {% if crm_permissions.can_view_finance %}
+        <section class="analytics-panel analytics-panel--finance" aria-labelledby="analytics-finance-title">
+            <header class="analytics-panel__header"><div><h2 id="analytics-finance-title">Бюджет и расходы</h2><p>Плановые бюджеты и внесённые расходы сгруппированы по месяцу мероприятия. Оплаты учитываются отдельно.</p></div><a href="{{ events_url }}" class="analytics-panel__link">Мероприятия <span aria-hidden="true">↗</span></a></header>
+            {% if finance_monthly_chart %}
+                <ul id="finance-monthly-chart" class="analytics-finance" aria-label="Плановый бюджет и расходы по месяцам">
+                    {% for item in finance_monthly_chart %}
+                    <li><a href="{{ item.url }}" class="analytics-finance__row">
+                        <span class="analytics-finance__month">{{ item.label }}</span>
+                        <span class="analytics-finance__value"><span>Плановый бюджет</span><strong>{{ item.budget|floatformat:"-2g" }} ₽</strong><span class="analytics-bar-track" aria-hidden="true"><span style="width: {% widthratio item.budget finance_max 100 %}%"></span></span></span>
+                        <span class="analytics-finance__value analytics-finance__value--expenses"><span>Внесённые расходы</span><strong>{{ item.expenses|floatformat:"-2g" }} ₽</strong><span class="analytics-bar-track" aria-hidden="true"><span style="width: {% widthratio item.expenses finance_max 100 %}%"></span></span></span>
+                    </a></li>
+                    {% endfor %}
+                </ul>
+            {% else %}<p class="analytics-empty">Мероприятий для финансового отчёта пока нет.</p>{% endif %}
+        </section>
+        {% endif %}
     </div>
-    {% if crm_permissions.can_view_finance %}
-        <div class="col-12">
-            <div class="premium-panel analytics-chart-panel">
-                <div class="premium-panel__header">
-                    <div>
-                        <h2 class="premium-panel__title">Бюджет и расходы</h2>
-                        <p class="premium-panel__subtitle">Плановый бюджет и фактические расходы по месяцам.</p>
-                    </div>
-                    <a href="{% url 'core:events' %}?scope=all" class="text-decoration-none">Открыть мероприятия</a>
-                </div>
-                {% if finance_monthly_chart %}
-                    <div class="analytics-chart-wrap">
-                        <canvas id="finance-monthly-chart" aria-label="Бюджет и расходы по месяцам"></canvas>
-                    </div>
-                    {{ finance_monthly_chart|json_script:"finance-monthly-chart-data" }}
-                {% else %}
-                    <p class="text-secondary mb-0">Финансовых данных пока нет.</p>
-                {% endif %}
-            </div>
-        </div>
-    {% endif %}
 </div>
-{% if pipeline_chart or source_chart or monthly_chart or team_chart or finance_monthly_chart %}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-{% endif %}
-{% if pipeline_chart %}
-    <script>
-        (() => {
-            const chartData = JSON.parse(document.getElementById("pipeline-chart-data").textContent);
-            const canvas = document.getElementById("pipeline-chart");
-            const chart = new Chart(canvas, {
-                type: "bar",
-                data: {
-                    labels: chartData.map((stage) => stage.label),
-                    datasets: [{
-                        data: chartData.map((stage) => stage.total),
-                        backgroundColor: chartData.map((stage) => stage.color),
-                        borderRadius: 8,
-                        borderSkipped: false,
-                        barThickness: 28,
-                    }],
-                },
-                options: {
-                    indexAxis: "y",
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                    },
-                    scales: {
-                        x: { beginAtZero: true, ticks: { precision: 0 } },
-                        y: { grid: { display: false } },
-                    },
-                    onClick: (_event, elements) => {
-                        if (elements.length) window.location.href = chartData[elements[0].index].url;
-                    },
-                },
-            });
-            canvas.style.cursor = "pointer";
-            window.pipelineChart = chart;
-        })();
-    </script>
-{% endif %}
-{% if monthly_chart and not pipeline_chart and not source_chart %}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-{% endif %}
-{% if monthly_chart %}
-    <script>
-        (() => {
-            const chartData = JSON.parse(document.getElementById("monthly-chart-data").textContent);
-            const canvas = document.getElementById("monthly-chart");
-            new Chart(canvas, {
-                type: "bar",
-                data: {
-                    labels: chartData.map((month) => month.label),
-                    datasets: [{
-                        data: chartData.map((month) => month.total),
-                        backgroundColor: "rgba(124, 58, 237, 0.76)",
-                        borderRadius: 8,
-                        borderSkipped: false,
-                        barThickness: 30,
-                    }],
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, ticks: { precision: 0 } },
-                        x: { grid: { display: false } },
-                    },
-                    onClick: (_event, elements) => {
-                        if (elements.length) window.location.href = chartData[elements[0].index].url;
-                    },
-                },
-            });
-            canvas.style.cursor = "pointer";
-        })();
-    </script>
-{% endif %}
-{% if team_chart %}
-    <script>
-        (() => {
-            const chartData = JSON.parse(document.getElementById("team-chart-data").textContent);
-            const canvas = document.getElementById("team-chart");
-            new Chart(canvas, {
-                type: "bar",
-                data: {
-                    labels: chartData.map((manager) => manager.label),
-                    datasets: [{
-                        data: chartData.map((manager) => manager.total),
-                        backgroundColor: "rgba(15, 159, 110, 0.76)",
-                        borderRadius: 8,
-                        borderSkipped: false,
-                        barThickness: 28,
-                    }],
-                },
-                options: {
-                    indexAxis: "y",
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { beginAtZero: true, ticks: { precision: 0 } },
-                        y: { grid: { display: false } },
-                    },
-                    onClick: (_event, elements) => {
-                        if (elements.length) window.location.href = chartData[elements[0].index].url;
-                    },
-                },
-            });
-            canvas.style.cursor = "pointer";
-        })();
-    </script>
-{% endif %}
-{% if finance_monthly_chart %}
-    <script>
-        (() => {
-            const chartData = JSON.parse(document.getElementById("finance-monthly-chart-data").textContent);
-            const canvas = document.getElementById("finance-monthly-chart");
-            new Chart(canvas, {
-                type: "bar",
-                data: {
-                    labels: chartData.map((month) => month.label),
-                    datasets: [
-                        {
-                            label: "Бюджет",
-                            data: chartData.map((month) => month.budget),
-                            backgroundColor: "rgba(31, 111, 235, 0.76)",
-                            borderRadius: 8,
-                        },
-                        {
-                            label: "Расходы",
-                            data: chartData.map((month) => month.expenses),
-                            backgroundColor: "rgba(225, 29, 72, 0.76)",
-                            borderRadius: 8,
-                        },
-                    ],
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: "top" } },
-                    scales: {
-                        y: { beginAtZero: true },
-                        x: { grid: { display: false } },
-                    },
-                    onClick: (_event, elements) => {
-                        if (elements.length) window.location.href = chartData[elements[0].index].url;
-                    },
-                },
-            });
-            canvas.style.cursor = "pointer";
-        })();
-    </script>
-{% endif %}
-{% if source_chart %}
-    <script>
-        (() => {
-            const chartData = JSON.parse(document.getElementById("source-chart-data").textContent);
-            const canvas = document.getElementById("source-chart");
-            new Chart(canvas, {
-                type: "doughnut",
-                data: {
-                    labels: chartData.map((source) => source.label),
-                    datasets: [{
-                        data: chartData.map((source) => source.total),
-                        backgroundColor: ["#1f6feb", "#0f9f6e", "#d97706", "#7c3aed", "#e11d48", "#64748b"],
-                        borderColor: "#ffffff",
-                        borderWidth: 3,
-                    }],
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: "right" },
-                    },
-                    onClick: (_event, elements) => {
-                        if (elements.length) window.location.href = chartData[elements[0].index].url;
-                    },
-                },
-            });
-            canvas.style.cursor = "pointer";
-        })();
-    </script>
-{% endif %}
 {% endblock %}

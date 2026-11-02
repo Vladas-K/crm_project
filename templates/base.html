@@ -47,7 +47,7 @@
                 <a class="crm-nav__link" href="{% url 'core:packages' %}"{% if request.path|slice:':10' == '/packages/' %} aria-current="page"{% endif %}>Пакеты</a>
                 <a class="crm-nav__link" href="{% url 'core:calendar' %}"{% if request.path == '/calendar/' %} aria-current="page"{% endif %}>Календарь</a>
                 {% if crm_permissions.can_view_analytics %}
-                    <a class="crm-nav__link" href="{% url 'core:analytics' %}">Аналитика</a>
+                    <a class="crm-nav__link" href="{% url 'core:analytics' %}"{% if request.resolver_match.url_name == 'analytics' %} aria-current="page"{% endif %}>Аналитика</a>
                 {% endif %}
                 {% if crm_permissions.can_manage_system %}
                     <a class="crm-nav__link" href="{% url 'core:team' %}"{% if request.path|slice:':6' == '/team/' %} aria-current="page"{% endif %}>Пользователи и роли</a>

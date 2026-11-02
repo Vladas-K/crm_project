@@ -515,6 +515,26 @@ class ServicePackageForm(BootstrapModelForm):
         help_texts = {"services": "Каждую услугу укажите с новой строки.", "price": "Цена предложения клиенту. Ноль допустим."}
 
 
+class LeadDateFilterForm(forms.Form):
+    """Проверяет границы даты создания для переходов из аналитики."""
+
+    date_from = forms.DateField(
+        label="Создан от", required=False, input_formats=("%Y-%m-%d",),
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"type": "date", "class": "form-control"}),
+    )
+    date_to = forms.DateField(
+        label="Создан до", required=False, input_formats=("%Y-%m-%d",),
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"type": "date", "class": "form-control"}),
+    )
+
+    def clean(self):
+        cleaned = super().clean()
+        start, end = cleaned.get("date_from"), cleaned.get("date_to")
+        if start and end and start > end:
+            self.add_error("date_to", "Дата окончания должна быть не раньше даты начала.")
+        return cleaned
+
+
 class EventDirectoryFilterForm(forms.Form):
     """Проверяет параметры каталога, в том числе старые ссылки на период."""
 
@@ -535,7 +555,10 @@ class EventDirectoryFilterForm(forms.Form):
 
     q = forms.CharField(label="Поиск", required=False, max_length=255)
     scope = forms.ChoiceField(label="Мероприятия", choices=SCOPE_CHOICES)
-    status = forms.ChoiceField(label="Статус", required=False, choices=(("", "Все статусы"), *Event.Status.choices))
+    status = forms.ChoiceField(
+        label="Статус", required=False,
+        choices=(("", "Все статусы"), ("not_cancelled", "Кроме отменённых"), *Event.Status.choices),
+    )
     event_format = forms.ChoiceField(label="Формат", required=False)
     manager = forms.ChoiceField(label="Ответственный", required=False)
     attention = forms.ChoiceField(label="Требуют внимания", required=False, choices=ATTENTION_CHOICES)
@@ -555,7 +578,7 @@ class EventDirectoryFilterForm(forms.Form):
         if data is not None:
             data = data.copy()
             data["scope"] = data.get("scope") or (
-                "all" if data.get("status") in {Event.Status.COMPLETED, Event.Status.CANCELLED} else "active"
+                "all" if data.get("status") in {Event.Status.COMPLETED, Event.Status.CANCELLED, "not_cancelled"} else "active"
             )
             data["period"] = data.get("period") or (
                 "custom" if any(data.get(key) for key in ("date_from", "date_to", "month")) else "all"
