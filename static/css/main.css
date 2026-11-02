@@ -165,7 +165,7 @@ body {
     width: 2.75rem;
     height: 2.75rem;
     border-radius: 0.9rem;
-    background: linear-gradient(135deg, #1f6feb 0%, #67a6ff 100%);
+    background: linear-gradient(135deg, #cc4b26 0%, #c43d50 100%);
     color: #fff;
 }
 
@@ -4132,7 +4132,7 @@ a.lead-profile-contact:focus {
 .team-rights li strong { font-weight: 600; color: #273444; }
 .team-rights li .team-rights__denied { color: #626e7d; font-weight: 400; }
 .team-rights p, .team-member__missing { color: #626e7d; font-size: .85rem; margin: .5rem 0; }
-.team-member a { display: inline-block; font-size: .85rem; margin-top: .5rem; }
+.team-member a { font-size: .85rem; margin-top: .5rem; }
 .team-member__edit { grid-column: 1 / -1; justify-self: start; }
 .team-empty { padding: 2rem; text-align: center; }
 .team-empty h2 { font-size: 1.1rem; }
