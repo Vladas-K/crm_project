@@ -14,15 +14,12 @@ from core.models import (
     CRMRole,
     Client,
     Event,
-    EventDocument,
     EventExpense,
     EventFormat,
     EventRisk,
     EventTask,
-    EventVendor,
     ExpenseCategory,
     TeamMemberProfile,
-    Vendor,
 )
 
 pytestmark = pytest.mark.django_db
@@ -262,42 +259,19 @@ def test_event_directory_keeps_filters_in_pagination_scope_tabs_and_get_form(
     assert response.context["event_attention_filter"] == "risks"
 
 
-def test_event_directory_counts_and_finance_are_not_multiplied_by_related_rows(
+def test_event_directory_warns_only_about_overdue_open_tasks(
     client, directory_viewer, directory_today, event_factory
 ):
-    """Несколько задач, документов и одинаковых расходов не искажают сводку."""
-    directory_viewer.crm_profile.can_view_finance = True
-    directory_viewer.crm_profile.save(update_fields=["can_view_finance"])
-    event = event_factory(planned_budget=Decimal("1000.00"))
-    for status, offset in (
-        (EventTask.Status.TODO, -1),
-        (EventTask.Status.IN_PROGRESS, 0),
-        (EventTask.Status.TODO, 1),
-        (EventTask.Status.DONE, -2),
-    ):
+    event = event_factory()
+    for status, offset in ((EventTask.Status.TODO, -1), (EventTask.Status.IN_PROGRESS, -2),
+                           (EventTask.Status.TODO, 1), (EventTask.Status.DONE, -3)):
         EventTask.objects.create(event=event, title="Задача", status=status,
                                  deadline=directory_today + timedelta(days=offset))
-    vendor = Vendor.objects.create(name="Подрядчик каталога")
-    for role in ("Звук", "Свет"):
-        EventVendor.objects.create(event=event, vendor=vendor, role=role)
-    for status in (EventDocument.Status.SIGNED, EventDocument.Status.SIGNED, EventDocument.Status.DRAFT):
-        EventDocument.objects.create(event=event, document_type=EventDocument.Type.CONTRACT, status=status)
-    category = ExpenseCategory.objects.create(name="Расходы каталога")
-    for amount in ("100.00", "100.00", "50.00"):
-        EventExpense.objects.create(event=event, category=category, amount=Decimal(amount))
-    archived_event = event_factory(status=Event.Status.COMPLETED)
-    EventExpense.objects.create(event=archived_event, category=category, amount=Decimal("999.00"))
-
     response = client.get(reverse("core:events"))
-    item = response.context["events"][0]
-
-    assert item.open_tasks_count == 3
-    assert item.overdue_tasks_count == 1
-    assert item.vendors_count == 2
-    assert item.documents_count == 3
-    assert item.signed_documents_count == 2
-    assert item.directory_total_expenses == Decimal("250.00")
-    assert item.directory_margin == Decimal("75.00")
+    assert response.context["events"][0].overdue_tasks_count == 2
+    html = response.content.decode()
+    assert "Просроченные задачи: 2" in html
+    assert f'{reverse("core:event_detail", args=[event.pk])}?tab=tasks&amp;task_filter=overdue#event-tabs' in html
 
 
 def test_event_directory_date_attention_excludes_archived_projects(
@@ -314,9 +288,12 @@ def test_event_directory_date_attention_excludes_archived_projects(
     assert events[finished.pk].directory_date_overdue is False
 
 
-def test_event_directory_does_not_read_or_render_finance_without_permission(
-    client, directory_viewer, event_factory
+@pytest.mark.parametrize("finance", [False, True])
+def test_event_directory_does_not_read_or_render_finance(
+    client, directory_viewer, event_factory, finance
 ):
+    directory_viewer.crm_profile.can_view_finance = finance
+    directory_viewer.crm_profile.save(update_fields=["can_view_finance"])
     event = event_factory(planned_budget=Decimal("7654321.12"))
     category = ExpenseCategory.objects.create(name="Скрытые расходы")
     EventExpense.objects.create(event=event, category=category, amount=Decimal("123456.78"))
@@ -370,7 +347,8 @@ def test_event_directory_escapes_user_text_in_cards(client, directory_viewer, ev
     response = client.get(reverse("core:events"))
     html = response.content.decode()
 
-    for value in (title, city, event.client.name):
+    assert event.client.name not in html
+    for value in (title, city):
         assert value not in html
         assert str(escape(value)) in html
 

@@ -124,27 +124,20 @@
             </div>
             <h3 id="event-title-{{ event.pk }}"><a href="{% url 'core:event_detail' event.pk %}">{{ event.title|default:event.client }}</a></h3>
             <p class="event-directory-card__date"><time datetime="{{ event.date|date:'Y-m-d' }}">{{ event.date|date:'j E Y' }}</time><span aria-hidden="true">·</span><span>{{ event.city }}</span></p>
-            {% if event.directory_active %}<p class="event-directory-card__countdown{% if event.directory_date_overdue %} event-directory-card__countdown--overdue{% endif %}">{% if event.directory_date_overdue %}Дата прошла · статус не закрыт{% elif event.directory_days_until == 0 %}Сегодня{% elif event.directory_days_until == 1 %}Завтра{% else %}До мероприятия: {{ event.directory_days_until }} дн.{% endif %}</p>{% endif %}
-            <dl class="event-directory-card__context">
-                <div><dt>Клиент</dt><dd>{% if crm_permissions.can_view_clients %}<a href="{% url 'core:client_detail' event.client_id %}">{{ event.client }}</a>{% else %}{{ event.client }}{% endif %}</dd></div>
-                <div><dt>Формат</dt><dd>{{ event.event_format|default:'Не выбран' }}</dd></div>
-                <div class="event-directory-card__manager"><dt>Ответственный</dt><dd>{% if event.manager %}{{ event.manager.get_full_name|default:event.manager.get_username }}{% else %}Не назначен{% endif %}</dd></div>
+            <dl class="event-directory-card__manager">
+                <dt>Ответственный</dt><dd>{% if event.manager %}{{ event.manager.get_full_name|default:event.manager.get_username }}{% else %}Не назначен{% endif %}</dd>
             </dl>
-            <div class="event-directory-card__operations" aria-label="Готовность мероприятия">
-                <a href="{% url 'core:event_detail' event.pk %}?tab=tasks&amp;task_filter=open#event-tabs"><span>Открытые задачи</span><strong>{{ event.open_tasks_count }}</strong>{% if event.overdue_tasks_count %}<small class="event-directory-card__overdue">Просрочено: {{ event.overdue_tasks_count }}</small>{% endif %}</a>
-                <a href="{% url 'core:event_detail' event.pk %}?tab=vendors#event-tabs"><span>Подрядчики</span><strong>{{ event.vendors_count }}</strong></a>
-                <a href="{% url 'core:event_detail' event.pk %}?tab=documents#event-tabs"><span>Документы</span>{% if event.documents_count %}<strong>{{ event.signed_documents_count }} / {{ event.documents_count }}</strong><small>подписано</small>{% else %}<small class="event-directory-card__no-documents">Нет документов</small>{% endif %}</a>
-            </div>
-            <div class="event-directory-card__footer">
-                {% if crm_permissions.can_view_finance %}<dl class="event-directory-card__finance"><div><dt>Бюджет</dt><dd>{{ event.directory_budget_display }} ₽</dd></div><div><dt>Плановая маржа</dt><dd>{% if event.planned_budget %}{{ event.directory_margin|floatformat:1 }}%{% else %}—{% endif %}</dd></div></dl>{% endif %}
-                <a href="{% url 'core:event_detail' event.pk %}" class="btn btn-sm btn-outline-secondary event-directory-card__open" aria-label="Открыть мероприятие {{ event.title|default:event.client }}">Открыть</a>
-            </div>
+            {% if event.directory_date_overdue or event.overdue_tasks_count %}
+                <ul class="event-directory-card__alerts" aria-label="Требует внимания">
+                    {% if event.directory_date_overdue %}<li>Дата прошла · статус не закрыт</li>{% endif %}
+                    {% if event.overdue_tasks_count %}<li><a href="{% url 'core:event_detail' event.pk %}?tab=tasks&amp;task_filter=overdue#event-tabs">Просроченные задачи: {{ event.overdue_tasks_count }}</a></li>{% endif %}
+                </ul>
+            {% endif %}
         </article>
     {% empty %}
         <div class="event-directory-empty" role="status"><strong>{% if filter_form.errors %}Исправьте параметры поиска{% else %}Мероприятия не найдены{% endif %}</strong><p>{% if filter_form.errors %}Проверьте указанные выше ошибки и повторите поиск.{% else %}Измените условия поиска или выберите другой состав списка.{% endif %}</p>{% if not filter_form.errors %}<a href="{% url 'core:events' %}?scope=all" class="btn btn-outline-secondary">Все мероприятия</a>{% endif %}</div>
     {% endfor %}
 </div>
-{% if crm_permissions.can_view_finance %}<p class="event-directory-finance-hint">Плановая маржа учитывает только внесённые расходы.</p>{% endif %}
 {% if is_paginated %}
     <nav class="client-pagination" aria-label="Страницы списка мероприятий">
         {% if page_obj.has_previous %}<a class="btn btn-outline-secondary" href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Назад</a>{% endif %}

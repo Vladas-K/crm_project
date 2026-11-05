@@ -756,8 +756,7 @@ class EventListView(CRMLoginRequiredMixin, ListView):
         self.scope = filters.get("scope", "active")
         self.period = filters.get("period", "all")
         self.sort = filters.get("sort", "date_asc")
-        self.can_view_finance = bool(getattr(getattr(self.request.user, "crm_profile", None), "can_view_finance", False))
-        queryset = Event.objects.select_related("client", "lead", "event_format", "manager")
+        queryset = Event.objects.select_related("client", "manager")
         if not form_valid:
             return queryset.none().order_by(*self.sort_options[self.sort])
         if self.scope == "active":
@@ -819,26 +818,13 @@ class EventListView(CRMLoginRequiredMixin, ListView):
         return Coalesce(Subquery(counts, output_field=IntegerField()), Value(0))
 
     def annotate_page(self, queryset):
-        """Считает сводку только для текущей страницы без перемножения связей."""
+        """Считает просроченные задачи только для текущей страницы каталога."""
 
-        annotations = {
-            "open_tasks_count": self.related_count(EventTask, status__in=(EventTask.Status.TODO, EventTask.Status.IN_PROGRESS)),
-            "overdue_tasks_count": self.related_count(
+        return queryset.annotate(
+            overdue_tasks_count=self.related_count(
                 EventTask, status__in=(EventTask.Status.TODO, EventTask.Status.IN_PROGRESS), deadline__lt=self.today,
             ),
-            "vendors_count": self.related_count(EventVendor),
-            "documents_count": self.related_count(EventDocument),
-            "signed_documents_count": self.related_count(EventDocument, status=EventDocument.Status.SIGNED),
-        }
-        if self.can_view_finance:
-            expenses = EventExpense.objects.filter(event_id=OuterRef("pk")).order_by().values("event_id").annotate(
-                total=Sum("amount")
-            ).values("total")[:1]
-            amount_field = DecimalField(max_digits=14, decimal_places=2)
-            annotations["directory_total_expenses"] = Coalesce(
-                Subquery(expenses, output_field=amount_field), Value(Decimal("0")), output_field=amount_field,
-            )
-        return queryset.annotate(**annotations)
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -851,11 +837,6 @@ class EventListView(CRMLoginRequiredMixin, ListView):
                 Event.Status.PLANNING: "soft", Event.Status.IN_PROGRESS: "",
                 Event.Status.COMPLETED: "success", Event.Status.CANCELLED: "soft",
             }.get(event.status, "soft")
-            if self.can_view_finance:
-                budget = event.planned_budget
-                event.directory_margin = ((budget - event.directory_total_expenses) / budget * 100) if budget else Decimal("0")
-                formatted = format(budget, ",.0f" if budget == budget.to_integral_value() else ",.2f")
-                event.directory_budget_display = formatted.replace(",", "\u00a0").replace(".", ",")
         context["events"] = context["object_list"] = context["page_obj"].object_list = events
         filters = self.filter_form.cleaned_data
         attention_filter = filters.get("attention", "")
