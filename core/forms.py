@@ -754,13 +754,36 @@ class EventTaskForm(BootstrapModelForm):
 
 
 class EventTimelineItemForm(BootstrapModelForm):
+    """Блок программы; ответственное лицо остаётся внутренней информацией CRM."""
+
     class Meta:
         model = EventTimelineItem
         fields = ["event", "time", "block", "description", "responsible"]
         widgets = {
-            "time": forms.TimeInput(format="%H:%M"),
+            "time": forms.TimeInput(format="%H:%M", attrs={"type": "time", "step": "60"}),
             "description": forms.Textarea(attrs={"rows": 3}),
         }
+        labels = {"time": "Время начала", "block": "Блок программы"}
+        help_texts = {
+            "time": "Время начала блока в формате ЧЧ:ММ.",
+            "responsible": "Для работы в CRM. Не включается в печатный тайминг.",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.fields["event"].disabled = True
+        self.fields["block"].widget.attrs["placeholder"] = "Например, встреча гостей"
+
+    def __getitem__(self, name):
+        field = super().__getitem__(name)
+        described_by = [f"{field.auto_id}_helptext"] if field.help_text else []
+        if field.errors:
+            field.field.widget.attrs["aria-invalid"] = "true"
+            described_by.append(f"{field.auto_id}_error")
+        if described_by:
+            field.field.widget.attrs["aria-describedby"] = " ".join(described_by)
+        return field
 
 
 class EventRiskForm(BootstrapModelForm):

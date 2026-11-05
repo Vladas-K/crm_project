@@ -10,7 +10,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
-from django.http import JsonResponse
+from django.http import FileResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Avg, Case, Count, DecimalField, F, IntegerField, OuterRef, Prefetch, Q, Subquery, Sum, Value, When
 from django.db.models.functions import Coalesce
@@ -2360,12 +2360,32 @@ class TaskUpdateView(TaskFormReturnMixin, EventManagementMixin, EventScopedFormM
     cancel_url = reverse_lazy("core:tasks")
 
 
+class EventTimelineDownloadView(CRMLoginRequiredMixin, View):
+    """Скачивает PDF с согласованными данными тайминга без промежуточной страницы."""
+
+    def get(self, request, pk):
+        from .timeline_pdf import build_timeline_pdf
+
+        event = get_object_or_404(Event.objects.select_related("client", "event_format"), pk=pk)
+        items = event.timeline_items.order_by("time", "id").values(
+            "time", "block", "description"
+        )
+        response = FileResponse(
+            build_timeline_pdf(event, items),
+            as_attachment=True,
+            filename=f"Dievent-timeline-{event.date:%Y-%m-%d}-{event.pk}.pdf",
+            content_type="application/pdf",
+        )
+        response["Cache-Control"] = "private, no-store"
+        return response
+
+
 class EventTimelineItemCreateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Добавляет блок тайминга к мероприятию."""
 
     model = EventTimelineItem
     form_class = EventTimelineItemForm
-    template_name = "core/object_form.html"
+    template_name = "core/timeline_form.html"
     return_tab = "timeline"
     page_title = "Новый блок тайминга"
     success_message = "Блок тайминга добавлен."
@@ -2378,7 +2398,7 @@ class EventTimelineItemUpdateView(EventManagementMixin, EventScopedFormMixin, CR
 
     model = EventTimelineItem
     form_class = EventTimelineItemForm
-    template_name = "core/object_form.html"
+    template_name = "core/timeline_form.html"
     return_tab = "timeline"
     page_title = "Редактирование блока тайминга"
     success_message = "Блок тайминга обновлён."

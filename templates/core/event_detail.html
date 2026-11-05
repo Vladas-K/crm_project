@@ -84,7 +84,10 @@
                 <h2 class="premium-panel__title">Тайминг</h2>
                 <p class="premium-panel__subtitle">Последовательность блоков и ключевые точки проведения мероприятия.</p>
             </div>
-            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_timeline_create' event.pk %}?return_tab=timeline{% if event_filters %}&amp;event_filters={{ event_filters|urlencode }}{% endif %}" class="btn btn-sm btn-primary">Добавить</a>{% endif %}
+            <div class="timeline-panel-actions">
+                <a href="{% url 'core:event_timeline_download' event.pk %}" class="btn btn-sm btn-outline-secondary">Скачать PDF</a>
+                {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_timeline_create' event.pk %}?return_tab=timeline{% if event_filters %}&amp;event_filters={{ event_filters|urlencode }}{% endif %}" class="btn btn-sm btn-primary">Добавить</a>{% endif %}
+            </div>
         </div>
         <div class="premium-list premium-list--timeline">
             {% for item in detail_timeline_items %}

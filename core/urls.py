@@ -64,6 +64,7 @@ from .views import (
     EventTimelineItemCreateView,
     EventTimelineItemDeleteView,
     EventTimelineItemUpdateView,
+    EventTimelineDownloadView,
     TeamView,
     TeamMemberAccessUpdateView,
     TeamMemberAccountUpdateView,
@@ -79,6 +80,7 @@ from .views import (
 app_name = "core"
 
 urlpatterns = [
+    path("events/<int:pk>/timeline/download/", EventTimelineDownloadView.as_view(), name="event_timeline_download"),
     path("", DashboardView.as_view(), name="dashboard"),
     path("leads/", LeadListView.as_view(), name="leads"),
     path("leads/autocomplete/", LeadAutocompleteView.as_view(), name="lead_autocomplete"),

@@ -4279,6 +4279,13 @@ a.lead-profile-contact:focus {
 
 /* Expense entry uses the shared structured form. */
 .expense-form-shell { max-width: 56rem; }
+.timeline-form-shell { max-width: 56rem; }
+.timeline-form-shell .workspace-page-header { margin-bottom: .25rem; }
+.timeline-panel-actions { display: flex; flex-wrap: wrap; gap: .65rem; }
+@media (max-width: 767.98px) {
+    .timeline-form-shell .form-control, .timeline-form-shell .form-select { font-size: 16px; min-height: 44px; }
+    .timeline-panel-actions .btn { min-height: 44px; }
+}
 .expense-form-shell .workspace-page-header { margin-bottom: .25rem; }
 .expense-form-preview, .expense-form-legacy { margin: 1rem 0 0; color: var(--crm-muted); font-size: .9rem; line-height: 1.5; }
 .expense-form-preview { color: var(--crm-text); font-weight: 500; }
