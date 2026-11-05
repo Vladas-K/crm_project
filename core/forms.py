@@ -790,14 +790,36 @@ class EventOutcomeForm(FinancialFieldsFormMixin, BootstrapModelForm):
 class EventExpenseForm(BootstrapModelForm):
     class Meta:
         model = EventExpense
-        fields = ["event", "category", "vendor_assignment", "amount", "paid_amount", "payment_status"]
+        fields = ["event", "category", "vendor_assignment", "amount", "paid_amount"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.show_duplicate_warning = False
         self.duplicate_warning_message = ""
-        self.fields["category"].queryset = ExpenseCategory.objects.filter(is_active=True).order_by("order", "name")
+        self.fields["category"].queryset = ExpenseCategory.objects.filter(Q(is_active=True) | Q(pk=self.instance.category_id)).order_by("order", "name")
         self.fields["vendor_assignment"].help_text = "Выберите подрядчика, назначенного на это мероприятие."
+        event = self.instance.event if self.instance.pk else self.initial.get("event")
+        if event:
+            self.fields["event"].disabled = True
+            self.fields["event"].initial = event
+            self.fields["vendor_assignment"].queryset = EventVendor.objects.filter(event=event).select_related("vendor")
+        self.fields["category"].empty_label = "Выберите категорию"
+        self.fields["vendor_assignment"].empty_label = "Без назначенного подрядчика"
+        self.fields["amount"].label = "Сумма расхода, ₽"
+        self.fields["paid_amount"].label = "Уже оплачено, ₽"
+        self.fields["paid_amount"].help_text = "От 0 до полной суммы расхода. Статус оплаты рассчитывается автоматически."
+        for name in ("amount", "paid_amount"):
+            self.fields[name].widget.attrs.update(min="0", inputmode="decimal")
+        for name, field in self.fields.items():
+            descriptions = []
+            if field.help_text:
+                descriptions.append(f"id_{name}_helptext")
+            if self.is_bound and name in self.errors:
+                field.widget.attrs["aria-invalid"] = "true"
+                descriptions.append(f"id_{name}_error")
+            if descriptions:
+                field.widget.attrs["aria-describedby"] = " ".join(descriptions)
+
 
     def clean(self):
         """Предупреждает о повторном расходе для того же подрядчика в мероприятии."""

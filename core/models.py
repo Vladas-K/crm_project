@@ -695,7 +695,7 @@ class EventExpense(models.Model):
         related_name="expenses",
         verbose_name="Назначенный подрядчик",
     )
-    amount = models.DecimalField("Сумма", max_digits=12, decimal_places=2, default=0)
+    amount = models.DecimalField("Сумма", max_digits=12, decimal_places=2, default=0, validators=[MinValueValidator(0)])
     paid_amount = models.DecimalField(
         "Оплачено",
         max_digits=12,
@@ -711,6 +711,10 @@ class EventExpense(models.Model):
     )
 
     class Meta:
+        constraints = [
+            models.CheckConstraint(condition=models.Q(amount__gte=0), name="expense_amount_nonnegative"),
+            models.CheckConstraint(condition=models.Q(paid_amount__gte=0) & models.Q(paid_amount__lte=models.F("amount")), name="expense_payment_range"),
+        ]
         ordering = ("category", "id")
         verbose_name = "Расход"
         verbose_name_plural = "Расходы"
@@ -725,10 +729,23 @@ class EventExpense(models.Model):
         errors = {}
         if self.vendor_assignment and self.event_id != self.vendor_assignment.event_id:
             errors["vendor_assignment"] = "Подрядчик должен быть назначен на это же мероприятие."
-        if self.paid_amount > self.amount:
+        if self.amount is not None and self.amount < 0:
+            errors["amount"] = "Сумма расхода не может быть отрицательной."
+        if self.paid_amount is not None and self.paid_amount < 0:
+            errors["paid_amount"] = "Оплаченная сумма не может быть отрицательной."
+        if self.amount is not None and self.amount >= 0 and self.paid_amount is not None and self.paid_amount > self.amount:
             errors["paid_amount"] = "Оплаченная сумма не может быть больше общей суммы."
         if errors:
             raise ValidationError(errors)
+        if self.amount is not None and self.paid_amount is not None:
+            self.payment_status = (self.PaymentStatus.PLANNED if self.paid_amount == 0 else
+                                   self.PaymentStatus.PARTIAL if self.paid_amount < self.amount else self.PaymentStatus.PAID)
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        if kwargs.get("update_fields") is not None:
+            kwargs["update_fields"] = set(kwargs["update_fields"]) | {"payment_status"}
+        return super().save(*args, **kwargs)
 
     @property
     def remaining_amount(self) -> Decimal:

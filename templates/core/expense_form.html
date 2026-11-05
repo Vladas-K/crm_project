@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ page_title }} | CRM{% endblock %}
+{% block content %}
+<div class="event-form-shell expense-form-shell">
+    <header class="workspace-page-header"><h1>{{ page_title }}</h1><p>Сумма расхода, подрядчик и учёт оплаты.</p></header>
+    <a href="{{ cancel_url }}" class="event-form-back">← К расходам мероприятия</a>
+    <form method="post" class="event-form" novalidate>
+        {% csrf_token %}
+        {% if return_tab %}<input type="hidden" name="return_tab" value="{{ return_tab }}">{% endif %}
+        {% if event_filters %}<input type="hidden" name="event_filters" value="{{ event_filters }}">{% endif %}
+        {% if form.errors %}<div class="event-form-errors" role="alert"><strong>Проверьте отмеченные поля</strong><ul>
+            {% for field in form %}{% for error in field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>{% endfor %}{% endfor %}
+            {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+        </ul></div>{% endif %}
+        {% if form.show_duplicate_warning %}<div class="event-form-errors" role="alert"><strong>Возможный повторный расход</strong><p>{{ form.duplicate_warning_message }} Если это отдельный расход, подтвердите сохранение.</p></div><input type="hidden" name="confirm_duplicate" value="1">{% endif %}
+        <div class="event-form-panel">
+            <p class="event-form-required-note"><span aria-hidden="true">*</span> Обязательные поля.</p>
+            <section class="event-form-section" aria-labelledby="expense-basics">
+                <div class="event-form-section__header"><h2 id="expense-basics">Расход</h2></div>
+                <div class="event-form-grid">
+                    {% include 'core/includes/event_form_field.html' with field=form.event wide=True %}
+                    {% include 'core/includes/event_form_field.html' with field=form.category wide=False %}
+                    {% include 'core/includes/event_form_field.html' with field=form.vendor_assignment wide=False %}
+                </div>
+                {% if form.instance.vendor_name and not form.instance.vendor_assignment_id %}<p class="expense-form-legacy">Указанный ранее подрядчик: <strong>{{ form.instance.vendor_name }}</strong>. Имя сохранится, если не выбирать назначенного подрядчика.</p>{% endif %}
+            </section>
+            <section class="event-form-section" aria-labelledby="expense-payment">
+                <div class="event-form-section__header"><h2 id="expense-payment">Оплата</h2><p>Статус определяется по суммам: без оплаты, частичная или полная оплата. Нулевой расход без оплаты остаётся запланированным.</p></div>
+                <div class="event-form-grid">
+                    {% include 'core/includes/event_form_field.html' with field=form.amount wide=False %}
+                    {% include 'core/includes/event_form_field.html' with field=form.paid_amount wide=False %}
+                </div>
+                <p class="expense-form-preview" data-expense-preview aria-live="polite" hidden></p>
+                <noscript><p>Остаток и статус будут рассчитаны при сохранении.</p></noscript>
+            </section>
+            <div class="event-form-actions"><a href="{{ cancel_url }}" class="btn btn-outline-secondary">Отмена</a><button type="submit" class="btn btn-primary">{% if form.show_duplicate_warning %}Сохранить всё равно{% elif form.instance.pk %}Сохранить изменения{% else %}Добавить расход{% endif %}</button></div>
+        </div>
+    </form>
+</div>
+<script src="{% static_with_version 'js/expense_form.js' %}" defer></script>
+{% endblock %}

@@ -458,7 +458,7 @@ def test_nested_expense_update_returns_to_expenses_tab(client, django_user_model
     assert expense.category.name == "Площадка обновлена"
     assert expense.amount == Decimal("65000.00")
     assert expense.paid_amount == Decimal("25000.00")
-    assert expense.payment_status == EventExpense.PaymentStatus.PAID
+    assert expense.payment_status == EventExpense.PaymentStatus.PARTIAL
     assert response.status_code == 302
     assert response.url == f"{reverse('core:event_detail', kwargs={'pk': expense.event.pk})}?tab=expenses#event-tabs"
 

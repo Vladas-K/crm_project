@@ -2525,7 +2525,7 @@ class EventExpenseCreateView(
 
     model = EventExpense
     form_class = EventExpenseForm
-    template_name = "core/object_form.html"
+    template_name = "core/expense_form.html"
     return_tab = "expenses"
     page_title = "Новый расход"
     success_message = "Расход добавлен."
@@ -2545,7 +2545,7 @@ class EventExpenseUpdateView(
 
     model = EventExpense
     form_class = EventExpenseForm
-    template_name = "core/object_form.html"
+    template_name = "core/expense_form.html"
     return_tab = "expenses"
     page_title = "Редактирование расхода"
     success_message = "Расход обновлён."

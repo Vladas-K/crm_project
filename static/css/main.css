@@ -4276,3 +4276,12 @@ a.lead-profile-contact:focus {
     .analytics-period-filter { grid-template-columns: minmax(0, 1fr); }
     .analytics-period-filter .btn { width: 100%; }
 }
+
+/* Expense entry uses the shared structured form. */
+.expense-form-shell { max-width: 56rem; }
+.expense-form-shell .workspace-page-header { margin-bottom: .25rem; }
+.expense-form-preview, .expense-form-legacy { margin: 1rem 0 0; color: var(--crm-muted); font-size: .9rem; line-height: 1.5; }
+.expense-form-preview { color: var(--crm-text); font-weight: 500; }
+@media (max-width: 767.98px) {
+    .expense-form-shell .form-control, .expense-form-shell .form-select { font-size: 16px; min-height: 44px; }
+}
