@@ -1178,6 +1178,7 @@ class TaskListView(CRMLoginRequiredMixin, ListView):
         return_url = task_list_url(return_params)
         context.update(
             today=today, active_filter=active_filter, task_stats=stats, task_tabs=tabs,
+            task_page_title={"all": "Все задачи", "open": "Открытые задачи", "overdue": "Просроченные задачи", "done": "Завершённые задачи"}[active_filter],
             task_search=params.get("q", ""), task_event=params.get("event", ""),
             task_mine=params.get("mine") == "1", task_sort=params.get("sort", "priority"),
             task_sorts=TASK_SORTS.items(),

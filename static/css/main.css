@@ -3771,11 +3771,13 @@ a.lead-profile-contact:focus {
 
 /* Tasks: separate coloured filters above a quiet working surface. */
 .task-workspace { min-width: 0; }
+.task-workspace > .workspace-page-header { margin-bottom: 1rem; padding-bottom: .5rem; }
 .task-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .85rem; margin-bottom: 1.75rem; }
 .task-summary a { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .75rem; min-width: 0; padding: 1.25rem; border: 2px solid transparent; border-radius: 1.25rem; color: #fff; background: #505155; text-decoration: none; cursor: pointer; }
-.task-summary a:nth-child(2) { background: #f5b88b; }
-.task-summary a:nth-child(3) { background: #ed8eab; }
-.task-summary a:nth-child(4) { background: #c6cdca; }
+.task-summary a:first-child { background: linear-gradient(135deg, #55575a, #3f4145); }
+.task-summary a:nth-child(2) { background: linear-gradient(135deg, #f0ad78, #e99a66); }
+.task-summary a:nth-child(3) { background: linear-gradient(135deg, #ed8eab, #e57498); }
+.task-summary a:nth-child(4) { background: linear-gradient(135deg, #929da3, #78838b); }
 .task-summary a[aria-current="page"] { box-shadow: 0 0 0 4px #d6d8da; }
 .task-summary a:hover { color: #fff; }
 .task-summary a:focus-visible { outline: 3px solid var(--crm-text); outline-offset: 3px; }
