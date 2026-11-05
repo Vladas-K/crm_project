@@ -1,6 +1,32 @@
 (() => {
     const form = document.querySelector('[data-event-filters]');
     if (!form) return;
+    const mobileFilters = form.querySelector('.event-mobile-filters');
+    const advancedFilters = form.querySelector('.event-advanced-filters');
+    const filterGrid = form.querySelector('.event-filter-grid');
+    const filterBody = form.querySelector('.event-mobile-filters__body');
+    const secondaryFields = [...filterBody.children];
+    form.classList.add('event-filters-enhanced');
+    const compact = window.matchMedia('(max-width: 767.98px)');
+    let compactOpen = mobileFilters.dataset.active === 'true';
+    let advancedOpen = advancedFilters.dataset.active === 'true';
+    const syncFilters = () => {
+        // Перемещаем существующие поля: закрытый details не скрывает их на компьютере.
+        secondaryFields.forEach((field) => {
+            if (compact.matches) filterBody.append(field);
+            else filterGrid.insertBefore(field, mobileFilters);
+        });
+        mobileFilters.open = !compact.matches || compactOpen;
+        advancedFilters.open = compact.matches || advancedOpen;
+    };
+    mobileFilters.addEventListener('toggle', () => {
+        if (compact.matches) compactOpen = mobileFilters.open;
+    });
+    advancedFilters.addEventListener('toggle', () => {
+        if (!compact.matches) advancedOpen = advancedFilters.open;
+    });
+    compact.addEventListener('change', syncFilters);
+    syncFilters();
     const period = form.querySelector('[data-event-period]');
     const dateRange = form.querySelector('[data-event-date-range]');
     const updatePeriod = () => {

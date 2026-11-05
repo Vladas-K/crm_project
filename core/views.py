@@ -804,6 +804,11 @@ class EventListView(CRMLoginRequiredMixin, ListView):
             candidates = queryset.select_related(None).select_related("client").only("pk", "title", "city", "client__name")
             matching_ids = [event.pk for event in candidates.iterator() if event_matches_search(event, filters["q"])]
             queryset = queryset.filter(pk__in=matching_ids)
+        if self.sort == "date_asc" and self.scope == "active":
+            queryset = queryset.annotate(
+                directory_past=Case(When(date__lt=self.today, then=Value(1)), default=Value(0), output_field=IntegerField())
+            ).order_by("directory_past", "date", "pk")
+            return queryset
         return queryset.order_by(*self.sort_options[self.sort])
 
     @staticmethod
@@ -865,6 +870,11 @@ class EventListView(CRMLoginRequiredMixin, ListView):
             "event_manager_filter": filters.get("manager", ""),
             "event_attention_filter": attention_filter,
             "event_scope": self.scope,
+            "event_page_title": {"active": "Активные мероприятия", "all": "Все мероприятия", "archive": "Архив мероприятий"}[self.scope],
+            "mobile_filters_open": bool(
+                filters.get("status") or self.period != "all" or filters.get("event_format")
+                or filters.get("manager") or attention_filter or self.sort != "date_asc" or self.filter_form.errors
+            ),
             "event_period": self.period,
             "event_sort": self.sort,
             "event_managers": self.filter_form.event_managers,

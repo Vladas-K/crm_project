@@ -1,19 +1,21 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Мероприятия | CRM{% endblock %}
+{% block title %}{{ event_page_title }} | CRM{% endblock %}
 
 {% block content %}
+<section class="event-directory-workspace">
 <div class="page-header workspace-page-header">
     <div class="workspace-page-header__content">
         <svg class="workspace-page-header__icon" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="6" width="24" height="23" rx="4"/><path d="M10 3v6M22 3v6M4 13h24M10 19h4M18 19h4M10 24h4"/></svg>
-        <div><h1>Мероприятия</h1><p>Ближайшие даты, ответственные и готовность проектов.</p></div>
+        <div><h1>{{ event_page_title }}</h1><p>Ближайшие даты, ответственные и готовность проектов.</p></div>
     </div>
     {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_create' %}" class="btn btn-primary">Добавить мероприятие</a>{% endif %}
 </div>
 
 <nav class="event-directory-tabs" aria-label="Состав списка мероприятий">
     {% for tab in scope_tabs %}<a href="{{ tab.url }}"{% if tab.active %} aria-current="page"{% endif %}>{{ tab.label }}</a>{% endfor %}
+    <span class="event-directory-count">{{ filtered_count }}{% if is_paginated %} · {{ page_obj.start_index }}–{{ page_obj.end_index }}{% endif %}<span class="visually-hidden"> мероприятий в текущей выборке</span></span>
 </nav>
 
 <form id="event-filters" method="get" class="event-directory-filters lead-filter-panel mb-4" data-event-filters>
@@ -34,75 +36,76 @@
                 <span class="visually-hidden" role="status" aria-live="polite" data-search-status></span>
             </div>
         </div>
-        <div class="event-filter-field">
-            <label for="event-status" class="form-label">Статус</label>
-            <select id="event-status" name="status" class="form-select">
-                <option value="">Все статусы</option>
-                {% for value, label in event_statuses %}<option value="{{ value }}"{% if event_status_filter == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
-            </select>
-        </div>
-        <div class="event-filter-field">
-            <label for="event-period" class="form-label">Период</label>
-            <select id="event-period" name="period" class="form-select" data-event-period>
-                <option value="all"{% if event_period == 'all' %} selected{% endif %}>За всё время</option>
-                <option value="this_month"{% if event_period == 'this_month' %} selected{% endif %}>Этот месяц</option>
-                <option value="next_30"{% if event_period == 'next_30' %} selected{% endif %}>Следующие 30 дней</option>
-                <option value="custom"{% if event_period == 'custom' %} selected{% endif %}>Произвольный период</option>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary event-filter-submit">Показать</button>
+        <button type="submit" class="btn btn-outline-secondary event-filter-submit">Показать</button>
+        <details class="event-mobile-filters" open data-active="{% if mobile_filters_open %}true{% else %}false{% endif %}">
+            <summary>Фильтры{% if mobile_filters_open %}<span class="event-mobile-filters__active">Применены</span>{% endif %}</summary>
+            <div class="event-mobile-filters__body">
+                <div class="event-filter-field">
+                    <label for="event-status" class="form-label">Статус</label>
+                    <select id="event-status" name="status" class="form-select">
+                        <option value="">Все статусы</option>
+                        {% for value, label in event_statuses %}<option value="{{ value }}"{% if event_status_filter == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="event-filter-field">
+                    <label for="event-period" class="form-label">Период</label>
+                    <select id="event-period" name="period" class="form-select" data-event-period>
+                        <option value="all"{% if event_period == 'all' %} selected{% endif %}>За всё время</option>
+                        <option value="this_month"{% if event_period == 'this_month' %} selected{% endif %}>Этот месяц</option>
+                        <option value="next_30"{% if event_period == 'next_30' %} selected{% endif %}>Следующие 30 дней</option>
+                        <option value="custom"{% if event_period == 'custom' %} selected{% endif %}>Произвольный период</option>
+                    </select>
+                </div>
+
+                <div class="event-date-range" data-event-date-range>
+                    <div class="event-filter-field"><label for="event-date-from" class="form-label">Дата от</label><input id="event-date-from" type="date" name="date_from" value="{{ event_date_from }}" class="form-control"{% if filter_form.date_from.errors %} aria-invalid="true"{% endif %}></div>
+                    <div class="event-filter-field"><label for="event-date-to" class="form-label">Дата до</label><input id="event-date-to" type="date" name="date_to" value="{{ event_date_to }}" class="form-control"{% if filter_form.date_to.errors %} aria-invalid="true"{% endif %}></div>
+                    <p>Даты используются для произвольного периода.</p>
+                </div>
+                <details class="event-advanced-filters" open data-active="{% if advanced_filters_open %}true{% else %}false{% endif %}">
+                    <summary>Дополнительные фильтры и сортировка</summary>
+                    <div class="event-advanced-grid">
+                        <div class="event-filter-field">
+                            <label for="event-format" class="form-label">Формат</label>
+                            <select id="event-format" name="event_format" class="form-select">
+                                <option value="">Все форматы</option>
+                                {% for format in event_formats %}<option value="{{ format.pk }}"{% if event_format_filter == format.pk|stringformat:'s' %} selected{% endif %}>{{ format.name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="event-filter-field">
+                            <label for="event-manager" class="form-label">Ответственный</label>
+                            <select id="event-manager" name="manager" class="form-select">
+                                <option value="">Все ответственные</option>
+                                <option value="unassigned"{% if event_manager_filter == 'unassigned' %} selected{% endif %}>Без ответственного</option>
+                                {% for manager in event_managers %}<option value="{{ manager.pk }}"{% if event_manager_filter == manager.pk|stringformat:'s' %} selected{% endif %}>{{ manager.get_full_name|default:manager.get_username }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="event-filter-field">
+                            <label for="event-attention" class="form-label">Требуют внимания</label>
+                            <select id="event-attention" name="attention" class="form-select"{% if event_scope == 'archive' %} disabled aria-describedby="event-attention-hint"{% endif %}>
+                                <option value="">Все мероприятия</option>
+                                <option value="overdue_tasks"{% if event_attention_filter == 'overdue_tasks' %} selected{% endif %}>Просроченные задачи</option>
+                                <option value="risks"{% if event_attention_filter == 'risks' %} selected{% endif %}>С рисками</option>
+                                <option value="outcomes"{% if event_attention_filter == 'outcomes' %} selected{% endif %}>Без заполненных итогов</option>
+                                <option value="unassigned_manager"{% if event_attention_filter == 'unassigned_manager' %} selected{% endif %}>Без ответственного</option>
+                            </select>
+                            {% if event_scope == 'archive' %}<small id="event-attention-hint" class="text-secondary">Для активных мероприятий.</small>{% endif %}
+                        </div>
+                        <div class="event-filter-field">
+                            <label for="event-sort" class="form-label">Сортировка</label>
+                            <select id="event-sort" name="sort" class="form-select">
+                                <option value="date_asc"{% if event_sort == 'date_asc' %} selected{% endif %}>По дате: сначала ближайшие</option>
+                                <option value="date_desc"{% if event_sort == 'date_desc' %} selected{% endif %}>По дате: сначала поздние</option>
+                                <option value="created_desc"{% if event_sort == 'created_desc' %} selected{% endif %}>Сначала добавленные недавно</option>
+                            </select>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </details>
     </div>
-    <div class="event-date-range" data-event-date-range>
-        <div class="event-filter-field"><label for="event-date-from" class="form-label">Дата от</label><input id="event-date-from" type="date" name="date_from" value="{{ event_date_from }}" class="form-control"{% if filter_form.date_from.errors %} aria-invalid="true"{% endif %}></div>
-        <div class="event-filter-field"><label for="event-date-to" class="form-label">Дата до</label><input id="event-date-to" type="date" name="date_to" value="{{ event_date_to }}" class="form-control"{% if filter_form.date_to.errors %} aria-invalid="true"{% endif %}></div>
-        <p>Даты используются для произвольного периода.</p>
-    </div>
-    <details class="event-advanced-filters"{% if advanced_filters_open %} open{% endif %}>
-        <summary>Дополнительные фильтры и сортировка</summary>
-        <div class="event-advanced-grid">
-            <div class="event-filter-field">
-                <label for="event-format" class="form-label">Формат</label>
-                <select id="event-format" name="event_format" class="form-select">
-                    <option value="">Все форматы</option>
-                    {% for format in event_formats %}<option value="{{ format.pk }}"{% if event_format_filter == format.pk|stringformat:'s' %} selected{% endif %}>{{ format.name }}</option>{% endfor %}
-                </select>
-            </div>
-            <div class="event-filter-field">
-                <label for="event-manager" class="form-label">Ответственный</label>
-                <select id="event-manager" name="manager" class="form-select">
-                    <option value="">Все ответственные</option>
-                    <option value="unassigned"{% if event_manager_filter == 'unassigned' %} selected{% endif %}>Без ответственного</option>
-                    {% for manager in event_managers %}<option value="{{ manager.pk }}"{% if event_manager_filter == manager.pk|stringformat:'s' %} selected{% endif %}>{{ manager.get_full_name|default:manager.get_username }}</option>{% endfor %}
-                </select>
-            </div>
-            <div class="event-filter-field">
-                <label for="event-attention" class="form-label">Требуют внимания</label>
-                <select id="event-attention" name="attention" class="form-select"{% if event_scope == 'archive' %} disabled aria-describedby="event-attention-hint"{% endif %}>
-                    <option value="">Все мероприятия</option>
-                    <option value="overdue_tasks"{% if event_attention_filter == 'overdue_tasks' %} selected{% endif %}>Просроченные задачи</option>
-                    <option value="risks"{% if event_attention_filter == 'risks' %} selected{% endif %}>С рисками</option>
-                    <option value="outcomes"{% if event_attention_filter == 'outcomes' %} selected{% endif %}>Без заполненных итогов</option>
-                    <option value="unassigned_manager"{% if event_attention_filter == 'unassigned_manager' %} selected{% endif %}>Без ответственного</option>
-                </select>
-                {% if event_scope == 'archive' %}<small id="event-attention-hint" class="text-secondary">Для активных мероприятий.</small>{% endif %}
-            </div>
-            <div class="event-filter-field">
-                <label for="event-sort" class="form-label">Сортировка</label>
-                <select id="event-sort" name="sort" class="form-select">
-                    <option value="date_asc"{% if event_sort == 'date_asc' %} selected{% endif %}>По дате: сначала ближайшие</option>
-                    <option value="date_desc"{% if event_sort == 'date_desc' %} selected{% endif %}>По дате: сначала поздние</option>
-                    <option value="created_desc"{% if event_sort == 'created_desc' %} selected{% endif %}>Сначала добавленные недавно</option>
-                </select>
-            </div>
-        </div>
-    </details>
     {% if has_filters %}<div class="event-filter-selection">{% if attention_label %}<span>{{ attention_label }}</span>{% endif %}<a href="{% url 'core:events' %}" class="lead-filter-reset">Сбросить фильтры</a></div>{% endif %}
 </form>
-
-<div class="event-directory-summary">
-    <div><h2>{% if event_scope == 'archive' %}Архив мероприятий{% elif event_scope == 'all' %}Все мероприятия{% else %}Активные мероприятия{% endif %}</h2><p>Найдено: {{ filtered_count }}{% if is_paginated %} · Показаны {{ page_obj.start_index }}–{{ page_obj.end_index }}{% endif %}</p></div>
-    {% if crm_permissions.can_view_finance %}<p class="event-directory-finance-hint">Плановая маржа учитывает только внесённые расходы.</p>{% endif %}
-</div>
 
 <div class="event-directory-grid">
     {% for event in events %}
@@ -130,7 +133,7 @@
             <div class="event-directory-card__operations" aria-label="Готовность мероприятия">
                 <a href="{% url 'core:event_detail' event.pk %}?tab=tasks&amp;task_filter=open#event-tabs"><span>Открытые задачи</span><strong>{{ event.open_tasks_count }}</strong>{% if event.overdue_tasks_count %}<small class="event-directory-card__overdue">Просрочено: {{ event.overdue_tasks_count }}</small>{% endif %}</a>
                 <a href="{% url 'core:event_detail' event.pk %}?tab=vendors#event-tabs"><span>Подрядчики</span><strong>{{ event.vendors_count }}</strong></a>
-                <a href="{% url 'core:event_detail' event.pk %}?tab=documents#event-tabs"><span>Документы</span><strong>{{ event.signed_documents_count }} / {{ event.documents_count }}</strong><small>подписано</small></a>
+                <a href="{% url 'core:event_detail' event.pk %}?tab=documents#event-tabs"><span>Документы</span>{% if event.documents_count %}<strong>{{ event.signed_documents_count }} / {{ event.documents_count }}</strong><small>подписано</small>{% else %}<small class="event-directory-card__no-documents">Нет документов</small>{% endif %}</a>
             </div>
             <div class="event-directory-card__footer">
                 {% if crm_permissions.can_view_finance %}<dl class="event-directory-card__finance"><div><dt>Бюджет</dt><dd>{{ event.directory_budget_display }} ₽</dd></div><div><dt>Плановая маржа</dt><dd>{% if event.planned_budget %}{{ event.directory_margin|floatformat:1 }}%{% else %}—{% endif %}</dd></div></dl>{% endif %}
@@ -141,6 +144,7 @@
         <div class="event-directory-empty" role="status"><strong>{% if filter_form.errors %}Исправьте параметры поиска{% else %}Мероприятия не найдены{% endif %}</strong><p>{% if filter_form.errors %}Проверьте указанные выше ошибки и повторите поиск.{% else %}Измените условия поиска или выберите другой состав списка.{% endif %}</p>{% if not filter_form.errors %}<a href="{% url 'core:events' %}?scope=all" class="btn btn-outline-secondary">Все мероприятия</a>{% endif %}</div>
     {% endfor %}
 </div>
+{% if crm_permissions.can_view_finance %}<p class="event-directory-finance-hint">Плановая маржа учитывает только внесённые расходы.</p>{% endif %}
 {% if is_paginated %}
     <nav class="client-pagination" aria-label="Страницы списка мероприятий">
         {% if page_obj.has_previous %}<a class="btn btn-outline-secondary" href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Назад</a>{% endif %}
@@ -148,6 +152,7 @@
         {% if page_obj.has_next %}<a class="btn btn-outline-secondary" href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Далее</a>{% endif %}
     </nav>
 {% endif %}
+</section>
 {% include 'core/partials/item_action_menus.html' %}
 {% include 'core/partials/clickable_profile_cards.html' %}
 <script src="{% static_with_version 'js/event_directory.js' %}" defer></script>

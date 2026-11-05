@@ -94,8 +94,8 @@ def test_event_directory_scopes_and_legacy_archived_status(
 @pytest.mark.parametrize(
     "period, offsets, expected_offsets",
     [
-        ("all", [-60, -1, 0, 29, 30, 60], [-60, -1, 0, 29, 30, 60]),
-        ("this_month", [-21, -20, 0, 10, 11], [-20, 0, 10]),
+        ("all", [-60, -1, 0, 29, 30, 60], [0, 29, 30, 60, -60, -1]),
+        ("this_month", [-21, -20, 0, 10, 11], [0, 10, -20]),
         ("next_30", [-1, 0, 29, 30], [0, 29]),
     ],
 )
@@ -447,3 +447,23 @@ def test_dashboard_event_count_links_to_directory_including_archive(
 
     assert f'href="{target_url}"' in dashboard.content.decode()
     assert set(directory.context["events"]) == {active, archived}
+
+
+@pytest.mark.parametrize("scope", ["active", "all", "archive"])
+def test_directory_titles_and_chronological_scope_order(client, directory_viewer, directory_today, event_factory, scope):
+    status = Event.Status.COMPLETED if scope == "archive" else Event.Status.PLANNING
+    past = event_factory(date=directory_today - timedelta(days=2), status=status)
+    today = event_factory(date=directory_today, status=status)
+    future = event_factory(date=directory_today + timedelta(days=2), status=status)
+    response = client.get(reverse("core:events"), {"scope": scope})
+    assert list(response.context["events"]) == ([today, future, past] if scope == "active" else [past, today, future])
+    title = {"active": "Активные мероприятия", "all": "Все мероприятия", "archive": "Архив мероприятий"}[scope]
+    assert f"<h1>{title}</h1>" in response.content.decode()
+    assert f"<title>{title} | CRM</title>" in response.content.decode()
+
+
+@pytest.mark.parametrize("params, expanded", [({}, False), ({"status": "planning"}, True), ({"period": "custom", "date_from": "bad"}, True), ({"manager": "unassigned"}, True)])
+def test_directory_mobile_filters_preserve_applied_state(client, directory_viewer, params, expanded):
+    response = client.get(reverse("core:events"), params)
+    assert response.context["mobile_filters_open"] is expanded
+    assert 'class="event-mobile-filters" open' in response.content.decode()
