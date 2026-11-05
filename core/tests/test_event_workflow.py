@@ -683,3 +683,47 @@ def test_nested_document_update_returns_to_documents_tab(client, django_user_mod
     assert document.status == EventDocument.Status.SIGNED
     assert response.status_code == 302
     assert response.url == f"{reverse('core:event_detail', kwargs={'pk': document.event.pk})}?tab=documents#event-tabs"
+
+
+@pytest.mark.django_db
+def test_event_task_context_keeps_filters_through_detail_edit_and_status(client, django_user_model, crm_objects):
+    from urllib.parse import parse_qs, urlsplit
+    login_user(client, django_user_model, can_manage_events=True)
+    event = crm_objects['event']
+    task = EventTask.objects.create(event=event, title='Контекст', status='todo')
+    state = 'task_filter=overdue&vendor_filter=approved'
+    params = {'return_tab': 'tasks', 'event_filters': state}
+    detail = client.get(reverse('core:task_detail', args=[task.pk]), params)
+    assert detail.context['task_event_return_url'] == f"{reverse('core:event_detail', args=[event.pk])}?tab=tasks&{state}#event-tabs"
+    edit = client.get(reverse('core:task_update', args=[task.pk]), params)
+    assert edit.context['cancel_url'] == detail.context['task_event_return_url']
+    response = client.post(reverse('core:task_status_update', args=[task.pk]), {**params, 'status': 'in_progress', 'return_task': '1'})
+    assert parse_qs(urlsplit(response.url).query)['event_filters'] == [state]
+    direct = client.post(reverse('core:task_status_update', args=[task.pk]), {**params, 'status': 'done'})
+    assert direct.url == detail.context['task_event_return_url']
+
+
+@pytest.mark.django_db
+def test_event_return_filters_are_whitelisted(client, django_user_model, crm_objects):
+    login_user(client, django_user_model, can_manage_events=True)
+    task = EventTask.objects.create(event=crm_objects['event'], title='Проверка')
+    response = client.post(reverse('core:task_status_update', args=[task.pk]), {
+        'status': 'in_progress', 'event_filters': 'task_filter=bad&vendor_filter=approved&next=https://example.com&tab=expenses'
+    })
+    assert response.url == f"{reverse('core:event_detail', args=[task.event_id])}?tab=tasks&vendor_filter=approved#event-tabs"
+
+
+@pytest.mark.django_db
+def test_event_tab_links_keep_filter_and_allow_reset(client, django_user_model, crm_objects):
+    from urllib.parse import parse_qs, urlsplit
+    from html.parser import HTMLParser
+    login_user(client, django_user_model, can_manage_events=True)
+    response = client.get(reverse('core:event_detail', args=[crm_objects['event'].pk]), {'task_filter': 'overdue'})
+    class Links(HTMLParser):
+        urls = []
+        def handle_starttag(self, tag, attrs):
+            if tag == 'a': self.urls.append(dict(attrs).get('href', ''))
+    links = Links(); links.feed(response.content.decode())
+    queries = [parse_qs(urlsplit(url).query) for url in links.urls]
+    assert any(q.get('tab') == ['vendors'] and q.get('task_filter') == ['overdue'] for q in queries)
+    assert any(q.get('tab') == ['tasks'] and q.get('task_filter', [])[-1:] == ['all'] for q in queries)

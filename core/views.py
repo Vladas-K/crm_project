@@ -932,6 +932,44 @@ class EventAutocompleteView(CRMLoginRequiredMixin, View):
         return response
 
 
+EVENT_FILTER_CHOICES = {
+    "task_filter": {"all", "open", "overdue", "done"},
+    "expense_filter": {"all", *EventExpense.PaymentStatus.values},
+    "vendor_filter": {"all", *EventVendor.Status.values},
+    "communication_filter": {"all", *EventCommunication.Type.values},
+    "document_filter": {"all", *EventDocument.Status.values},
+}
+
+
+def event_filter_params(values):
+    """Оставляет только поддерживаемые фильтры вкладок мероприятия."""
+    return {key: values.get(key) for key, choices in EVENT_FILTER_CHOICES.items()
+            if values.get(key) in choices - {"all"}}
+
+
+def event_filter_context(request):
+    """Читает нормализованное состояние, переданное через форму или ссылку."""
+    raw = request.POST.get("event_filters") or request.GET.get("event_filters", "")
+    parsed = parse_qs(raw[:1000])
+    return urlencode(event_filter_params({key: values[-1] for key, values in parsed.items()}))
+
+
+def event_task_return_query(request):
+    params = {"return_tab": "tasks"}
+    filters = event_filter_context(request)
+    if filters:
+        params["event_filters"] = filters
+    return urlencode(params)
+
+
+def event_return_url(request, event_id, tab):
+    if tab not in {"tasks", "timeline", "risks", "outcome", "expenses", "vendors", "communications", "documents"}:
+        tab = "tasks"
+    filters = event_filter_context(request)
+    query = f"tab={tab}" + (f"&{filters}" if filters else "")
+    return f"{reverse('core:event_detail', args=[event_id])}?{query}#event-tabs"
+
+
 class EventDetailView(CRMLoginRequiredMixin, DetailView):
     """Рабочая карточка мероприятия с вкладками, фильтрами и связанной операционной информацией."""
 
@@ -1014,6 +1052,9 @@ class EventDetailView(CRMLoginRequiredMixin, DetailView):
         if document_filter in {choice[0] for choice in EventDocument.Status.choices}:
             documents = documents.filter(status=document_filter)
 
+        selected_filters = event_filter_params(self.request.GET)
+        context["event_filters"] = urlencode(selected_filters)
+        context["event_filter_prefix"] = urlencode(selected_filters) + "&" if selected_filters else ""
         context["today"] = today
         context["event_date_overdue"] = (
             self.object.date < today
@@ -1039,6 +1080,8 @@ class EventDetailView(CRMLoginRequiredMixin, DetailView):
             "total_expenses": self.object.total_expenses,
             "approved_vendors": self.object.event_vendors.filter(status=EventVendor.Status.APPROVED).count(),
             "signed_documents": self.object.documents.filter(status=EventDocument.Status.SIGNED).count(),
+            "total_documents": self.object.documents.count(),
+            "total_vendors": self.object.event_vendors.count(),
         }
         context["overdue_tasks_count"] = self.object.tasks.exclude(status=EventTask.Status.DONE).filter(
             deadline__lt=today
@@ -1205,8 +1248,9 @@ class TaskDetailView(CRMLoginRequiredMixin, DetailView):
         return_url = safe_task_return_url(self.request.GET.get("return_to", ""))
         if self.request.GET.get("return_tab") == "tasks":
             context["task_return_tab"] = "tasks"
-            context["task_return_query"] = "return_tab=tasks"
-            context["task_event_return_url"] = f"{reverse('core:event_detail', args=[self.object.event_id])}?tab=tasks#event-tabs"
+            context["event_filters"] = event_filter_context(self.request)
+            context["task_return_query"] = event_task_return_query(self.request)
+            context["task_event_return_url"] = event_return_url(self.request, self.object.event_id, "tasks")
         elif return_url:
             context["task_return_url"] = return_url
             context["task_return_query"] = urlencode({"return_to": return_url})
@@ -1931,7 +1975,7 @@ class EventScopedFormMixin(CRMLoginRequiredMixin):
     def get_event_detail_url(self, event):
         """Строит URL карточки мероприятия с вкладкой по умолчанию для view."""
 
-        return f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab={self.return_tab}#event-tabs"
+        return event_return_url(self.request, event.pk, self.return_tab)
 
     def get_return_tab(self):
         """Определяет вкладку возврата из запроса или настройки view."""
@@ -1964,6 +2008,7 @@ class EventScopedFormMixin(CRMLoginRequiredMixin):
 
         context = super().get_context_data(**kwargs)
         context["return_tab"] = self.get_return_tab()
+        context["event_filters"] = event_filter_context(self.request)
         return context
 
     def form_valid(self, form):
@@ -1977,10 +2022,10 @@ class EventScopedFormMixin(CRMLoginRequiredMixin):
         """Возвращает пользователя в карточку мероприятия и нужную вкладку."""
 
         if self.parent_event:
-            return f"{reverse('core:event_detail', kwargs={'pk': self.parent_event.pk})}?tab={self.get_return_tab()}#event-tabs"
+            return event_return_url(self.request, self.parent_event.pk, self.get_return_tab())
         event = getattr(getattr(self, "object", None), "event", None)
         if event:
-            return f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab={self.get_return_tab()}#event-tabs"
+            return event_return_url(self.request, event.pk, self.get_return_tab())
         return super().get_cancel_url()
 
     def get_success_url(self):
@@ -1988,7 +2033,7 @@ class EventScopedFormMixin(CRMLoginRequiredMixin):
 
         event = self.parent_event or getattr(getattr(self, "object", None), "event", None)
         if event:
-            return f"{reverse('core:event_detail', kwargs={'pk': event.pk})}?tab={self.get_return_tab()}#event-tabs"
+            return event_return_url(self.request, event.pk, self.get_return_tab())
         return super().get_success_url()
 
 
@@ -2246,10 +2291,11 @@ class TaskReturnMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         return_url = self.get_task_list_url()
+        context["event_filters"] = event_filter_context(self.request)
         if return_url:
             context.update(return_to=return_url, cancel_url=return_url, return_tab="")
         elif not context.get("cancel_url") and getattr(self, "object", None):
-            context["cancel_url"] = f"{reverse('core:event_detail', args=[self.object.event_id])}?tab=tasks#event-tabs"
+            context["cancel_url"] = event_return_url(self.request, self.object.event_id, 'tasks')
         return context
 
 
@@ -2261,7 +2307,7 @@ class TaskFormReturnMixin(TaskReturnMixin):
     def get_task_detail_url(self):
         detail_url = reverse("core:task_detail", args=[self.object.pk])
         return_url = self.get_task_list_url()
-        query = urlencode({"return_to": return_url}) if return_url else "return_tab=tasks"
+        query = urlencode({"return_to": return_url}) if return_url else event_task_return_query(self.request)
         return f"{detail_url}?{query}"
 
     def get_success_url(self):
@@ -2349,7 +2395,7 @@ class EventTimelineItemDeleteView(EventManagementMixin, DeleteView):
     def get_success_url(self):
         """Возвращает пользователя на вкладку тайминга после удаления блока."""
 
-        return f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=timeline#event-tabs"
+        return event_return_url(self.request, self.object.event.pk, 'timeline')
 
 
 class EventRiskCreateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
@@ -2387,7 +2433,7 @@ class EventRiskDeleteView(SystemAccessMixin, DeleteView):
     def get_success_url(self):
         """Возвращает пользователя на вкладку рисков после удаления."""
 
-        return f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=risks#event-tabs"
+        return event_return_url(self.request, self.object.event.pk, 'risks')
 
 
 class EventOutcomeCreateView(EventManagementMixin, FinanceFormMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
@@ -2425,7 +2471,7 @@ class EventOutcomeDeleteView(SystemAccessMixin, DeleteView):
     def get_success_url(self):
         """Возвращает пользователя на вкладку итогов после удаления."""
 
-        return f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=outcome#event-tabs"
+        return event_return_url(self.request, self.object.event.pk, 'outcome')
 
 
 class TaskDeleteView(TaskReturnMixin, SystemAccessMixin, DeleteView):
@@ -2438,7 +2484,7 @@ class TaskDeleteView(TaskReturnMixin, SystemAccessMixin, DeleteView):
         """Выбирает URL возврата по месту, откуда пользователь пришел удалять задачу."""
 
         return self.get_task_list_url() or (
-            f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=tasks#event-tabs"
+            event_return_url(self.request, self.object.event.pk, 'tasks')
         )
 
 
@@ -2460,11 +2506,11 @@ class TaskStatusUpdateView(EventManagementMixin, View):
         if request.POST.get("return_task") == "1":
             detail_url = reverse("core:task_detail", args=[task.pk])
             if request.POST.get("return_tab") == "tasks":
-                detail_url += "?return_tab=tasks"
+                detail_url += "?" + event_task_return_query(request)
             elif return_url:
                 detail_url += "?" + urlencode({"return_to": return_url})
             return redirect(detail_url)
-        return redirect(return_url or f"{reverse('core:event_detail', kwargs={'pk': task.event.pk})}?tab=tasks#event-tabs")
+        return redirect(return_url or event_return_url(self.request, task.event.pk, 'tasks'))
 
 
 class EventExpenseCreateView(
@@ -2516,7 +2562,7 @@ class EventExpenseDeleteView(SystemAccessMixin, DeleteView):
     def get_success_url(self):
         """Возвращает пользователя на вкладку расходов после удаления."""
 
-        return f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=expenses#event-tabs"
+        return event_return_url(self.request, self.object.event.pk, 'expenses')
 
 
 class EventVendorCreateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
@@ -2554,7 +2600,7 @@ class EventVendorDeleteView(EventManagementMixin, DeleteView):
     def get_success_url(self):
         """Возвращает пользователя на вкладку подрядчиков после удаления назначения."""
 
-        return f"{reverse('core:event_detail', kwargs={'pk': self.object.event.pk})}?tab=vendors#event-tabs"
+        return event_return_url(self.request, self.object.event.pk, 'vendors')
 
 
 class EventVendorStatusUpdateView(EventManagementMixin, View):
@@ -2571,7 +2617,7 @@ class EventVendorStatusUpdateView(EventManagementMixin, View):
             assignment.status = status
             assignment.save(update_fields=["status"])
             messages.success(request, "Статус подрядчика обновлён.")
-        return redirect(f"{reverse('core:event_detail', kwargs={'pk': assignment.event.pk})}?tab=vendors#event-tabs")
+        return redirect(event_return_url(self.request, assignment.event.pk, 'vendors'))
 
 
 class EventRecordDeleteView(EventManagementMixin, DeleteView):
@@ -2584,11 +2630,12 @@ class EventRecordDeleteView(EventManagementMixin, DeleteView):
         return super().get_queryset().select_related("event")
 
     def get_success_url(self):
-        return f"{reverse('core:event_detail', kwargs={'pk': self.object.event_id})}?tab={self.return_tab}#event-tabs"
+        return event_return_url(self.request, self.object.event_id, self.return_tab)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(
+            event_filters=event_filter_context(self.request),
             page_title=self.page_title,
             parent_event=self.object.event,
             cancel_url=self.get_success_url(),

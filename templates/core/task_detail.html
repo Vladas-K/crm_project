@@ -12,6 +12,7 @@
                 {% if task.status == 'todo' or task.status == 'in_progress' %}
                     <form method="post" action="{% url 'core:task_status_update' task.pk %}">
                         {% csrf_token %}
+        {% if event_filters %}<input type="hidden" name="event_filters" value="{{ event_filters }}">{% endif %}
                         <input type="hidden" name="return_task" value="1">
                         {% if task_return_tab %}<input type="hidden" name="return_tab" value="{{ task_return_tab }}">{% endif %}
                         {% if task_return_url %}<input type="hidden" name="return_to" value="{{ task_return_url }}">{% endif %}

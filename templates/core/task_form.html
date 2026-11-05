@@ -13,6 +13,7 @@
     <a href="{{ cancel_url }}" class="event-form-back">{{ cancel_label }}</a>
     <form method="post" class="event-form" novalidate>
         {% csrf_token %}
+        {% if event_filters %}<input type="hidden" name="event_filters" value="{{ event_filters }}">{% endif %}
         {% if return_to %}<input type="hidden" name="return_to" value="{{ return_to }}">{% endif %}
         {% if return_tab %}<input type="hidden" name="return_tab" value="{{ return_tab }}">{% endif %}
         {% if form.errors %}

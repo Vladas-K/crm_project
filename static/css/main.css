@@ -3706,7 +3706,7 @@ a.lead-profile-contact:focus {
 .event-operation-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-rows: minmax(4.25rem, auto);
+    grid-auto-rows: auto;
     gap: 1rem;
     margin: 0;
 }
@@ -3726,7 +3726,9 @@ a.lead-profile-contact:focus {
 .event-operation-grid strong { margin: 0; font-size: 1.1rem; line-height: 1.5; font-weight: 550; }
 .event-context-fields .event-context-empty { color: #526071; font-weight: 400; }
 .event-context-fields a, .event-workspace .workspace-page-header p a { color: inherit; text-decoration: underline; text-decoration-color: #bcc7d2; text-underline-offset: 0.2rem; }
-.event-context-notes { display: grid; gap: 0.8rem; margin: 1rem 0 0; padding-top: 1rem; border-top: 1px solid #e7ebef; }
+.event-context-notes { display: grid; gap: 0.8rem; margin: 0; padding-top: 1rem; }
+.event-brief { padding: .8rem 1.25rem; border: 1px solid var(--crm-border); border-radius: 1rem; background: #fff; }
+.event-brief > summary { min-height: 28px; font-weight: 550; cursor: pointer; }
 .event-context-notes dd { font-size: 0.9rem; }
 .event-operation-grid a { color: var(--crm-text); text-decoration: none; border-radius: 0.3rem; }
 .event-operation-grid span { color: #526071; font-size: 0.85rem; }
@@ -3737,7 +3739,7 @@ a.lead-profile-contact:focus {
 .event-finance__metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin: 0; }
 .event-finance__metrics dd { font-size: clamp(1.1rem, 1.65vw, 1.5rem); font-weight: 550; font-variant-numeric: tabular-nums; }
 .event-finance__note { margin: 0.8rem 0 0; padding-top: 0.7rem; border-top: 1px solid #e7ebef; color: #526071; font-size: 0.8rem; }
-.event-workspace .event-tabs { padding: 0; gap: 0.2rem 0.6rem; background: transparent; border: 0; border-bottom: 1px solid #dce2e8; border-radius: 0; box-shadow: none; backdrop-filter: none; }
+.event-workspace .event-tabs { scroll-margin-top: 1rem; padding: 0; gap: 0.2rem 0.6rem; background: transparent; border: 0; border-bottom: 1px solid #dce2e8; border-radius: 0; box-shadow: none; backdrop-filter: none; }
 .event-workspace .event-tabs__link { padding: 0.7rem 0.5rem; border-bottom: 2px solid transparent; border-radius: 0; font-weight: 500; color: #526071; }
 .event-workspace .event-tabs__link--active { color: var(--crm-text); border-bottom-color: var(--crm-accent); background: transparent; box-shadow: none; }
 .event-workspace .event-tabs__link { position: relative; isolation: isolate; }
@@ -3769,7 +3771,17 @@ a.lead-profile-contact:focus {
     .event-task-controls { justify-content: flex-start; gap: 0.7rem; }
 }
 @media (max-width: 767.98px) {
-    .event-context-grid { grid-template-columns: minmax(0, 1fr); }
+    .event-context-grid { grid-template-columns: minmax(0, 1fr); gap: .75rem; }
+    .event-context-fields { grid-template-columns: 1fr; gap: .4rem; }
+    .event-context-fields > div { flex-direction: row; justify-content: space-between; gap: .75rem; }
+    .event-context-fields dd { text-align: right; font-size: .9rem; }
+    .event-context-fields dt { flex-shrink: 0; }
+    .event-operation-grid { gap: .65rem; }
+    .event-operation-grid span { font-size: .8rem; }
+    .event-workspace .event-tabs { flex-wrap: nowrap; overflow-x: auto; scroll-margin-top: 76px; gap: .25rem; }
+    .event-workspace .event-tabs__link { flex-shrink: 0; white-space: nowrap; }
+    .event-workspace .premium-panel__title { margin-bottom: .6rem !important; }
+
     .event-finance__metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .event-workspace .workspace-page-header > .btn { width: 100%; }
     .event-workspace .premium-list__row--task { align-items: flex-start; flex-direction: column; }
