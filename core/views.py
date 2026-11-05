@@ -2565,27 +2565,27 @@ class EventExpenseDeleteView(SystemAccessMixin, DeleteView):
         return event_return_url(self.request, self.object.event.pk, 'expenses')
 
 
-class EventVendorCreateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
+class EventVendorCreateView(EventManagementMixin, FinanceFormMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, CreateView):
     """Добавляет подрядчика в конкретное мероприятие."""
 
     model = EventVendor
     form_class = EventVendorForm
-    template_name = "core/object_form.html"
+    template_name = "core/event_vendor_form.html"
     return_tab = "vendors"
-    page_title = "Новый подрядчик мероприятия"
+    page_title = "Назначение подрядчика"
     success_message = "Подрядчик добавлен в мероприятие."
     success_url = reverse_lazy("core:events")
     cancel_url = reverse_lazy("core:events")
 
 
-class EventVendorUpdateView(EventManagementMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
+class EventVendorUpdateView(EventManagementMixin, FinanceFormMixin, EventScopedFormMixin, CRUDContextMixin, SuccessMessageMixin, UpdateView):
     """Редактирует назначение подрядчика на мероприятие."""
 
     model = EventVendor
     form_class = EventVendorForm
-    template_name = "core/object_form.html"
+    template_name = "core/event_vendor_form.html"
     return_tab = "vendors"
-    page_title = "Редактирование подрядчика мероприятия"
+    page_title = "Изменение назначения подрядчика"
     success_message = "Подрядчик мероприятия обновлён."
     success_url = reverse_lazy("core:events")
     cancel_url = reverse_lazy("core:events")

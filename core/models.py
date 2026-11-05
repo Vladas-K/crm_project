@@ -775,13 +775,14 @@ class EventVendor(models.Model):
         verbose_name="Подрядчик",
     )
     role = models.CharField("Роль", max_length=120)
-    cost = models.DecimalField("Стоимость", max_digits=12, decimal_places=2, default=0)
+    cost = models.DecimalField("Стоимость", max_digits=12, decimal_places=2, default=0, validators=[MinValueValidator(0)])
     status = models.CharField("Статус", max_length=20, choices=Status.choices, default=Status.PROPOSED)
 
     class Meta:
         verbose_name = "Подрядчик мероприятия"
         verbose_name_plural = "Подрядчики мероприятия"
         unique_together = ("event", "vendor", "role")
+        constraints = [models.CheckConstraint(condition=models.Q(cost__gte=0), name="event_vendor_cost_nonnegative")]
 
     def __str__(self) -> str:
         return f"{self.vendor} / {self.role}"

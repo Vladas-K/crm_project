@@ -522,9 +522,11 @@ def test_expense_delete_returns_to_expenses_tab(client, django_user_model, crm_o
 @pytest.mark.django_db
 def test_nested_event_vendor_create_returns_to_vendors_tab(client, django_user_model, crm_objects):
     """Создание назначения подрядчика возвращает на вкладку подрядчиков."""
-    login_user(client, django_user_model)
+    login_user(client, django_user_model, can_view_finance=True)
     event = crm_objects["event"]
     vendor = crm_objects["vendor"]
+    vendor.roles = "Координатор"
+    vendor.save()
 
     response = client.post(
         f"{reverse('core:event_vendor_create', kwargs={'event_pk': event.pk})}?return_tab=vendors",
@@ -549,8 +551,10 @@ def test_nested_event_vendor_create_returns_to_vendors_tab(client, django_user_m
 @pytest.mark.django_db
 def test_nested_event_vendor_update_returns_to_vendors_tab(client, django_user_model, crm_objects):
     """Редактирование назначения подрядчика возвращает на вкладку подрядчиков."""
-    login_user(client, django_user_model)
+    login_user(client, django_user_model, can_view_finance=True)
     assignment = crm_objects["event_vendor"]
+    assignment.vendor.roles = "Технический координатор"
+    assignment.vendor.save()
 
     response = client.post(
         f"{reverse('core:event_vendor_update', kwargs={'pk': assignment.pk})}?return_tab=vendors",

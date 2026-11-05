@@ -332,7 +332,7 @@
                 <h2 class="premium-panel__title">Подрядчики</h2>
                 <p class="premium-panel__subtitle">Текущий состав команды подрядчиков по мероприятию.</p>
             </div>
-            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_vendor_create' event.pk %}?return_tab=vendors{% if event_filters %}&amp;event_filters={{ event_filters|urlencode }}{% endif %}" class="btn btn-sm btn-primary">Добавить</a>{% endif %}
+            {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_vendor_create' event.pk %}?return_tab=vendors{% if event_filters %}&amp;event_filters={{ event_filters|urlencode }}{% endif %}" class="btn btn-sm btn-primary">Назначить подрядчика</a>{% endif %}
         </div>
         <div class="event-filter mb-3">
             <a href="{% url 'core:event_detail' event.pk %}?{{ event_filter_prefix }}tab=vendors&amp;vendor_filter=all#event-tabs" class="event-filter__link{% if vendor_filter == 'all' %} event-filter__link--active{% endif %}">Все</a>

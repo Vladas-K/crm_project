@@ -848,8 +848,17 @@ class EventVendorForm(BootstrapModelForm):
         model = EventVendor
         fields = ["event", "vendor", "role", "cost", "status"]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, can_view_finance=False, **kwargs):
         super().__init__(*args, **kwargs)
+        if not can_view_finance:
+            self.fields.pop("cost")
+        else:
+            self.fields["cost"].label = "Стоимость участия, ₽"
+            self.fields["cost"].min_value = 0
+            self.fields["cost"].validators.append(MinValueValidator(0))
+            self.fields["cost"].widget.attrs.update(min="0", inputmode="decimal")
+        if self.instance.pk:
+            self.fields["event"].disabled = True
         vendors = Vendor.objects.prefetch_related("role_categories").order_by("name")
         self.fields["vendor"].queryset = vendors
         role_map = {}
@@ -857,10 +866,9 @@ class EventVendorForm(BootstrapModelForm):
             role_names = set(vendor.role_categories.values_list("name", flat=True))
             role_names.update(role.strip() for role in vendor.roles.split(",") if role.strip())
             role_map[str(vendor.pk)] = sorted(role_names, key=str.casefold)
-        self.fields["vendor"].widget.attrs["data-role-map"] = json.dumps(role_map, ensure_ascii=False)
-        self.fields["role"] = forms.ChoiceField(label="Роль", required=True)
+        self.fields["role"] = forms.ChoiceField(label="Роль на мероприятии", required=True, widget=forms.Select(attrs={"class": "form-select"}))
         vendor_id = self.data.get("vendor") if self.is_bound else getattr(self.instance, "vendor_id", None)
-        if vendor_id:
+        if vendor_id and str(vendor_id).isascii() and str(vendor_id).isdigit():
             vendor = Vendor.objects.prefetch_related("role_categories").filter(pk=vendor_id).first()
         else:
             vendor = None
@@ -871,13 +879,22 @@ class EventVendorForm(BootstrapModelForm):
         else:
             role_names = set()
 
-        if self.instance.role:
+        if self.instance.role and str(vendor_id) == str(self.instance.vendor_id):
             role_names.add(self.instance.role)
-        if self.is_bound and self.data.get("role"):
-            role_names.add(self.data["role"])
+            role_map.setdefault(str(vendor_id), [])
+            if self.instance.role not in role_map[str(vendor_id)]:
+                role_map[str(vendor_id)].append(self.instance.role)
+        self.fields["vendor"].widget.attrs["data-role-map"] = json.dumps(role_map, ensure_ascii=False)
         self.fields["role"].choices = [("", "Сначала выберите подрядчика")] + [
             (name, name) for name in sorted(role_names, key=str.casefold)
         ]
+
+    def __getitem__(self, name):
+        field = super().__getitem__(name)
+        if field.errors:
+            field.field.widget.attrs["aria-invalid"] = "true"
+            field.field.widget.attrs["aria-describedby"] = f"{field.auto_id}_error"
+        return field
 
 
 class EventCommunicationForm(BootstrapModelForm):

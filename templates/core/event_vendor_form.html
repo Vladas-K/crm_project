@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ page_title }} | CRM{% endblock %}
+{% block content %}
+<div class="event-form-shell expense-form-shell">
+<header class="workspace-page-header"><h1>{{ page_title }}</h1><p>Выберите существующего подрядчика и условия участия в мероприятии.</p></header>
+<a href="{{ cancel_url }}" class="event-form-back">← К подрядчикам мероприятия</a>
+<form method="post" class="event-form" novalidate>
+{% csrf_token %}
+{% if return_tab %}<input type="hidden" name="return_tab" value="{{ return_tab }}">{% endif %}
+{% if event_filters %}<input type="hidden" name="event_filters" value="{{ event_filters }}">{% endif %}
+{% if form.errors %}<div class="event-form-errors" role="alert"><strong>Проверьте отмеченные поля</strong><ul>{% for field in form %}{% for error in field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>{% endfor %}{% endfor %}{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
+<div class="event-form-panel">
+<p class="event-form-required-note">* Обязательные поля.</p>
+<section class="event-form-section"><div class="event-form-section__header"><h2>Подрядчик и роль</h2></div><div class="event-form-grid">
+{% include 'core/includes/event_form_field.html' with field=form.event wide=True %}
+{% include 'core/includes/event_form_field.html' with field=form.vendor %}
+{% include 'core/includes/event_form_field.html' with field=form.role %}
+</div></section>
+<section class="event-form-section"><div class="event-form-section__header"><h2>Условия участия</h2><p>Предложен — кандидат; утверждён — участие согласовано; заменён — больше не участвует.</p></div><div class="event-form-grid">
+{% if form.cost %}{% include 'core/includes/event_form_field.html' with field=form.cost %}{% endif %}
+{% include 'core/includes/event_form_field.html' with field=form.status %}
+</div></section>
+<div class="event-form-actions"><a href="{{ cancel_url }}" class="btn btn-outline-secondary">Отмена</a><button type="submit" class="btn btn-primary">{% if form.instance.pk %}Сохранить изменения{% else %}Назначить подрядчика{% endif %}</button></div>
+</div></form></div>
+<script src="{% static_with_version 'js/event_vendor_form.js' %}" defer></script>
+{% endblock %}
