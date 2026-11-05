@@ -844,7 +844,18 @@ class EventTimelineItem(models.Model):
     time = models.TimeField("Время")
     block = models.CharField("Блок", max_length=120)
     description = models.TextField("Описание", blank=True)
-    responsible = models.CharField("Ответственный", max_length=120, blank=True)
+    responsible_vendor = models.ForeignKey(
+        EventVendor, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="timeline_items", verbose_name="Подрядчик мероприятия",
+    )
+    responsible = models.CharField("Ответственный", max_length=255, blank=True)
+    responsible_phone = models.CharField("Телефон ответственного", max_length=30, blank=True)
+
+    def clean(self):
+        super().clean()
+        if self.responsible_vendor_id and self.responsible_vendor.event_id != self.event_id:
+            raise ValidationError({"responsible_vendor": "Выберите подрядчика этого мероприятия."})
+        self.responsible_phone = normalize_russian_phone(self.responsible_phone)
 
     class Meta:
         ordering = ("time", "id")

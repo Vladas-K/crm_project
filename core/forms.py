@@ -754,19 +754,21 @@ class EventTaskForm(BootstrapModelForm):
 
 
 class EventTimelineItemForm(BootstrapModelForm):
-    """Блок программы; ответственное лицо остаётся внутренней информацией CRM."""
+    """Блок программы с контактом назначенного подрядчика или ручным ответственным."""
 
     class Meta:
         model = EventTimelineItem
-        fields = ["event", "time", "block", "description", "responsible"]
+        fields = ["event", "time", "block", "description", "responsible_vendor", "responsible", "responsible_phone"]
         widgets = {
             "time": forms.TimeInput(format="%H:%M", attrs={"type": "time", "step": "60"}),
             "description": forms.Textarea(attrs={"rows": 3}),
+            "responsible_phone": forms.TextInput(attrs={"type": "tel", "autocomplete": "off"}),
         }
         labels = {"time": "Время начала", "block": "Блок программы"}
         help_texts = {
             "time": "Время начала блока в формате ЧЧ:ММ.",
-            "responsible": "Для работы в CRM. Не включается в печатный тайминг.",
+            "responsible_vendor": "При выборе подставятся контактное лицо и телефон из профиля подрядчика. Для другого контакта выберите «Указать вручную».",
+            "responsible_phone": "Имя и телефон ответственного включаются в скачиваемый PDF.",
         }
 
     def __init__(self, *args, **kwargs):
@@ -774,6 +776,28 @@ class EventTimelineItemForm(BootstrapModelForm):
         if self.instance.pk:
             self.fields["event"].disabled = True
         self.fields["block"].widget.attrs["placeholder"] = "Например, встреча гостей"
+        # Используем закреплённое мероприятие, а не присланный в POST идентификатор.
+        event = self.instance.event_id or self.initial.get("event")
+        event_id = getattr(event, "pk", event)
+        assignments = EventVendor.objects.filter(event_id=event_id).select_related("vendor").order_by("vendor__name", "role", "id") if event_id else EventVendor.objects.none()
+        self.fields["responsible_vendor"].queryset = assignments
+        self.fields["responsible_vendor"].empty_label = "Указать вручную / без ответственного"
+        self.fields["responsible_vendor"].label_from_instance = lambda item: f"{item.vendor.name} — {item.role} ({item.get_status_display()})"
+        self.responsible_contacts = {
+            str(item.pk): {"name": item.vendor.contact_person or item.vendor.name, "phone": item.vendor.phone}
+            for item in assignments
+        }
+        self.has_responsible_vendors = bool(self.responsible_contacts)
+
+    def clean(self):
+        cleaned = super().clean()
+        assignment = cleaned.get("responsible_vendor")
+        if assignment:
+            # Работает без JavaScript; поля контакта не могут подменить выбранный профиль.
+            cleaned["responsible"] = assignment.vendor.contact_person or assignment.vendor.name
+            cleaned["responsible_phone"] = assignment.vendor.phone
+        cleaned["responsible_phone"] = normalize_russian_phone(cleaned.get("responsible_phone", ""))
+        return cleaned
 
     def __getitem__(self, name):
         field = super().__getitem__(name)

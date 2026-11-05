@@ -98,6 +98,7 @@
                     </div>
                     <div class="premium-list__meta text-end">
                         <div class="text-secondary small">{{ item.responsible|default:"Ответственный не указан" }}</div>
+                        {% if item.responsible_phone %}<div class="text-secondary small">{{ item.responsible_phone }}</div>{% endif %}
                         <div class="timeline-row__actions">
                             {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_timeline_update' item.pk %}?return_tab=timeline{% if event_filters %}&amp;event_filters={{ event_filters|urlencode }}{% endif %}" class="panel-action-link">Изменить</a>{% endif %}
                             {% if crm_permissions.can_manage_events %}<a href="{% url 'core:event_timeline_delete' item.pk %}?return_tab=timeline{% if event_filters %}&amp;event_filters={{ event_filters|urlencode }}{% endif %}" class="panel-action-link panel-action-link--danger">Удалить</a>{% endif %}

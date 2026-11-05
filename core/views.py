@@ -2368,7 +2368,7 @@ class EventTimelineDownloadView(CRMLoginRequiredMixin, View):
 
         event = get_object_or_404(Event.objects.select_related("client", "event_format"), pk=pk)
         items = event.timeline_items.order_by("time", "id").values(
-            "time", "block", "description"
+            "time", "block", "description", "responsible", "responsible_phone"
         )
         response = FileResponse(
             build_timeline_pdf(event, items),

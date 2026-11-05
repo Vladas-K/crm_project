@@ -27,7 +27,7 @@ def test_download_contains_only_selected_event_and_agreed_fields(client, django_
     # Создаём не по времени: печатная программа должна быть хронологической.
     EventTimelineItem.objects.create(event=event, time="19:00", block="Вечерний блок",
                                      description="Первая строка\n<script>опасный текст</script>",
-                                     responsible="Скрытый координатор")
+                                     responsible="Координатор мероприятия", responsible_phone="+7 911 123-45-67")
     EventTimelineItem.objects.create(event=event, time="09:00", block="Первый утренний блок")
     EventTimelineItem.objects.create(event=event, time="09:00", block="Второй утренний блок")
     other = Event.objects.create(client=event.client, date=event.date, city=event.city)
@@ -41,12 +41,14 @@ def test_download_contains_only_selected_event_and_agreed_fields(client, django_
     assert data.startswith(b'%PDF-')
     pdf = PdfReader(BytesIO(data))
     text = '\n'.join(page.extract_text() for page in pdf.pages)
+    text = ' '.join(text.split())
     assert 'Dievent' in text and event.title in text
     assert event.date.strftime('%d.%m.%Y') in text
     assert text.index('Первый утренний блок') < text.index('Второй утренний блок') < text.index('Вечерний блок')
     assert '09:00' in text and '19:00' in text
     assert '<script>опасный текст</script>' in text
-    for value in ('Скрытый координатор', 'Ответственный', 'Чужое мероприятие', 'Плановый бюджет', 'Выйти', 'Изменить', 'Удалить'):
+    assert 'Ответственный' in text and 'Координатор мероприятия' in text and '+7 911 123-45-67' in text
+    for value in ('Чужое мероприятие', 'Плановый бюджет', 'Выйти', 'Изменить', 'Удалить'):
         assert value not in text
     assert float(pdf.pages[0].mediabox.width) == pytest.approx(595.28, abs=.1)
     assert float(pdf.pages[0].mediabox.height) == pytest.approx(841.89, abs=.1)

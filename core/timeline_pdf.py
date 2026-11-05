@@ -62,14 +62,15 @@ def build_timeline_pdf(event, items):
     ]))
     story = [brand, Spacer(1, 20), paragraph("Тайминг мероприятия", label),
              paragraph(str(event), heading), paragraph(event.date.strftime("%d.%m.%Y"), date_style)]
-    rows = [[paragraph(text, header_style) for text in ("Время", "Блок программы", "Описание")]]
+    rows = [[paragraph(text, header_style) for text in ("Время", "Блок программы", "Описание", "Ответственный")]]
     for item in items:
+        contact = "\n".join(value for value in (item["responsible"], item["responsible_phone"]) if value)
         rows.append([paragraph(item["time"].strftime("%H:%M")), paragraph(item["block"], bold),
-                     paragraph(item["description"] or "—")])
+                     paragraph(item["description"] or "—"), paragraph(contact or "—")])
     empty = len(rows) == 1
     if empty:
-        rows.append([paragraph("Блоки тайминга ещё не добавлены."), "", ""])
-    table = LongTable(rows, colWidths=[document.width * .16, document.width * .31, document.width * .53],
+        rows.append([paragraph("Блоки тайминга ещё не добавлены."), "", "", ""])
+    table = LongTable(rows, colWidths=[document.width * ratio for ratio in (.11, .23, .40, .26)],
                       repeatRows=1, splitByRow=1, splitInRow=1, hAlign="LEFT")
     commands = [
         ("VALIGN", (0, 0), (-1, -1), "TOP"),

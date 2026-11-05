@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}{{ page_title }} | CRM{% endblock %}
 {% block content %}
 <div class="event-form-shell timeline-form-shell">
@@ -34,8 +35,17 @@
                 <div class="event-form-section__header"><h2 id="timeline-details">Подробности</h2></div>
                 <div class="event-form-grid">
                     {% include 'core/includes/event_form_field.html' with field=form.description wide=True %}
-                    {% include 'core/includes/event_form_field.html' with field=form.responsible wide=True %}
                 </div>
+            </section>
+            <section class="event-form-section" aria-labelledby="timeline-responsible">
+                <div class="event-form-section__header"><h2 id="timeline-responsible">Ответственный</h2><p>Контакт для команды мероприятия и документа PDF.</p></div>
+                {% if not form.has_responsible_vendors %}<p class="event-form-field__help">На мероприятие пока не назначены подрядчики. Укажите имя и телефон вручную.</p>{% endif %}
+                <div class="event-form-grid">
+                    {% include 'core/includes/event_form_field.html' with field=form.responsible_vendor wide=True %}
+                    {% include 'core/includes/event_form_field.html' with field=form.responsible wide=False %}
+                    {% include 'core/includes/event_form_field.html' with field=form.responsible_phone wide=False %}
+                </div>
+                <noscript><p class="event-form-field__help">При выборе подрядчика его контактные данные подставятся при сохранении.</p></noscript>
             </section>
             <div class="event-form-actions">
                 <a href="{{ cancel_url }}" class="btn btn-outline-secondary">Отмена</a>
@@ -44,4 +54,6 @@
         </div>
     </form>
 </div>
+{{ form.responsible_contacts|json_script:"timeline-responsible-contacts" }}
+<script src="{% static_with_version 'js/timeline_form.js' %}" defer></script>
 {% endblock %}
