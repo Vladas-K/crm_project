@@ -4,7 +4,7 @@
 {% block title %}{{ task_page_title }} | CRM{% endblock %}
 
 {% block content %}
-<section class="task-workspace" aria-label="Рабочая область задач">
+<section class="task-workspace" data-task-filter="{{ active_filter }}" aria-label="Рабочая область задач">
     <header class="page-header workspace-page-header">
         <div class="workspace-page-header__content">
             <svg class="workspace-page-header__icon" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="6" y="5" width="21" height="24" rx="4"/><path d="M12 3h9v5h-9zM11 15l2 2 4-4M20 15h3M11 23h12"/></svg>
