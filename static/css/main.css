@@ -4058,7 +4058,7 @@ a.lead-profile-contact:focus {
 .calendar-day:last-child { border-right: 0; }
 .calendar-day--outside { background: #fafbfc; color: #8c96a4; }
 .calendar-day > time { display: flex; align-items: center; justify-content: center; margin: 0 0 .5rem auto; width: 28px; height: 28px; font-size: .8rem; border-radius: 50%; }
-.calendar-day--today > time { color: #fff; background: var(--crm-accent); font-weight: 600; }
+.calendar-day--today > time { color: #fff; background: #c7474f; font-weight: 600; }
 .calendar-event { display: flex; flex-direction: column; gap: .2rem; min-width: 0; margin-bottom: .5rem; padding: .6rem; border-radius: .75rem; color: #273444; background: #f3f5f8; text-decoration: none; overflow-wrap: anywhere; font-size: .75rem; line-height: 1.4; transition: background .15s ease; }
 .calendar-event strong { font-size: .8rem; font-weight: 600; }
 .calendar-event > span { color: #526071; }
@@ -4076,7 +4076,7 @@ a.lead-profile-contact:focus {
     .calendar-agenda { display: block; }
     .calendar-agenda-day + .calendar-agenda-day { margin-top: 1.5rem; }
     .calendar-agenda-day h3 { font-size: .95rem; color: #526071; margin-bottom: .75rem; }
-    .calendar-agenda-day [aria-current="date"] { color: var(--crm-accent); }
+    .calendar-agenda-day [aria-current="date"] { color: #c7474f; }
     .calendar-agenda .calendar-event { padding: 1rem; font-size: .85rem; gap: .35rem; }
     .calendar-agenda .calendar-event strong { font-size: 1rem; }
 }

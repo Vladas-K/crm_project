@@ -36,7 +36,7 @@
         </details>
         <div class="task-directory-filters__footer">
             <label class="task-directory-mine"><input type="checkbox" name="mine" value="1"{% if task_mine %} checked{% endif %}> Мои задачи</label>
-            <button type="submit" class="btn btn-primary">Показать</button>
+            <button type="submit" class="btn btn-outline-secondary">Показать</button>
             {% if task_search or task_event or task_mine or task_sort != 'priority' %}<a href="{% url 'core:tasks' %}{% if active_filter != 'all' %}?filter={{ active_filter }}{% endif %}">Сбросить фильтры</a>{% endif %}
         </div>
     </form>
